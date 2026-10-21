@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>DefStar HTTP 샘플</title>
+  <link rel="stylesheet" href="/css/sample.css">
+  <link rel="icon" href="/favicon.ico">
+</head>
+<body>
+  <h1>DefStar HTTP 샘플</h1>
+  <p>WSGI 없이 실행하는 동기식 HTTP 애플리케이션입니다.</p>
+  <ul>
+    <li><a href="/status">상태 확인</a></li>
+    <li><a href="/api/run/101/102?a=6&amp;b=10">경로·쿼리 검증과 계산</a></li>
+    <li><a href="/api/auth/query?credentials=1">쿼리 인증</a></li>
+    <li><a href="/api/run/stream">직접 스트림 출력</a></li>
+    <li><a href="/api/run/stream/chunked">Chunked 출력</a></li>
+    <li><a href="/api/run/stream/sse">SSE 출력</a></li>
+    <li><a href="/api/doc">OpenAPI 명세</a></li>
+    <li><a href="/swagger">Swagger UI</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/metrics">Prometheus Metrics</a></li>
+    <li><a href="/health">HealthCheck</a></li>
+  </ul>
+  <p>POST·PUT·DELETE 및 토큰 요청 예시는 샘플 README를 참고하세요.</p>
+  <p>Swagger UI에서 API 명세를 확인하고 Try it out으로 실제 요청을 실행할 수 있습니다.</p>
+  <img src="/thumbs/sample" alt="파일시스템 연결로 제공하는 이미지">
+</body>
+</html>
