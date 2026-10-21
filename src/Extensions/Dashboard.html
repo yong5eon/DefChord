@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} Dashboard</title>
+  <style>
+    :root { color-scheme: light; font: 14px/1.55 system-ui, -apple-system, sans-serif; color: #263343; background: #f7f8fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #fff; border-bottom: 1px solid #e1e5eb; }
+    .heading, main { max-width: 1440px; margin: auto; padding: 24px 32px; }
+    .heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    h1 { margin: 0; font-size: 22px; letter-spacing: -.6px; overflow-wrap: anywhere; }
+    h2 { margin: 0; font-size: 15px; }
+    p { margin: 6px 0 0; }
+    .subtitle, .muted { color: #657184; font-size: 12px; }
+    .subtitle:empty { display: none; }
+    .badge { padding: 5px 10px; border: 1px solid #c6dfcf; border-radius: 5px; color: #286f40; background: #f0faf3; font-size: 11px; white-space: nowrap; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    #notice { margin: 0; font-size: 12px; color: #536374; }
+    #error { color: #ab303d; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #error:empty { display: none; }
+    button { padding: 8px 14px; border: 1px solid #cdd5df; border-radius: 5px; font: 600 12px system-ui, sans-serif; background: #fff; color: #38485b; cursor: pointer; white-space: nowrap; }
+    button:hover { background: #edf3f8; }
+    select { padding: 8px; border: 1px solid #cdd5df; border-radius: 5px; background: #fff; color: #38485b; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    :focus-visible { outline: 3px solid #89b8ff; outline-offset: 3px; }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card, .panel { min-width: 0; background: #fff; border: 1px solid #e1e5eb; border-radius: 7px; }
+    .card { padding: 20px; }
+    .label { font-size: 12px; color: #657184; }
+    .value { margin-top: 8px; font-size: 28px; font-weight: 650; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .rate { color: #27834c; }
+    .failure { color: #b33b45; }
+    .hint { color: #768295; font-size: 11px; margin-top: 8px; }
+    .panel-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 20px; border-bottom: 1px solid #e1e5eb; }
+    .table-scroll { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #f7f9fb; color: #657184; font-weight: 600; white-space: nowrap; }
+    th, td { padding: 13px 18px; text-align: right; border-bottom: 1px solid #edf0f4; font-variant-numeric: tabular-nums; }
+    th:first-child, td:first-child { text-align: left; }
+    td:first-child { max-width: 400px; overflow-wrap: anywhere; font: 12px/1.7 Consolas, monospace; }
+    tr:last-child td { border-bottom: 0; }
+    #empty { padding: 24px; color: #657184; font-size: 12px; }
+    .notes { margin-top: 20px; color: #657184; font-size: 12px; }
+    .stale .cards, .stale .panel { opacity: .55; }
+    [hidden] { display: none !important; }
+    @media(max-width: 800px) {
+      .heading, main { padding: 20px 16px; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .card { padding: 16px; }
+      .value { font-size: 24px; }
+    }
+    @media(max-width: 420px) {
+      .cards { grid-template-columns: 1fr; }
+      .heading { align-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <header><div class="heading">
+    <div><h1>{{title}} Dashboard</h1><p class="subtitle">{{description}}</p></div>
+    <span class="badge">LIVE DASHBOARD</span>
+  </div></header>
+  <main>
+    <div class="toolbar">
+      <div><p id="notice" role="status" aria-live="polite">Application에 연결하는 중입니다.</p><p id="error" role="alert"></p></div>
+      <div class="controls">
+        <label for="window">집계 구간</label><select id="window"><option value="1">최근 1초</option><option value="60">최근 1분</option></select>
+        <button id="pause" type="button" aria-pressed="false">갱신 일시정지</button>
+      </div>
+    </div>
+    <div class="cards">
+      <section class="card"><div class="label">구간 완료 요청</div><div id="rate" class="value rate">--</div><p id="window-hint" class="hint">완전히 지난 최근 1초의 완료 요청</p></section>
+      <section class="card"><div class="label">진행 중</div><div id="active" class="value">--</div><p class="hint">응답 전송이 끝나지 않은 요청</p></section>
+      <section class="card"><div class="label">Application 상태</div><div id="state" class="value">--</div><p class="hint">실행 상태이며 외부 시스템 건강 검사는 아닙니다.</p></section>
+      <section class="card"><div class="label">누적 성공</div><div id="success" class="value">--</div><p class="hint">Application 시작 이후</p></section>
+      <section class="card"><div class="label">누적 실패</div><div id="failure" class="value failure">--</div><p class="hint">HTTP 오류·전송 실패·연결 해제 포함</p></section>
+      <section class="card"><div class="label">가동 시간</div><div id="uptime" class="value">--</div><p class="hint">Metrics 초기화 이후</p></section>
+      <section class="card"><div class="label">구간 성공 / 실패</div><div id="window-outcomes" class="value">--</div><p class="hint">선택한 구간 내 완료 요청</p></section>
+      <section class="card"><div class="label">구간 실패율</div><div id="failure-rate" class="value">--</div><p class="hint">실패 / 완료 요청</p></section>
+      <section class="card"><div class="label">구간 평균 시간</div><div id="average" class="value">--</div><p class="hint">응답 전송 종료까지 포함</p></section>
+      <section class="card"><div class="label">구간 최대 시간</div><div id="maximum" class="value">--</div><p class="hint">선택한 구간의 가장 느린 완료 요청</p></section>
+      <section class="card"><div class="label">최장 진행 시간</div><div id="oldest" class="value">--</div><p class="hint">진행 중인 스트림·SSE 포함</p></section>
+    </div>
+    <section class="panel" aria-labelledby="requests-title">
+      <div class="panel-heading"><h2 id="requests-title">요청 처리 현황</h2><span class="muted">구간 집계와 누적 합계</span></div>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">경로</th><th scope="col">진행 중</th><th scope="col">누적 성공</th><th scope="col">누적 실패</th><th id="rate-heading" scope="col">완료 / 초</th><th scope="col">구간 평균</th><th scope="col">구간 최대</th><th scope="col">구간 성공</th><th scope="col">구간 실패</th><th scope="col">실패율</th><th scope="col">최장 진행</th></tr></thead>
+        <tbody id="requests"></tbody>
+      </table></div>
+      <p id="empty" hidden>등록된 요청 지표가 없습니다.</p>
+    </section>
+    <p class="notes">약 1초 간격으로 갱신합니다. 집계 구간은 완전히 지난 monotonic 초를 기준으로 하므로 실시간 누적 합계보다 1초 미만 늦을 수 있습니다.
+      최근 1분은 실제 60초의 완료 요청 수이며 초당 값을 곱한 추정치가 아닙니다. 시작 직후에는 시작 이후 데이터만 포함합니다.
+      확장 자신의 요청도 측정하며, 하나의 Application에 대한 지표입니다. 영구 이력은 저장하지 않습니다.</p>
+  </main>
+  <script>
+    'use strict';
+    const el = id => document.getElementById(id);
+    const number = new Intl.NumberFormat(undefined, {maximumFractionDigits: 2});
+    let latest = null;
+    let timer = null;
+    let pending = false;
+    let paused = false;
+    const milliseconds = value => number.format(value * 1000) + ' ms';
+    const failureRate = period => period.success + period.failure ? number.format(period.failure / (period.success + period.failure) * 100) + '%' : '--';
+    function duration(seconds) {
+      const total = Math.floor(seconds);
+      return [Math.floor(total / 3600), Math.floor(total % 3600 / 60), total % 60].map(value => String(value).padStart(2, '0')).join(':');
+    }
+    function render(snapshot) {
+      const seconds = el('window').value;
+      const totals = {active: 0, success: 0, failure: 0};
+      const periodTotals = {success: 0, failure: 0, duration: 0, max_duration: 0};
+      let oldest = 0;
+      const rows = Object.entries(snapshot.requests).map(([path, stats]) => {
+        for (const key of Object.keys(totals)) totals[key] += stats[key];
+        const period = stats.windows[seconds];
+        for (const key of ['success', 'failure', 'duration']) periodTotals[key] += period[key];
+        periodTotals.max_duration = Math.max(periodTotals.max_duration, period.max_duration);
+        oldest = Math.max(oldest, stats.oldest_active);
+        const count = period.success + period.failure;
+        const row = document.createElement('tr');
+        const values = [
+          path, number.format(stats.active), number.format(stats.success), number.format(stats.failure),
+          number.format(count), count ? milliseconds(period.duration / count) : '--',
+          count ? milliseconds(period.max_duration) : '--', number.format(period.success), number.format(period.failure),
+          failureRate(period), stats.active ? milliseconds(stats.oldest_active) : '--'
+        ];
+        values.forEach((value, index) => {
+          const cell = document.createElement('td');
+          if (index >= 4) cell.className = 'request-rate';
+          cell.textContent = value;
+          row.append(cell);
+        });
+        return row;
+      });
+      el('requests').replaceChildren(...rows);
+      el('empty').hidden = rows.length > 0;
+      for (const key of Object.keys(totals)) el(key).textContent = number.format(totals[key]);
+      const count = periodTotals.success + periodTotals.failure;
+      el('rate').textContent = number.format(count) + (seconds === '60' ? ' /분' : ' /초');
+      el('window-hint').textContent = '완전히 지난 최근 ' + (seconds === '60' ? '60초' : '1초') + '의 완료 요청';
+      el('rate-heading').textContent = seconds === '60' ? '완료 / 분' : '완료 / 초';
+      el('window-outcomes').textContent = number.format(periodTotals.success) + ' / ' + number.format(periodTotals.failure);
+      el('failure-rate').textContent = failureRate(periodTotals);
+      el('average').textContent = count ? milliseconds(periodTotals.duration / count) : '--';
+      el('maximum').textContent = count ? milliseconds(periodTotals.max_duration) : '--';
+      el('oldest').textContent = totals.active ? milliseconds(oldest) : '--';
+      el('state').textContent = snapshot.running ? '실행 중' : '종료';
+      el('uptime').textContent = duration(snapshot.uptime);
+      latest = snapshot;
+    }
+    function stale() {
+      latest = null;
+      document.body.classList.add('stale');
+      for (const id of ['rate', 'window-outcomes', 'failure-rate', 'average', 'maximum', 'oldest']) el(id).textContent = '--';
+      for (const cell of document.querySelectorAll('.request-rate')) cell.textContent = '--';
+    }
+    el('window').onchange = () => { if (latest) render(latest); };
+    async function refresh() {
+      if (pending || paused || document.hidden) return;
+      pending = true;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        const response = await fetch(location.pathname, {
+          headers: {Accept: 'application/json'}, credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal: controller.signal
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const snapshot = await response.json();
+        if (paused || document.hidden) return;
+        render(snapshot);
+        document.body.classList.remove('stale');
+        el('error').textContent = '';
+        el('notice').textContent = '실시간 갱신 · ' + new Date().toLocaleTimeString();
+      } catch (failure) {
+        stale();
+        el('notice').textContent = '갱신 중단 · 다음 주기에 다시 시도합니다.';
+        el('error').textContent = '갱신 실패 · 표시된 누적 값은 이전 데이터입니다. ' + (failure.name === 'AbortError' ? '요청 시간이 초과됐습니다.' : failure.message);
+      } finally {
+        clearTimeout(timeout);
+        pending = false;
+        if (!paused && !document.hidden) timer = setTimeout(refresh, 1000);
+      }
+    }
+    el('pause').onclick = () => {
+      paused = !paused;
+      clearTimeout(timer);
+      el('pause').textContent = paused ? '갱신 재개' : '갱신 일시정지';
+      el('pause').setAttribute('aria-pressed', String(paused));
+      if (paused) {
+        stale();
+        el('notice').textContent = '일시정지 · 표시된 데이터는 갱신되지 않습니다.';
+      } else refresh();
+    };
+    document.addEventListener('visibilitychange', () => {
+      clearTimeout(timer);
+      if (document.hidden) stale();
+      else refresh();
+    });
+    refresh();
+  </script>
+</body>
+</html>

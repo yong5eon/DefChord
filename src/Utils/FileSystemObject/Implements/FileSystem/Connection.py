@@ -1,78 +1,111 @@
-# -*- coding: utf-8 -*-
-
-from DefStar.Utils.FileSystemObject import (
-	Connection as BaseConnection,
+from email.utils import formatdate
+from hashlib import sha256
+from mimetypes import guess_type
+from pathlib import (
+	Path,
+	PureWindowsPath,
 )
+
+from ...Connection import Connection as BaseConnection
 from .Configuration import Configuration
 from .File import File
 
-from os import stat
-from os.path import isfile
-
-from time import timezone, mktime
-from mimetypes import guess_type
-from email.utils import formatdate, parsedate_tz
-from hashlib import sha1
-from os.path import split
-
-__all__ = (
-	'Connection'
-)
-
 
 class Connection(BaseConnection):
-	"""File Object Class for Common File System"""
+	"""설정된 루트 안에서만 파일에 접근하는 로컬 파일시스템."""
 
-	def __init__(self, conf: Configuration):
+	def __init__(
+		self,
+		conf: Configuration,
+	):
 		self.conf = conf
+		self.base = Path(conf.base).resolve(strict=True)
+		if not self.base.is_dir():
+			raise NotADirectoryError(str(self.base))
 		return
 
-	def connect(self):
-		pass
-
-	def exist(self, path):
-		return isfile(self.conf.base + '/' + path)
-
-	def type(self, path):
-		return guess_type(self.conf.base + '/' + path)
-
-	def timestamp(self, path):
-		stats = stat(self.conf.base + '/' + path)
-		if not stats:
-			raise RuntimeError('cannot read {} file stats'.format(path))
+	def resolve(
+		self,
+		path: str,
+	) -> Path:
+		if '\x00' in path or '\\' in path or PureWindowsPath(path).drive or ':' in path:
+			raise PermissionError('허용하지 않는 파일 경로')
+		target = (self.base / path.lstrip('/')).resolve()
 		try:
-			ts = formatdate(stats.st_mtime, usegmt=True)
-			return mktime(ts[:8] + (0,)) - (ts[9] or 0) - timezone
-		except (TypeError, ValueError, IndexError, OverflowError):
-			return None
+			target.relative_to(self.base)
+		except ValueError as error:
+			raise PermissionError('파일시스템 루트 밖에 접근할 수 없습니다') from error
+		return target
 
-	def modified(self, path):
-		stats = stat(self.conf.base + '/' + path)
-		if not stats:
-			raise RuntimeError('cannot read {} file stats'.format(path))
-		return formatdate(stats.st_mtime, usegmt=True)
+	def connect(self):
+		return
 
-	def etag(self, path):
-		head, tail = split(self.conf.base + '/' + path)
-		stats = stat(self.conf.base + '/' + path)
-		if not stats:
-			raise RuntimeError('cannot read {} file stats'.format(path))
-		etag = '%d:%d:%d:%d:%s'.format(stats.st_dev, stats.st_ino, stats.st_mtime, stats.st_size, tail)
-		return sha1(etag.encode('utf-8')).hexdigest()
+	def exist(
+		self,
+		path,
+	):
+		return self.resolve(path).is_file()
 
-	def size(self, path):
-		stats = stat(self.conf.base + '/' + path)
-		if not stats:
-			raise RuntimeError('cannot read {} file stats'.format(path))
-		return stats.st_size
+	def type(
+		self,
+		path,
+	):
+		return guess_type(str(self.resolve(path)))
 
-	def open(self, path, mode='r', encoding=None):
-		f = File(self)
-		f.open(path, mode)
-		return f
+	def timestamp(
+		self,
+		path,
+	):
+		return self.resolve(path).stat().st_mtime
+
+	def modified(
+		self,
+		path,
+	):
+		return formatdate(
+			self.timestamp(path),
+			usegmt=True,
+		)
+
+	def etag(
+		self,
+		path,
+	):
+		stats = self.resolve(path).stat()
+		return sha256(
+			'{}:{}'.format(
+				stats.st_mtime_ns,
+				stats.st_size,
+			).encode(),
+		).hexdigest()
+
+	def size(
+		self,
+		path,
+	):
+		return self.resolve(path).stat().st_size
+
+	def open(
+		self,
+		path,
+		mode='r',
+		encoding=None,
+	):
+		file = File(self)
+		return file.open(
+			path,
+			mode=mode,
+			encoding=encoding,
+		)
 
 	def close(self):
-		pass
+		return
 
-	def files(self, path):
-		pass
+	def files(
+		self,
+		path,
+	):
+		return [
+			str(file.relative_to(self.base))
+			for file in sorted(self.resolve(path).iterdir())
+		]
