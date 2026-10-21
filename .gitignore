@@ -1,0 +1,61 @@
+# Python bytecode and caches
+__pycache__/
+*.py[codz]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+
+# Virtual environments and local environment files
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Python packaging and build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+.Python
+
+# Local broker adapter links
+/src/Broker/Implements/*
+!/src/Broker/Implements/__init__.py
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Miscellaneous files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+*.tmp
+*.temp
+
+# IDE and editor specific files
+.vscode/
+.idea/
+
+# Git
+.git/
+
+# GitHub specific files
+.github/*
+!.github/
+!.github/workflows/
+
+# GitLab specific files
+.gitlab/
