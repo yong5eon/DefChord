@@ -49,9 +49,8 @@ tmp/
 .git/
 
 # GitHub specific files
-.github/*
-!.github/
-!.github/workflows/
+.github/instructions
+.github/instructions/
 
 # GitLab specific files
 .gitlab/
