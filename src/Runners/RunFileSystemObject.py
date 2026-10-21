@@ -14,7 +14,7 @@ from ..Utils.FileSystemObject import Connection
 
 
 class FileSystemRoute(Route):
-	"""경로 구분자를 포함하는 파일 경로를 prefix 아래에 매핑한다."""
+	"""Map file paths, including path separators, under a URL prefix."""
 
 	def __init__(
 		self,

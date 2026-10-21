@@ -8,7 +8,7 @@ from ..ResponseWriter import ResponseWriter
 
 
 class StreamWriter:
-	"""응답을 시작하고 바이트를 직접 쓰는 스트림 출력."""
+	"""Start a response and write bytes directly to the stream."""
 
 	chunked = False
 

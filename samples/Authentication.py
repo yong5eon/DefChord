@@ -34,7 +34,7 @@ from DefStar.Validator.Patterns.Object import (
 
 
 class GetSession(Authorization):
-	"""샘플 전용 고정 인증 값 '1'을 검증한다. 실제 인증 서버가 아니다."""
+	"""Validate the fixed sample credential '1'; this is not an authentication server."""
 
 	def __call__(
 		self,
@@ -43,7 +43,7 @@ class GetSession(Authorization):
 		value = credentials.credentials if isinstance(credentials, HTTPAuthorization) else credentials
 		if value != '1':
 			raise ClientError(
-				'잘못된 인증 정보',
+				'Invalid credentials',
 				status=401,
 			)
 		return {
@@ -67,7 +67,7 @@ def auth_handler(
 			GetSession(),
 			credentials,
 		),
-		summary='샘플 인증 후 세션 반환',
+		summary='Authenticate sample credentials and return a session',
 		tags='Auth',
 	):
 		def run(

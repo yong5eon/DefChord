@@ -7,8 +7,8 @@ from ..Sample import create_application
 
 
 def main() -> None:
-	"""샘플 Application의 OpenAPI 문서를 파일로 저장한다."""
-	parser = ArgumentParser(description='샘플 OpenAPI 문서 생성')
+	"""Save the sample Application's OpenAPI document to a file."""
+	parser = ArgumentParser(description='Generate the sample OpenAPI document')
 	parser.add_argument('output', type=Path)
 	args = parser.parse_args()
 	app = create_application()

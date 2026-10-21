@@ -12,7 +12,7 @@ __all__ = (
 
 
 class File(BaseFile):
-	"""로컬 파일 핸들의 수명과 읽기·쓰기를 관리한다."""
+	"""Manage local file handle lifetime, reading, and writing."""
 
 	def __init__(
 		self,
@@ -46,7 +46,7 @@ class File(BaseFile):
 		encoding=None,
 	):
 		if self.fo is not None:
-			raise RuntimeError('이미 열린 파일입니다')
+			raise RuntimeError('File is already open')
 		self.fo = self.fso.resolve(path).open(
 			mode,
 			encoding=encoding,
@@ -58,7 +58,7 @@ class File(BaseFile):
 		size=None,
 	):
 		if self.fo is None:
-			raise RuntimeError('닫힌 파일입니다')
+			raise RuntimeError('File is closed')
 		return self.fo.read(size if size is not None else -1)
 
 	def write(
@@ -66,7 +66,7 @@ class File(BaseFile):
 		buffer,
 	):
 		if self.fo is None:
-			raise RuntimeError('닫힌 파일입니다')
+			raise RuntimeError('File is closed')
 		self.fo.write(buffer)
 		return
 

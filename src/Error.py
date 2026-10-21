@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 
 class Error(Exception):
-	"""HTTP 응답으로 전달할 오류."""
+	"""Represent an error to be returned as an HTTP response."""
 
 	def __init__(
 		self,
@@ -17,7 +17,7 @@ class Error(Exception):
 
 
 class ClientError(Error):
-	"""잘못된 클라이언트 요청."""
+	"""Represent an invalid client request."""
 
 	def __init__(
 		self,
@@ -25,7 +25,7 @@ class ClientError(Error):
 		status: int = 400,
 	):
 		if not 400 <= status < 500:
-			raise ValueError('ClientError 상태 코드는 4xx여야 합니다')
+			raise ValueError('ClientError status code must be in the 4xx range')
 		super().__init__(
 			status,
 			reason,

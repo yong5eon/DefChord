@@ -21,7 +21,7 @@ class BinaryWriter(Protocol):
 
 
 class ResponseWriter:
-	"""응답 시작과 전송 상태를 공유해 직접 출력과 반환 응답의 중복을 막는다."""
+	"""Share response state to prevent duplicate direct and returned responses."""
 
 	def __init__(
 		self,
@@ -48,9 +48,9 @@ class ResponseWriter:
 		chunked: bool,
 	) -> None:
 		if self.started:
-			raise RuntimeError('이미 시작한 응답을 다시 시작할 수 없습니다')
+			raise RuntimeError('Cannot start a response that has already started')
 		if not 200 <= response.status <= 599:
-			raise ValueError('최종 응답에는 200~599 상태 코드가 필요합니다')
+			raise ValueError('Final response status code must be between 200 and 599')
 		self.chunked = chunked
 		self.suppress_body = self.method == 'HEAD' or response.status in (
 			204,
@@ -58,7 +58,7 @@ class ResponseWriter:
 			304,
 		)
 		if chunked and not self.suppress_body and self.version != 'HTTP/1.1':
-			raise ClientError('Chunked 출력에는 HTTP/1.1 요청이 필요합니다')
+			raise ClientError('Chunked output requires an HTTP/1.1 request')
 		self.started = True
 		try:
 			self.sender(
@@ -75,17 +75,17 @@ class ResponseWriter:
 		response: Response,
 		chunked: bool = False,
 	) -> None:
-		"""직접 출력의 헤더를 필터링한 뒤 한 번만 전송한다."""
+		"""Filter direct-output headers and send them exactly once."""
 		if self.started:
-			raise RuntimeError('이미 시작한 응답을 다시 시작할 수 없습니다')
+			raise RuntimeError('Cannot start a response that has already started')
 		if self.on_response is not None:
 			response = self.on_response(response)
 		if not isinstance(response, Response):
-			raise TypeError('응답 필터는 Response를 반환해야 합니다')
+			raise TypeError('Response filters must return a Response')
 		if not isinstance(response.body, bytes) or response.body:
-			raise ValueError('직접 출력의 응답 필터는 본문을 지정할 수 없습니다')
+			raise ValueError('Response filters must not set a body for direct output')
 		if response.header('Content-Length') is not None:
-			raise ValueError('직접 출력에는 Content-Length를 지정할 수 없습니다')
+			raise ValueError('Content-Length must not be set for direct output')
 		self.start(
 			response,
 			chunked,
@@ -94,19 +94,19 @@ class ResponseWriter:
 
 	def require_open(self) -> None:
 		if not self.started:
-			raise RuntimeError('먼저 응답을 시작해야 합니다')
+			raise RuntimeError('Response must be started first')
 		if self.ended or self.failed:
-			raise RuntimeError('종료되었거나 실패한 응답에는 쓸 수 없습니다')
+			raise RuntimeError('Cannot write to a completed or failed response')
 		return
 
 	def write(
 		self,
 		data: bytes,
 	) -> None:
-		"""현재 응답의 프레이밍에 맞춰 바이트를 즉시 쓴다."""
+		"""Write bytes immediately using the current response framing."""
 		self.require_open()
 		if not isinstance(data, bytes):
-			raise TypeError('응답 스트림에는 bytes가 필요합니다')
+			raise TypeError('Response streams require bytes')
 		if not data or self.suppress_body:
 			return
 		if self.chunked:
@@ -122,7 +122,7 @@ class ResponseWriter:
 			while data:
 				count = self.writer.write(data)
 				if count <= 0 or count > len(data):
-					raise OSError('응답 쓰기가 진행되지 않았습니다')
+					raise OSError('Response write made no valid progress')
 				data = data[count:]
 		except Exception:
 			self.failed = True
@@ -139,7 +139,7 @@ class ResponseWriter:
 		return
 
 	def end(self) -> None:
-		"""정상 종료 시 Chunked 종료 프레임을 한 번만 전송한다."""
+		"""Send the terminating chunk exactly once on successful completion."""
 		if self.ended:
 			return
 		self.require_open()
@@ -155,13 +155,13 @@ class ResponseWriter:
 		*,
 		filtered: bool = False,
 	) -> None:
-		"""반환된 bytes 또는 iterable 응답을 동일한 전송 경계로 출력한다."""
+		"""Send returned bytes or iterable responses through the same transport boundary."""
 		if self.started:
-			raise RuntimeError('이미 시작한 응답을 다시 전송할 수 없습니다')
+			raise RuntimeError('Cannot send a response that has already started')
 		if not filtered and self.on_response is not None:
 			response = self.on_response(response)
 		if not isinstance(response, Response):
-			raise TypeError('응답 필터는 Response를 반환해야 합니다')
+			raise TypeError('Response filters must return a Response')
 		if isinstance(response.body, bytes) and response.status not in (
 			204,
 			205,

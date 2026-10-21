@@ -40,13 +40,13 @@
     stylesheet.rel = 'stylesheet';
     stylesheet.crossOrigin = 'anonymous';
     stylesheet.href = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/swagger-ui.css';
-    stylesheet.addEventListener('error', () => fail('Swagger UI 스타일을 불러오지 못했습니다. CDN 연결을 확인하세요.'));
+    stylesheet.addEventListener('error', () => fail('Failed to load Swagger UI styles. Check your CDN connection.'));
     document.head.append(stylesheet);
   </script>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/swagger-ui-bundle.js" crossorigin="anonymous"></script>
   <script>
     if (typeof SwaggerUIBundle !== 'function') {
-      fail('Swagger UI를 불러오지 못했습니다. CDN 연결을 확인하세요.');
+      fail('Failed to load Swagger UI. Check your CDN connection.');
     } else {
       try {
         window.ui = SwaggerUIBundle({
@@ -60,7 +60,7 @@
           requestInterceptor(request) {
             const url = new URL(request.url, location.origin);
             if (url.origin !== location.origin || url.username || url.password) {
-              throw new Error('같은 출처의 API와 문서만 요청할 수 있습니다.');
+              throw new Error('Only same-origin API and document requests are allowed.');
             }
             request.credentials = 'same-origin';
             request.redirect = 'error';
@@ -69,7 +69,7 @@
           onComplete() { document.getElementById('loading').hidden = true; }
         });
       } catch (failure) {
-        fail('Swagger UI 초기화 실패: ' + failure.message);
+        fail('Failed to initialize Swagger UI: ' + failure.message);
       }
     }
   </script>

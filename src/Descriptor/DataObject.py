@@ -55,7 +55,7 @@ def SchemaToDataObject(
 	o: Schema,
 	name: Optional[str] = None,
 ) -> object:
-	# TODO: 스키마에 대응하는 dataclass 동적 생성을 구현한다.
+	# TODO: Implement dynamic dataclass generation from the schema.
 	raise NotImplementedError('SchemaToDataObject is not implemented yet')
 
 

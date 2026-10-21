@@ -26,7 +26,7 @@ def content_handler(
 		method='POST',
 		url=url,
 		body=Body(JavaScriptObjectNotationContentReader(va=pattern)),
-		summary='JSON 값의 타입을 검증하고 반환',
+		summary='Validate and return a JSON value',
 		tags='Content Validation',
 	):
 		def run(

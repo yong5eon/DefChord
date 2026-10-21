@@ -31,7 +31,7 @@ def filters(
 
 
 class RunRequest:
-	"""기존 검증·본문·필터 적용 순서를 유지하는 실행 처리."""
+	"""Execute handlers while preserving validation, body, and filter ordering."""
 
 	def __init__(
 		self,
@@ -67,7 +67,7 @@ class RunRequest:
 			request, response = on_request(request)
 			if response is not None:
 				if not isinstance(response, Response):
-					raise TypeError('요청 필터는 Response 또는 None을 반환해야 합니다')
+					raise TypeError('Request filters must return a Response or None')
 				return apply_cors(
 					properties,
 					request,
@@ -83,7 +83,7 @@ class RunRequest:
 						previous,
 					)
 					if not isinstance(response, Response):
-						raise TypeError('응답 필터는 Response를 반환해야 합니다')
+						raise TypeError('Response filters must return a Response')
 				except Exception:
 					previous.close()
 					raise
@@ -112,9 +112,9 @@ class RunRequest:
 			if response is not None:
 				if isinstance(response, Response):
 					response.close()
-				raise RuntimeError('직접 출력 후 Response를 반환할 수 없습니다')
+				raise RuntimeError('Cannot return a Response after starting direct output')
 			writer.end()
 			return None
 		if not isinstance(response, Response):
-			raise TypeError('run은 Response를 반환하거나 Writer로 응답을 시작해야 합니다')
+			raise TypeError('run must return a Response or start a response through the writer')
 		return apply_response_filters(response)

@@ -11,7 +11,7 @@ from .Content import Content
 
 @dataclass(frozen=True)
 class ResponseSpec:
-	"""실제 Response와 분리된 OpenAPI 응답 선언."""
+	"""Declare an OpenAPI response independently of the actual Response."""
 
 	status: int
 	description: str

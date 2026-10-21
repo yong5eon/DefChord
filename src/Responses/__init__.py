@@ -9,7 +9,7 @@ from .ResponseFile import ResponseFile
 
 
 class ResponseJSON(Response):
-	"""JSON 또는 dataclass 값을 UTF-8 응답으로 직렬화한다."""
+	"""Serialize JSON or dataclass values as UTF-8 responses."""
 
 	def __init__(
 		self,
@@ -20,7 +20,7 @@ class ResponseJSON(Response):
 		def encode(value):
 			if is_dataclass(value) and not isinstance(value, type):
 				return asdict(value)
-			raise TypeError('JSON으로 변환할 수 없는 값: ' + type(value).__name__)
+			raise TypeError('Value is not JSON serializable: ' + type(value).__name__)
 
 		super().__init__(
 			status=status,
@@ -38,7 +38,7 @@ class ResponseJSON(Response):
 
 
 class ResponseText(Response):
-	"""문자열을 명시적인 문자셋으로 출력한다."""
+	"""Encode a string using an explicit charset."""
 
 	def __init__(
 		self,

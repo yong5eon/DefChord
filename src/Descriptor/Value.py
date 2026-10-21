@@ -142,7 +142,7 @@ class Condition(ABC):
 
 
 class Schema(object):
-	"""Descriptor 노드, 조건 또는 JSON Schema 매핑을 이름으로 감싼다."""
+	"""Wrap a Descriptor node, condition, or JSON Schema mapping with a name."""
 
 	def __init__(
 		self,
@@ -171,7 +171,7 @@ class AllOf(Condition): pass
 
 
 class TypeMapper(metaclass=ABCMeta):
-	"""사용자 타입을 Value 파생 클래스와 생성 인자로 변환한다."""
+	"""Convert a user-defined type to a Value subclass and constructor arguments."""
 
 	def __call__(
 		self,

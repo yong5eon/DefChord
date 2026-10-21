@@ -30,7 +30,7 @@ def check_origin(
 			return
 		error = next((policy.error for policy in policies if policy.error is not None), None)
 		raise error if error is not None else ClientError(
-			'허용하지 않는 Origin',
+			'Origin not allowed',
 			status=403,
 		)
 	return

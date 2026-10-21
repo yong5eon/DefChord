@@ -69,7 +69,7 @@ def label(value: str) -> str:
 
 
 class Metrics(Extension):
-	"""HTTP 전송 완료까지 측정하는 스레드 안전 Prometheus 지표."""
+	"""Collect thread-safe Prometheus metrics through HTTP transmission completion."""
 
 	def __init__(
 		self,
@@ -88,7 +88,7 @@ class Metrics(Extension):
 	) -> None:
 		with self.lock:
 			if any(stats.active for stats in self.requests.values()):
-				raise RuntimeError('종료하지 않은 요청이 있어 Metrics를 재시작할 수 없습니다')
+				raise RuntimeError('Cannot restart Metrics while requests are still active')
 			self.requests = {
 				route.method + ' ' + route.url: RequestMetrics()
 				for route in app.router.routes
@@ -104,13 +104,13 @@ class Metrics(Extension):
 	) -> Observation:
 		app = self.application
 		if app is None:
-			raise RuntimeError('Metrics가 Application에 연결되지 않았습니다')
+			raise RuntimeError('Metrics is not bound to an Application')
 		matches = app.router.matches(request.path)
 		match = matches.get(request.method)
 		key = request.method + ' ' + match[0].url if match is not None else '<unmatched>'
 		with self.lock:
 			if self.started_at is None:
-				raise RuntimeError('Metrics가 시작되지 않았습니다')
+				raise RuntimeError('Metrics has not been started')
 			context = Observation(
 				key,
 				request.id,
@@ -129,7 +129,7 @@ class Metrics(Extension):
 		error: Optional[BaseException],
 	) -> None:
 		if not isinstance(context, Observation):
-			raise TypeError('Metrics가 생성한 Observation이 필요합니다')
+			raise TypeError('An Observation created by Metrics is required')
 		with self.lock:
 			stats = self.requests[context.key]
 			del stats.starts[context.id]
@@ -162,7 +162,7 @@ class Metrics(Extension):
 	) -> dict:
 		with self.lock:
 			if self.started_at is None:
-				raise RuntimeError('Metrics가 시작되지 않았습니다')
+				raise RuntimeError('Metrics has not been started')
 			now = monotonic()
 			for stats in self.requests.values():
 				stats.prune(now)

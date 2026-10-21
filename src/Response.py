@@ -9,7 +9,7 @@ from typing import (
 
 
 class Response:
-	"""바이트열 또는 순차 출력으로 구성하는 HTTP 응답."""
+	"""Represent an HTTP response with a byte body or sequential output."""
 
 	def __init__(
 		self,
@@ -44,7 +44,7 @@ class Response:
 		if value is None:
 			return self.props.get(key)
 		if '\r' in key or '\n' in key or '\r' in value or '\n' in value:
-			raise ValueError('응답 헤더에 줄바꿈을 포함할 수 없습니다')
+			raise ValueError('Response headers must not contain line breaks')
 		del self.props[key]
 		self.props[key] = value
 		return None

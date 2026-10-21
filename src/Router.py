@@ -7,7 +7,7 @@ from .Route import Route
 
 
 class Router:
-	"""Application별 등록 상태와 정적 경로 우선순위를 유지한다."""
+	"""Maintain per-Application registrations and prioritize static routes."""
 
 	def __init__(self):
 		self.routes: list[Route] = []
@@ -21,7 +21,7 @@ class Router:
 			if registered.method == route.method and registered.url == route.url:
 				if registered.object is route.object:
 					return
-				raise ValueError('이미 등록된 라우트: {} {}'.format(
+				raise ValueError('Route already registered: {} {}'.format(
 					route.method,
 					route.url,
 				))

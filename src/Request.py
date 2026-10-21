@@ -18,7 +18,7 @@ from .Error import ClientError
 
 
 class Request:
-	"""서버 환경 딕셔너리와 독립적인 HTTP 요청."""
+	"""Represent an HTTP request independently of server environment dictionaries."""
 
 	def __init__(
 		self,
@@ -58,9 +58,9 @@ class Request:
 
 	@property
 	def writer(self) -> ResponseWriter:
-		"""실행 계층이 제공한 응답 Writer를 반환한다."""
+		"""Return the response writer provided by the execution layer."""
 		if self.response_writer is None:
-			raise RuntimeError('이 요청에는 응답 Writer가 연결되지 않았습니다')
+			raise RuntimeError('No response writer is attached to this request')
 		return self.response_writer
 
 	def header(
@@ -98,7 +98,7 @@ class Request:
 		format = value.split(';', 1)[0].strip().lower()
 		token = r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+"
 		if fullmatch(token + '/' + token, format) is None:
-			raise ClientError('잘못된 Content-Type')
+			raise ClientError('Invalid Content-Type')
 		return format
 
 	@property

@@ -9,7 +9,7 @@ from ..RequestReader import RequestReader
 
 
 class ContentReader(ABC):
-	"""일반 본문 해석과 스트림 입력을 선택하는 읽기 계약."""
+	"""Define body parsing and streaming input selection."""
 
 	@abstractmethod
 	def __call__(
@@ -21,7 +21,7 @@ class ContentReader(ABC):
 
 
 class TypeReader(ABC):
-	"""JSON의 각 말단 값을 변환하는 확장 계약."""
+	"""Define conversion of individual JSON leaf values."""
 
 	@abstractmethod
 	def __call__(

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class Swagger(Extension):
-	"""동일 Application의 Spec을 CDN 기반 Swagger UI로 제공한다."""
+	"""Serve the same Application's Spec through CDN-hosted Swagger UI."""
 
 	def __init__(
 		self,
@@ -25,7 +25,7 @@ class Swagger(Extension):
 	):
 		super().__init__(path)
 		if not isinstance(title, str) or not title or not isinstance(description, str):
-			raise ValueError('Swagger 제목과 설명은 문자열이어야 합니다')
+			raise ValueError('Swagger title must be a non-empty string and description must be a string')
 		self.title = title
 		self.description = description
 		self.spec: Optional[Spec] = None
@@ -37,7 +37,7 @@ class Swagger(Extension):
 	) -> None:
 		specs = [extension for extension in app.exts.values() if isinstance(extension, Spec)]
 		if len(specs) != 1:
-			raise ValueError('Swagger에는 정확히 하나의 Spec 확장이 필요합니다')
+			raise ValueError('Swagger requires exactly one Spec extension')
 		self.spec = specs[0]
 		return
 
@@ -47,7 +47,7 @@ class Swagger(Extension):
 		request: Request,
 	) -> Response:
 		if self.spec is None:
-			raise RuntimeError('Swagger가 Spec에 연결되지 않았습니다')
+			raise RuntimeError('Swagger is not bound to a Spec extension')
 		return page(
 			'Swagger',
 			self.title,

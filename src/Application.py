@@ -25,7 +25,7 @@ from .Runners.RunExtension import extension_handler
 
 
 class Application:
-	"""등록 상태를 소유하고 요청별 처리기 인스턴스를 실행한다."""
+	"""Own registration state and execute a new handler instance per request."""
 
 	def __init__(
 		self,
@@ -38,11 +38,11 @@ class Application:
 		extensions = tuple(exts)
 		for extension in extensions:
 			if not isinstance(extension, Extension):
-				raise TypeError('exts에는 Extension 인스턴스가 필요합니다')
+				raise TypeError('exts must contain Extension instances')
 			if extension.application is not None:
-				raise ValueError('확장 인스턴스는 다른 Application과 공유할 수 없습니다')
+				raise ValueError('Extension instances cannot be shared between Applications')
 			if extension.path in self.exts:
-				raise ValueError('중복된 확장 경로: ' + extension.path)
+				raise ValueError('Duplicate extension path: ' + extension.path)
 			self.exts[extension.path] = extension
 		try:
 			for extension in extensions:
@@ -62,10 +62,10 @@ class Application:
 		return
 
 	def start(self) -> None:
-		"""서버 실행 전에 확장을 선언 순서로 시작한다."""
+		"""Start extensions in declaration order before serving requests."""
 		with self.lifecycle_lock:
 			if self.running:
-				raise RuntimeError('이미 실행 중인 Application입니다')
+				raise RuntimeError('Application is already running')
 			started = []
 			try:
 				for extension in self.exts.values():
@@ -76,13 +76,13 @@ class Application:
 					try:
 						extension.stop(self)
 					except Exception:
-						getLogger('DefStar.Application').exception('확장 시작 실패 후 정리 오류')
+						getLogger('DefStar.Application').exception('Cleanup failed after extension startup failure')
 				raise
 			self.running = True
 		return
 
 	def stop(self) -> None:
-		"""시작한 확장을 역순으로 종료하고 정리 오류를 전파한다."""
+		"""Stop started extensions in reverse order and propagate cleanup errors."""
 		with self.lifecycle_lock:
 			if not self.running:
 				return
@@ -92,7 +92,7 @@ class Application:
 				try:
 					extension.stop(self)
 				except Exception as error:
-					getLogger('DefStar.Application').exception('확장 종료 오류')
+					getLogger('DefStar.Application').exception('Extension shutdown failed')
 					if first_error is None:
 						first_error = error
 			if first_error is not None:
@@ -104,15 +104,15 @@ class Application:
 		handler: Type[RequestRunner],
 	) -> None:
 		if self.running:
-			raise RuntimeError('실행 중에는 처리기를 등록할 수 없습니다')
+			raise RuntimeError('Cannot register handlers while Application is running')
 		if not issubclass(
 			handler,
 			RequestRunner,
 		) or isabstract(handler):
-			raise TypeError('구체적인 RequestRunner 클래스가 필요합니다')
+			raise TypeError('A concrete RequestRunner class is required')
 		properties = handler.properties
 		if properties.method is None or properties.url is None:
-			raise ValueError('등록할 처리기에 method와 url이 필요합니다')
+			raise ValueError('Handlers must define method and url before registration')
 		self.router.add(Route(
 			properties.method,
 			properties.url,
@@ -125,7 +125,7 @@ class Application:
 		mod: Optional[str] = None,
 		path: Optional[str] = None,
 	) -> None:
-		"""이미 import된 모듈도 각 Application에 독립적으로 등록한다."""
+		"""Register modules independently for each Application, even if already imported."""
 		for module in Loader()(
 			mod=mod,
 			path=path,
@@ -148,7 +148,7 @@ class Application:
 		onRequest=None,
 		onResponse=None,
 	) -> None:
-		"""고정 URL에 파일 응답을 등록한다."""
+		"""Register a file response at a fixed URL."""
 		self.register(file_handler(
 			path,
 			url,
@@ -164,7 +164,7 @@ class Application:
 		onRequest=None,
 		onResponse=None,
 	) -> None:
-		"""기존 파일 트리의 각 파일을 독립 라우트로 등록한다."""
+		"""Register each file in an existing file tree as a separate route."""
 		root = Path(path).resolve(strict=True)
 		if not root.is_dir():
 			raise NotADirectoryError(str(root))
@@ -186,9 +186,9 @@ class Application:
 		onRequest=None,
 		onResponse=None,
 	) -> None:
-		"""파일 접근 연결을 Application 소유 prefix 라우트에 연결한다."""
+		"""Bind a filesystem connection to an Application-owned prefix route."""
 		if self.running:
-			raise RuntimeError('실행 중에는 파일 경로를 등록할 수 없습니다')
+			raise RuntimeError('Cannot register file paths while Application is running')
 		self.router.add(filesystem_handler(
 			fso,
 			prefix,
@@ -209,7 +209,7 @@ class Application:
 		matches = self.router.matches(request.path)
 		if not matches:
 			raise ClientError(
-				'일치하는 경로가 없습니다',
+				'No matching route',
 				status=404,
 			)
 		if request.method == 'OPTIONS' and 'OPTIONS' not in matches:
@@ -219,15 +219,15 @@ class Application:
 			)
 		if request.method not in matches:
 			raise ClientError(
-				'지원하지 않는 메서드입니다',
+				'Method not allowed',
 				status=405,
 			)
 		if (request.reader.chunked or request.reader.remaining) and request.format is None:
-			raise ClientError('본문이 있는 요청에는 Content-Type이 필요합니다')
+			raise ClientError('Content-Type is required for requests with a body')
 		route, parameters = matches[request.method]
 		if (request.reader.chunked or request.reader.remaining) and route.object.properties.body is None:
 			raise ClientError(
-				'처리기에 본문 읽기 방식이 지정되지 않았습니다',
+				'No body reader is configured for this handler',
 				status=415,
 			)
 		request.params = parameters

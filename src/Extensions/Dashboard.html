@@ -179,7 +179,7 @@
       } catch (failure) {
         stale();
         el('notice').textContent = '갱신 중단 · 다음 주기에 다시 시도합니다.';
-        el('error').textContent = '갱신 실패 · 표시된 누적 값은 이전 데이터입니다. ' + (failure.name === 'AbortError' ? '요청 시간이 초과됐습니다.' : failure.message);
+        el('error').textContent = 'Refresh failed. Displayed totals are stale. ' + (failure.name === 'AbortError' ? 'Request timed out.' : failure.message);
       } finally {
         clearTimeout(timeout);
         pending = false;

@@ -7,7 +7,7 @@ from typing import (
 
 @dataclass(frozen=True)
 class Content:
-	"""입출력 콘텐츠 형식과 스키마·예시 메타데이터."""
+	"""Describe input or output content formats, schemas, and examples."""
 
 	format: str
 	schema: Optional[object] = None

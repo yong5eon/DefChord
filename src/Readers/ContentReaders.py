@@ -21,7 +21,7 @@ from .ContentReader import ContentReader
 
 
 class ByteStringContentReader(ContentReader):
-	"""명시적인 바이너리 본문을 읽고 검증한다."""
+	"""Read and validate an explicitly selected binary body."""
 
 	def __init__(
 		self,
@@ -47,7 +47,7 @@ class ByteStringContentReader(ContentReader):
 	) -> None:
 		if request.format != format:
 			raise self.typeerror if self.typeerror is not None else ClientError(
-				'지원하지 않는 본문 형식',
+				'Unsupported body format',
 				status=415,
 			)
 		return
@@ -82,7 +82,7 @@ class ByteStringContentReader(ContentReader):
 
 
 class StreamContentReader(ByteStringContentReader):
-	"""길이 지정·Chunked 입력을 미리 읽지 않고 바이너리 스트림으로 전달한다."""
+	"""Expose length-delimited or chunked input as a binary stream without pre-reading."""
 
 	def read_content(
 		self,
@@ -97,7 +97,7 @@ class StreamContentReader(ByteStringContentReader):
 
 
 class TextContentReader(ByteStringContentReader):
-	"""text/* 본문을 문자열로 변환한다."""
+	"""Decode text/* bodies into strings."""
 
 	def decode(
 		self,
@@ -107,7 +107,7 @@ class TextContentReader(ByteStringContentReader):
 		try:
 			return reader.read().decode(request.charset or 'utf-8')
 		except (UnicodeError, LookupError) as error:
-			raise ClientError('잘못된 본문 문자 인코딩') from error
+			raise ClientError('Invalid body character encoding') from error
 
 	def read_content(
 		self,
@@ -116,7 +116,7 @@ class TextContentReader(ByteStringContentReader):
 	) -> Any:
 		if request.format is None or not request.format.startswith('text/'):
 			raise self.typeerror if self.typeerror is not None else ClientError(
-				'지원하지 않는 텍스트 본문 형식',
+				'Unsupported text body format',
 				status=415,
 			)
 		return self.validate(self.decode(
@@ -126,7 +126,7 @@ class TextContentReader(ByteStringContentReader):
 
 
 class FormUrlEncodedContentReader(TextContentReader):
-	"""URL 인코딩된 폼을 단일 값 또는 복수 값으로 읽는다."""
+	"""Read URL-encoded forms with single or multiple values."""
 
 	def read_content(
 		self,
@@ -151,7 +151,7 @@ class FormUrlEncodedContentReader(TextContentReader):
 
 
 class JavaScriptObjectNotationContentReader(TextContentReader):
-	"""JSON 본문을 읽고 선택적인 값 변환과 검증을 수행한다."""
+	"""Read JSON bodies with optional value conversion and validation."""
 
 	def __init__(
 		self,
@@ -195,7 +195,7 @@ class JavaScriptObjectNotationContentReader(TextContentReader):
 				reader,
 			))
 		except ValueError as error:
-			raise ClientError('잘못된 JSON 본문') from error
+			raise ClientError('Invalid JSON body') from error
 		if self.typereader is not None:
 			value = self.convert(value)
 		return self.validate(value)

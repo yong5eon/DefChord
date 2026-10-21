@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class RunOptions:
-	"""Application 소유 라우트에서 Allow와 CORS preflight를 계산한다."""
+	"""Compute Allow and CORS preflight responses from Application-owned routes."""
 
 	def run(
 		self,
@@ -32,7 +32,7 @@ class RunOptions:
 		matches = router.matches(request.path)
 		if not matches:
 			raise ClientError(
-				'일치하는 경로가 없습니다',
+				'No matching route',
 				status=404,
 			)
 		methods = sorted(set(matches) | {'OPTIONS'})
@@ -45,13 +45,13 @@ class RunOptions:
 			return response
 		if method not in matches:
 			raise ClientError(
-				'지원하지 않는 preflight 메서드',
+				'Preflight method not allowed',
 				status=405,
 			)
 		properties = matches[method][0].object.properties
 		if request.header('Origin') is None or not origins(properties):
 			raise ClientError(
-				'CORS 정책이 없는 preflight 요청',
+				'No CORS policy is configured for this preflight request',
 				status=403,
 			)
 		check_origin(
@@ -63,7 +63,7 @@ class RunOptions:
 		if requested is not None:
 			allowed = {name.lower() for name in headers}
 			if any(name.strip().lower() not in allowed for name in requested.split(',')):
-				raise ClientError('지원하지 않는 preflight 헤더')
+				raise ClientError('Preflight header not allowed')
 		response.header(
 			'Access-Control-Allow-Methods',
 			method,

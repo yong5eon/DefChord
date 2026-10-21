@@ -496,7 +496,7 @@ class DirectServerTests(TestCase):
 					release.set()
 					client.close()
 		self.assertIn(
-			'연결 종료',
+			'Connection closed while sending response',
 			'\n'.join(logged.output),
 		)
 		return

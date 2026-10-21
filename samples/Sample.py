@@ -72,7 +72,7 @@ class RunStatus(
 	method='GET',
 	url='/status',
 	origin=Origin(all=True),
-	summary='상태 확인과 CORS',
+	summary='Check status and CORS',
 	tags='Common',
 ):
 	def run(
@@ -88,7 +88,7 @@ def to_jpeg(request: Request):
 
 
 def create_application() -> Application:
-	"""호출마다 라우트와 파일 연결을 독립적으로 생성한다."""
+	"""Create independent routes and filesystem connections on each call."""
 	spec = Spec('/api/doc', title='DefStar HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),

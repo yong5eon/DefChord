@@ -15,7 +15,7 @@ from typing import (
 
 
 class Loader:
-	"""모듈 또는 파일·디렉터리를 재실행 없이 로드한다."""
+	"""Load modules, files, or directories without re-executing imported modules."""
 
 	def path(
 		self,
@@ -30,7 +30,7 @@ class Loader:
 			source,
 		)
 		if spec is None or spec.loader is None:
-			raise ImportError('Python 모듈을 로드할 수 없습니다: ' + str(source))
+			raise ImportError('Cannot load Python module: ' + str(source))
 		module = module_from_spec(spec)
 		modules[name] = module
 		try:
@@ -60,7 +60,7 @@ class Loader:
 		path: Optional[str] = None,
 	) -> List[ModuleType]:
 		if mod is None and path is None:
-			raise ValueError('mod 또는 path가 필요합니다')
+			raise ValueError('mod or path is required')
 		loaded = self.mod(mod) if mod is not None else []
 		if path is not None:
 			source = Path(path).resolve(strict=True)

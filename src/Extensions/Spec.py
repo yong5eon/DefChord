@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
 
 class Spec(Extension):
-	"""Application에 등록된 처리기 선언을 OpenAPI 3.1로 변환한다."""
+	"""Convert registered Application handler declarations to OpenAPI 3.1."""
 
 	def __init__(
 		self,
@@ -54,7 +54,7 @@ class Spec(Extension):
 	):
 		super().__init__(path)
 		if not isinstance(title, str) or not title or not isinstance(version, str) or not version:
-			raise ValueError('문서 제목과 버전에는 비어 있지 않은 문자열이 필요합니다')
+			raise ValueError('Document title and version must be non-empty strings')
 		self.title = title
 		self.version = version
 		self.description = description
@@ -72,7 +72,7 @@ class Spec(Extension):
 				name = value.name
 				converted = schema(value.format)
 				if name in schemas and schemas[name] != converted:
-					raise ValueError('동일한 이름의 스키마가 충돌합니다: ' + name)
+					raise ValueError('Conflicting schemas with the same name: ' + name)
 				schemas[name] = converted
 				return {'$ref': '#/components/schemas/' + name.replace('~', '~0').replace('/', '~1')}
 			return schema_value(value)
@@ -82,9 +82,9 @@ class Spec(Extension):
 			result = {}
 			for item in items:
 				if not isinstance(item, Content):
-					raise TypeError('본문 명세에는 Content가 필요합니다')
+					raise TypeError('Body specifications require Content instances')
 				if item.format in result:
-					raise ValueError('중복된 본문 형식: ' + item.format)
+					raise ValueError('Duplicate body format: ' + item.format)
 				entry = {}
 				if item.schema is not None:
 					entry['schema'] = schema(item.schema)
@@ -95,38 +95,38 @@ class Spec(Extension):
 
 		def responses(value):
 			if value is None:
-				return {'default': {'description': '응답 명세가 선언되지 않았습니다'}}
+				return {'default': {'description': 'No response specification declared'}}
 			if isinstance(value, ResponseSpec):
 				items = (value,)
 			elif isinstance(value, Mapping):
 				result = {}
 				for code, response in value.items():
 					if fullmatch(r'default|[1-5](?:[0-9]{2}|XX)', str(code)) is None:
-						raise ValueError('잘못된 OpenAPI 응답 상태: ' + str(code))
+						raise ValueError('Invalid OpenAPI response status: ' + str(code))
 					if isinstance(response, str):
 						result[str(code)] = {'description': response}
 					elif isinstance(response, Mapping):
 						if not isinstance(response.get('description'), str):
-							raise ValueError('OpenAPI 응답에는 description이 필요합니다')
+							raise ValueError('OpenAPI responses require a description')
 						result[str(code)] = deepcopy(dict(response))
 					else:
-						raise TypeError('응답 매핑에는 설명 문자열 또는 OpenAPI 응답 객체가 필요합니다')
+						raise TypeError('Response mappings require description strings or OpenAPI response objects')
 				if not result:
-					raise ValueError('응답 명세는 비어 있을 수 없습니다')
+					raise ValueError('Response specification must not be empty')
 				return result
 			elif isinstance(value, Sequence) and not isinstance(value, str):
 				items = value
 			else:
-				raise TypeError('response에는 ResponseSpec 또는 응답 매핑이 필요합니다')
+				raise TypeError('response must be a ResponseSpec or response mapping')
 			result = {}
 			for item in items:
 				if not isinstance(item, ResponseSpec):
-					raise TypeError('응답 목록에는 ResponseSpec이 필요합니다')
+					raise TypeError('Response lists must contain ResponseSpec instances')
 				if not 100 <= item.status <= 599:
-					raise ValueError('잘못된 응답 상태 코드')
+					raise ValueError('Invalid response status code')
 				code = str(item.status)
 				if code in result:
-					raise ValueError('중복된 응답 상태: ' + code)
+					raise ValueError('Duplicate response status: ' + code)
 				entry: dict[str, Any] = {'description': item.description}
 				if item.content is not None:
 					entry['content'] = contents(item.content)
@@ -136,7 +136,7 @@ class Spec(Extension):
 					}
 				result[code] = entry
 			if not result:
-				raise ValueError('응답 명세는 비어 있을 수 없습니다')
+				raise ValueError('Response specification must not be empty')
 			return result
 
 		paths: dict[str, Any] = {}
@@ -205,7 +205,7 @@ class Spec(Extension):
 							body_content = (Content(media),)
 							break
 				if not body_content:
-					raise ValueError('사용자 정의 Reader에는 Content 명세가 필요합니다: ' + route.url)
+					raise ValueError('Custom readers require a Content specification: ' + route.url)
 				operation['requestBody'] = {
 					'required': properties.body.required,
 					'content': contents(body_content),
@@ -241,7 +241,7 @@ class Spec(Extension):
 			):
 				path_item = paths.setdefault(path, {})
 				if route.method.lower() in path_item:
-					raise ValueError('OpenAPI 경로와 메서드가 충돌합니다: ' + route.method + ' ' + path)
+					raise ValueError('Conflicting OpenAPI path and method: ' + route.method + ' ' + path)
 				path_item[route.method.lower()] = operation
 			else:
 				custom.append({

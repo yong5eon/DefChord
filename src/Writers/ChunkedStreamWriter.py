@@ -2,7 +2,7 @@ from .StreamWriter import StreamWriter
 
 
 class ChunkedStreamWriter(StreamWriter):
-	"""HTTP/1.1 Chunked 프레이밍으로 직접 출력한다."""
+	"""Write directly using HTTP/1.1 chunked framing."""
 
 	chunked = True
 

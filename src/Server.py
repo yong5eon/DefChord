@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class Server(ThreadingHTTPServer):
-	"""WSGI를 거치지 않는 개발용 스레드 HTTP 서버."""
+	"""Provide a threaded development HTTP server without WSGI."""
 
 	daemon_threads = True
 	app: 'Application'
@@ -50,25 +50,25 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 		if len(self.headers.get_all('Content-Type', [])) > 1:
 			raise Error(
 				400,
-				'중복된 Content-Type',
+				'Duplicate Content-Type',
 			)
 		if len(lengths) > 1 or len(transfers) > 1 or (lengths and transfers):
 			raise Error(
 				400,
-				'모호한 요청 본문 프레이밍',
+				'Ambiguous request body framing',
 			)
 		size: Optional[int] = None
 		if lengths:
 			if not lengths[0].isascii() or not lengths[0].isdigit():
 				raise Error(
 					400,
-					'잘못된 Content-Length',
+					'Invalid Content-Length',
 				)
 			size = int(lengths[0])
 		if transfers and transfers[0].lower() != 'chunked':
 			raise Error(
 				400,
-				'지원하지 않는 Transfer-Encoding',
+				'Unsupported Transfer-Encoding',
 			)
 		return RequestReader(
 			self.rfile,
@@ -135,7 +135,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 				failure = error
 				if writer.started:
 					raise
-				self.logger.exception('요청 처리 중 예상하지 못한 오류')
+				self.logger.exception('Unexpected error while handling request')
 				response = Response(
 					status=500,
 					body=b'Internal Server Error',
@@ -147,22 +147,22 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 					filtered=True,
 				)
 			elif not writer.ended:
-				raise RuntimeError('응답이 반환되거나 정상 종료되지 않았습니다')
+				raise RuntimeError('Response was neither returned nor completed successfully')
 			else:
 				status = self.response_status
 		except (ConnectionError, OSError) as error:
 			failure = error
-			self.logger.info('응답 전송 중 연결 종료', exc_info=True)
+			self.logger.info('Connection closed while sending response', exc_info=True)
 		except Exception as error:
 			failure = error
-			self.logger.exception('응답 전송 실패: 새 오류 응답 없이 연결을 종료합니다')
+			self.logger.exception('Response transmission failed: closing connection without another error response')
 		finally:
 			if response is not None:
 				try:
 					response.close()
 				except Exception as error:
 					failure = error
-					self.logger.exception('응답 본문 정리 오류')
+					self.logger.exception('Response body cleanup failed')
 			if request is not None:
 				for extension, context in reversed(observations):
 					try:
@@ -173,7 +173,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 							failure,
 						)
 					except Exception:
-						self.logger.exception('확장 요청 관찰 종료 오류')
+						self.logger.exception('Extension request observation cleanup failed')
 		return
 
 	def begin_response(
@@ -250,7 +250,7 @@ def serve(
 	port: int,
 	app: 'Application',
 ) -> Server:
-	"""기존처럼 서버를 생성해 반환하며 호출자가 실행·종료를 관리한다."""
+	"""Create and return a server; the caller manages serving and shutdown."""
 	server = Server(
 		(
 			host,

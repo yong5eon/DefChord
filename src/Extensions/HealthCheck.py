@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class HealthCheck(Extension):
-	"""HTTP 처리 흐름의 응답 가능 여부와 Application 실행 상태를 제공한다."""
+	"""Report HTTP responsiveness and Application running state."""
 
 	def handle(
 		self,

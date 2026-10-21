@@ -22,7 +22,7 @@ ResponseFilter = Callable[[Request, Response], Response]
 
 @dataclass(frozen=True)
 class RequestProperties:
-	"""클래스 정의에 보관하며 Application 등록 시 사용하는 처리기 설정."""
+	"""Store handler settings on the class for Application registration."""
 
 	method: Optional[str]
 	url: Optional[str]
@@ -41,7 +41,7 @@ class RequestProperties:
 
 
 class RequestRunner(ABC):
-	"""클래스 선언으로 설정하며 요청마다 생성하는 처리기."""
+	"""Configure a handler through class declarations and instantiate it per request."""
 
 	properties: RequestProperties
 
@@ -65,11 +65,11 @@ class RequestRunner(ABC):
 	):
 		super().__init_subclass__()
 		if (method is None) != (url is None):
-			raise TypeError('method와 url을 함께 지정해야 합니다')
+			raise TypeError('method and url must be specified together')
 		if method is not None and fullmatch(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+", method) is None:
-			raise ValueError('잘못된 HTTP 메서드 토큰')
+			raise ValueError('Invalid HTTP method token')
 		if url is not None and (not url.startswith('/') or '?' in url or '#' in url):
-			raise ValueError('url에는 /로 시작하는 경로를 지정해야 합니다')
+			raise ValueError('url must be a path starting with /')
 		cls.properties = RequestProperties(
 			method=method,
 			url=url,
@@ -93,5 +93,5 @@ class RequestRunner(ABC):
 		self,
 		request: Request,
 	) -> Optional[Response]:
-		"""응답을 반환하거나 request.writer로 직접 전송한 뒤 None을 반환한다."""
+		"""Return a Response, or write through request.writer and return None."""
 		raise NotImplementedError

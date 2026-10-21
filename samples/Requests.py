@@ -40,13 +40,13 @@ PARAMETERS = Parameters(
 		'a': {
 			'type': 'integer',
 			'exclusiveMinimum': 100,
-			'description': '계산에 사용할 첫 번째 경로 값',
+			'description': 'First path value used in the calculation',
 			'examples': [101],
 		},
 		'b': {
 			'type': 'integer',
 			'exclusiveMinimum': 100,
-			'description': '계산에 사용할 두 번째 경로 값',
+			'description': 'Second path value used in the calculation',
 			'examples': [102],
 		},
 	},
@@ -78,7 +78,7 @@ QUERIES = QueryString(
 		'c': {
 			'type': 'string',
 			'default': '안녕',
-			'description': '계산 결과에 함께 반환할 메시지',
+			'description': 'Message returned with the calculation result',
 		},
 	},
 )
@@ -107,12 +107,12 @@ JSON_BODY = Body(
 					'a': {
 						'type': 'integer',
 						'exclusiveMaximum': 5,
-						'description': '첫 번째 값의 계산에 사용할 정수',
+						'description': 'Integer used to calculate the first value',
 					},
 					'b': {
 						'type': 'number',
 						'exclusiveMaximum': 9,
-						'description': '두 번째 값의 계산에 사용할 숫자',
+						'description': 'Number used to calculate the second value',
 					},
 				},
 			},
@@ -125,7 +125,7 @@ JSON_BODY = Body(
 )
 CALCULATION_RESPONSE = ResponseSpec(
 	200,
-	'검증된 입력과 계산 결과',
+	'Validated input and calculation result',
 	Content(
 		'application/json',
 		schema=Schema(
@@ -154,7 +154,7 @@ CALCULATION_RESPONSE = ResponseSpec(
 							'message': {'type': 'string'},
 							'args': {
 								'type': 'object',
-								'description': '검증·변환된 경로·쿼리·본문 입력',
+								'description': 'Validated and converted path, query, and body input',
 								'properties': {
 									'parameters': {'type': 'object'},
 									'qs': {'type': 'object'},
@@ -168,7 +168,7 @@ CALCULATION_RESPONSE = ResponseSpec(
 							},
 							'ret': {
 								'type': 'number',
-								'description': '계산 결과',
+								'description': 'Calculation result',
 							},
 						},
 					},
@@ -217,7 +217,7 @@ class RunGet(
 	url='/api/run/:a/:b',
 	parameters=PARAMETERS,
 	qs=QUERIES,
-	summary='경로·쿼리 검증과 계산',
+	summary='Validate path and query values and calculate the result',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
 ):
@@ -235,7 +235,7 @@ class RunPost(
 	parameters=PARAMETERS,
 	qs=QUERIES,
 	body=JSON_BODY,
-	summary='JSON 본문을 더하는 계산',
+	summary='Calculate the result by adding JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
 ):
@@ -253,7 +253,7 @@ class RunPut(
 	parameters=PARAMETERS,
 	qs=QUERIES,
 	body=JSON_BODY,
-	summary='JSON 본문을 곱하는 계산',
+	summary='Calculate the result by multiplying JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
 ):
@@ -271,7 +271,7 @@ class RunDelete(
 	parameters=PARAMETERS,
 	qs=QUERIES,
 	body=JSON_BODY,
-	summary='JSON 본문을 빼는 계산',
+	summary='Calculate the result by subtracting JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
 ):
@@ -294,7 +294,7 @@ class RunUpload(
 		requires='Content-Format',
 	),
 	body=Body(ByteStringContentReader()),
-	summary='바이너리 업로드를 지정한 형식으로 반환',
+	summary='Return a binary upload in the specified format',
 	tags='RequestRunner',
 ):
 	def run(

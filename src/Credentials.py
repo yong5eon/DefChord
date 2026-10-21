@@ -16,14 +16,14 @@ from .Validators import Credentials
 
 @dataclass(frozen=True)
 class HTTPAuthorization:
-	"""HTTP 인증 헤더의 스킴과 자격 값."""
+	"""Represent the scheme and credentials of an HTTP authentication header."""
 
 	scheme: str
 	credentials: str
 
 
 class Query(Credentials):
-	"""쿼리의 단일 인증 값을 추출한다."""
+	"""Extract a single credential value from the query string."""
 
 	def __init__(
 		self,
@@ -39,7 +39,7 @@ class Query(Credentials):
 		value = request.qs.get(self.key)
 		if value is not None and not isinstance(value, str):
 			raise ClientError(
-				'인증 쿼리는 단일 값이어야 합니다',
+				'Credential query parameter must have a single value',
 				status=401,
 			)
 		return value
@@ -58,7 +58,7 @@ class Query(Credentials):
 
 
 class Header(Query):
-	"""지정한 헤더에서 인증 값을 추출한다."""
+	"""Extract credentials from the specified header."""
 
 	def __call__(
 		self,
@@ -84,7 +84,7 @@ class Header(Query):
 
 
 class Cookie(Query):
-	"""지정한 쿠키의 값을 추출한다."""
+	"""Extract the value of the specified cookie."""
 
 	def __call__(
 		self,
@@ -98,7 +98,7 @@ class Cookie(Query):
 			cookies.load(value)
 		except CookieError as error:
 			raise ClientError(
-				'잘못된 인증 쿠키',
+				'Invalid authentication cookie',
 				status=401,
 			) from error
 		cookie = cookies.get(self.key)
@@ -118,7 +118,7 @@ class Cookie(Query):
 
 
 class HTTP(Credentials):
-	"""Authorization 헤더를 파싱하고 명시된 스킴을 확인한다."""
+	"""Parse the Authorization header and verify the specified scheme."""
 
 	def __init__(
 		self,
@@ -139,7 +139,7 @@ class HTTP(Credentials):
 		scheme, separator, credentials = value.partition(' ')
 		if not separator or not credentials.strip() or scheme.lower() != self.scheme.lower():
 			raise ClientError(
-				'잘못된 인증 스킴 또는 인증 값',
+				'Invalid authentication scheme or credentials',
 				status=401,
 			)
 		return HTTPAuthorization(
@@ -167,7 +167,7 @@ class HTTP(Credentials):
 
 
 class OAuth2Implicit(HTTP):
-	"""OAuth2 implicit 흐름의 Bearer 인증과 문서 설정."""
+	"""Configure bearer authentication metadata for the OAuth2 implicit flow."""
 
 	flow = 'implicit'
 
@@ -194,7 +194,7 @@ class OAuth2Implicit(HTTP):
 
 
 class OAuth2Password(OAuth2Implicit):
-	"""OAuth2 password 흐름의 토큰·갱신 주소 설정."""
+	"""Configure token and refresh URLs for the OAuth2 password flow."""
 
 	flow = 'password'
 
@@ -212,13 +212,13 @@ class OAuth2Password(OAuth2Implicit):
 
 
 class OAuth2ClientCredentials(OAuth2Password):
-	"""OAuth2 clientCredentials 흐름."""
+	"""Represent the OAuth2 clientCredentials flow."""
 
 	flow = 'clientCredentials'
 
 
 class OAuth2AuthorizationCode(OAuth2Password):
-	"""OAuth2 authorizationCode 흐름의 인증·토큰 주소 설정."""
+	"""Configure authorization and token URLs for the OAuth2 authorizationCode flow."""
 
 	flow = 'authorizationCode'
 

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class Extension(ABC):
-	"""Application 하나에 귀속되는 HTTP 확장과 관찰 계약."""
+	"""Define HTTP extension and observation hooks owned by one Application."""
 
 	methods = (
 		'GET',
@@ -33,7 +33,7 @@ class Extension(ABC):
 				':',
 			)
 		):
-			raise ValueError('확장에는 매개변수 없는 절대 HTTP 경로가 필요합니다')
+			raise ValueError('Extensions require an absolute HTTP path without parameters')
 		self.path = path
 		self.application: Optional['Application'] = None
 		return
@@ -42,7 +42,7 @@ class Extension(ABC):
 		self,
 		app: 'Application',
 	) -> None:
-		"""전체 확장 등록 후 의존성을 확인한다."""
+		"""Validate dependencies after all extensions have been registered."""
 		return
 
 	def start(

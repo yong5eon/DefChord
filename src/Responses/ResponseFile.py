@@ -19,19 +19,19 @@ def file_error(error: OSError) -> ClientError:
 		),
 	):
 		return ClientError(
-			'파일을 찾을 수 없습니다',
+			'File not found',
 			status=404,
 		)
 	if isinstance(error, PermissionError):
 		return ClientError(
-			'파일에 접근할 수 없습니다',
+			'File access denied',
 			status=403,
 		)
 	raise error
 
 
 class FileBody:
-	"""열린 파일을 일정 크기로 읽고 응답 종료 시 반드시 닫는다."""
+	"""Read an open file in fixed-size chunks and close it when the response ends."""
 
 	def __init__(
 		self,
@@ -60,7 +60,7 @@ class FileBody:
 
 
 class ResponseFile(Response):
-	"""로컬 파일 또는 열린 FileSystemObject 파일을 스트림 응답으로 제공한다."""
+	"""Stream a local file or an open FileSystemObject file as a response."""
 
 	def __init__(
 		self,

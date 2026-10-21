@@ -23,7 +23,7 @@ class BinaryReader(Protocol):
 
 
 class RequestReader:
-	"""전송 프레이밍을 제거하고 요청 본문 경계 안에서 읽는다."""
+	"""Remove transfer framing and read within request body boundaries."""
 
 	def __init__(
 		self,
@@ -32,9 +32,9 @@ class RequestReader:
 		chunked: bool = False,
 	):
 		if size is not None and size < 0:
-			raise ValueError('본문 길이는 음수일 수 없습니다')
+			raise ValueError('Body length must not be negative')
 		if chunked and size is not None:
-			raise ClientError('Content-Length와 Transfer-Encoding을 함께 사용할 수 없습니다')
+			raise ClientError('Content-Length and Transfer-Encoding cannot be used together')
 		self.reader = reader
 		self.remaining = size if size is not None else 0
 		self.chunked = chunked
@@ -45,7 +45,7 @@ class RequestReader:
 	def line(self) -> bytes:
 		line = self.reader.readline(65537)
 		if len(line) > 65536 or not line.endswith(b'\r\n'):
-			raise ClientError('잘못되었거나 중단된 Chunked 프레이밍')
+			raise ClientError('Invalid or truncated chunked framing')
 		return line[:-2]
 
 	def exact(
@@ -56,7 +56,7 @@ class RequestReader:
 		while size:
 			part = self.reader.read(size)
 			if not part:
-				raise ClientError('요청 본문 수신 중 연결이 종료되었습니다')
+				raise ClientError('Connection closed while receiving the request body')
 			parts.append(part)
 			size -= len(part)
 		return b''.join(parts)
@@ -65,7 +65,7 @@ class RequestReader:
 		line = self.line()
 		size = line.split(b';', 1)[0]
 		if not size or any(byte not in b'0123456789abcdefABCDEF' for byte in size):
-			raise ClientError('잘못된 Chunked 크기')
+			raise ClientError('Invalid chunk size')
 		self.chunk_remaining = int(size, 16)
 		if self.chunk_remaining == 0:
 			while True:
@@ -78,7 +78,7 @@ class RequestReader:
 					b'transfer-encoding',
 					b'host',
 				):
-					raise ClientError('잘못된 Chunked trailer')
+					raise ClientError('Invalid chunked trailer')
 			self.finished = True
 		return
 
@@ -87,7 +87,7 @@ class RequestReader:
 		size: int = -1,
 	) -> bytes:
 		if size < -1:
-			raise ValueError('읽기 크기는 -1 이상이어야 합니다')
+			raise ValueError('Read size must be at least -1')
 		if size == 0 or self.finished:
 			return b''
 		if not self.chunked:
@@ -109,7 +109,7 @@ class RequestReader:
 			if size != -1:
 				size -= count
 			if self.chunk_remaining == 0 and self.exact(2) != b'\r\n':
-				raise ClientError('잘못된 Chunked 구분자')
+				raise ClientError('Invalid chunk delimiter')
 		return b''.join(parts)
 
 	def readline(

@@ -12,7 +12,7 @@ from .File import File
 
 
 class Connection(BaseConnection):
-	"""설정된 루트 안에서만 파일에 접근하는 로컬 파일시스템."""
+	"""Provide local filesystem access restricted to the configured root."""
 
 	def __init__(
 		self,
@@ -29,12 +29,12 @@ class Connection(BaseConnection):
 		path: str,
 	) -> Path:
 		if '\x00' in path or '\\' in path or PureWindowsPath(path).drive or ':' in path:
-			raise PermissionError('허용하지 않는 파일 경로')
+			raise PermissionError('File path not allowed')
 		target = (self.base / path.lstrip('/')).resolve()
 		try:
 			target.relative_to(self.base)
 		except ValueError as error:
-			raise PermissionError('파일시스템 루트 밖에 접근할 수 없습니다') from error
+			raise PermissionError('Cannot access paths outside the filesystem root') from error
 		return target
 
 	def connect(self):

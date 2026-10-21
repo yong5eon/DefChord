@@ -21,7 +21,7 @@ Just def. Let web applications do the work. You don't need to await this.
 
 
 def supports_color() -> bool:
-	"""터미널 출력에서만 색상을 사용하고 NO_COLOR 설정을 우선한다."""
+	"""Use colors only for terminal output and honor NO_COLOR."""
 	return (
 		getattr(sys.stdout, 'isatty', lambda: False)()
 		and 'NO_COLOR' not in environ
@@ -29,7 +29,7 @@ def supports_color() -> bool:
 
 
 def colorize_logo(logo: str) -> str:
-	"""배너의 다섯 줄에 기존 Startup의 색상 그라데이션을 적용한다."""
+	"""Apply the existing startup color gradient to the five banner lines."""
 	colors = (
 		'\033[38;5;39m',
 		'\033[38;5;45m',
@@ -53,10 +53,10 @@ def colorize_logo(logo: str) -> str:
 
 
 def startup(server: 'Server') -> None:
-	"""바인딩된 서버와 Application의 실제 등록 상태를 출력한다."""
+	"""Print the bound server address and actual Application registrations."""
 	host, port = server.server_address[:2]
 	if not isinstance(host, str):
-		raise TypeError('HTTP 수신 주소는 문자열이어야 합니다')
+		raise TypeError('HTTP listen address must be a string')
 	address = f'[{host}]' if ':' in host else host
 	logo = LOGO.rstrip()
 	starting = 'Starting Application'
@@ -87,7 +87,7 @@ def startup(server: 'Server') -> None:
 	text = '\n'.join(lines)
 	encoding = getattr(sys.stdout, 'encoding', None)
 	if encoding is not None:
-		# 출력 인코딩에서 표현할 수 없는 문자만 이스케이프해 실행 정보를 보존한다.
+		# Escape only unencodable characters to preserve startup information.
 		text = text.encode(encoding, errors='backslashreplace').decode(encoding)
 	print(
 		text,

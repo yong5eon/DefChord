@@ -11,7 +11,7 @@ from .RequestRunner import RequestRunner
 
 
 class Route:
-	"""기존 :name 경로 매개변수 형식을 유지하는 라우트."""
+	"""Represent a route using the existing :name path parameter syntax."""
 
 	variable = compile(r':([A-Za-z_][A-Za-z_0-9]*)')
 

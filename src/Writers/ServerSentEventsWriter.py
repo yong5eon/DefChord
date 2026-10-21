@@ -10,7 +10,7 @@ from .StreamWriter import StreamWriter
 
 
 class ServerSentEventsWriter:
-	"""일반 또는 Chunked 스트림을 감싸 SSE 이벤트를 즉시 전송한다."""
+	"""Wrap a plain or chunked stream to send SSE events immediately."""
 
 	def __init__(
 		self,
