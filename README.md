@@ -1,6 +1,6 @@
 # DefStar
 
-The Modern Python WSGI Framework
+The Modern Synchronous Python WSGI Framework
 
 **Just def.**<br>
 **Let web applications do the work.**<br>

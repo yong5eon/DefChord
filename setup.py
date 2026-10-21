@@ -21,7 +21,7 @@ for package in find_packages(SOURCE):
 
 setup(
 	name='DefStar',
-	description='The Modern Python WSGI Framework',
+	description='The Modern Synchronous Python WSGI Framework',
 	long_description=Path('README.md').read_text(encoding='utf-8'),
 	long_description_content_type='text/markdown',
 	author='Heo Yongseon',
@@ -41,6 +41,10 @@ setup(
 	package_dir=PACKAGE_DIR,
 	include_package_data=False,
 	package_data={
+		'DefStar.Extensions': [
+			'Dashboard.html',
+			'Swagger.html',
+		],
 	},
 	classifiers=[
 		'Programming Language :: Python :: 3.9',
