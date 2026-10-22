@@ -74,14 +74,14 @@ def startup(server: 'Server') -> None:
 	]
 	for route in routes:
 		lines.extend((
-			f'    - {route.object.__qualname__}',
+			f'    - {route.object.properties.name if route.object.properties.name is not None else route.object.__qualname__}',
 			f'      {route.method} {route.url}',
 		))
 	if server.app.exts:
 		lines.append(f'  Extensions: {len(server.app.exts)} extensions')
 		for extension in server.app.exts.values():
 			lines.append(
-				f'    - {type(extension).__name__}: http://{address}:{port}{extension.path}',
+				f'    - {type(extension).__name__}: {extension.path}',
 			)
 	lines.append('\n')
 	text = '\n'.join(lines)

@@ -11,6 +11,7 @@ from ..Responses import ResponseFile
 from ..Responses.ResponseFile import file_error
 from ..Route import Route
 from ..Utils.FileSystemObject import Connection
+from ..Utils.FileSystemObject.Implements.FileSystem.Connection import Connection as LocalConnection
 from .RunFactory import RunFactory
 
 
@@ -65,11 +66,17 @@ class RunFileSystemObjectFactory(RunFactory[FileSystemRoute]):
 
 	def __call__(self) -> FileSystemRoute:
 		fso = self.fso
+		name = (
+			f'RunFileSystemObject({fso.base})'
+			if isinstance(fso, LocalConnection)
+			else f'RunFileSystemObject({self.prefix})'
+		)
 
 		class RunFileSystemObject(
 			RequestRunner,
 			method='GET',
 			url=self.prefix,
+			name=name,
 			onRequest=self.on_request,
 			onResponse=self.on_response,
 		):

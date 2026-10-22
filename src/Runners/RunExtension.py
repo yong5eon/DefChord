@@ -35,6 +35,7 @@ class RunExtensionFactory(RunFactory[Type[RequestRunner]]):
 			RequestRunner,
 			method=self.method,
 			url=extension.path,
+			name=type(extension).__name__,
 		):
 			def run(
 				self,

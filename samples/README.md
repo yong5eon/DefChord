@@ -12,7 +12,11 @@ python -m samples.Sample
 
 브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. `create_application()`을 호출할 때마다 라우터·파일 연결은 독립적으로 생성된다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
 
+시작 출력의 핸들러 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. 확장 처리기는 확장 클래스 이름, 파일 처리기는 `RunFile(절대 파일 경로)`, 로컬 파일시스템 처리기는 `RunFileSystemObject(절대 루트 경로)`로 표시한다. 다른 파일시스템 연결은 `RunFileSystemObject(URL 접두사)`로 표시하며, 확장 목록에는 호스트 없이 등록 경로만 표시한다.
+
 ## 이전 대응표
+
+인증·본문 검증 샘플은 `RunFactory`를 상속한 `RunAuthFactory`와 `RunContentFactory`로 처리 클래스를 생성한다. 시작 출력에는 내부 클래스 경로 대신 `RunAuth(query)`, `RunAuth(oauth2/implicit)`, `RunContent(integer)`처럼 지정된 이름을 표시한다.
 
 | 기존 시나리오 | 현재 구현 | 경로·동작 |
 | --- | --- | --- |

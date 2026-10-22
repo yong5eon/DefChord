@@ -102,6 +102,7 @@ def create_application() -> Application:
 		RequestRunner,
 		method='GET',
 		url='/options',
+		name='Options',
 		qs=QueryString(
 			{
 				'p': IsString(),

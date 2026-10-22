@@ -38,6 +38,7 @@ class RequestProperties:
 	tags: Union[str, Sequence[str], None]
 	on_request: Union[RequestFilter, Sequence[RequestFilter], None]
 	on_response: Union[ResponseFilter, Sequence[ResponseFilter], None]
+	name: Optional[str] = None
 
 
 class RequestRunner(ABC):
@@ -50,6 +51,7 @@ class RequestRunner(ABC):
 		*,
 		method: Optional[str] = None,
 		url: Optional[str] = None,
+		name: Optional[str] = None,
 		origin: Union[RequestCheck, Sequence[RequestCheck], None] = None,
 		auth: Optional[RequestCheck] = None,
 		parameters: Optional[RequestCheck] = None,
@@ -64,6 +66,8 @@ class RequestRunner(ABC):
 		onResponse: Union[ResponseFilter, Sequence[ResponseFilter], None] = None,
 	):
 		super().__init_subclass__()
+		if name is not None and (not isinstance(name, str) or not name.strip()):
+			raise ValueError('name must be a non-empty string')
 		if (method is None) != (url is None):
 			raise TypeError('method and url must be specified together')
 		if method is not None and fullmatch(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+", method) is None:
@@ -73,6 +77,7 @@ class RequestRunner(ABC):
 		cls.properties = RequestProperties(
 			method=method,
 			url=url,
+			name=name,
 			origin=origin,
 			auth=auth,
 			parameters=parameters,

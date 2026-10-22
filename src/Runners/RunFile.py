@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Type
 
 from ..Request import Request
@@ -29,6 +30,7 @@ class RunFileFactory(RunFactory[Type[RequestRunner]]):
 			RequestRunner,
 			method='GET',
 			url=self.url,
+			name=f'RunFile({Path(path).resolve()})',
 			onRequest=self.on_request,
 			onResponse=self.on_response,
 		):

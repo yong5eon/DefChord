@@ -32,6 +32,21 @@ create_application = import_module(PACKAGE_NAME + '.Sample').create_application
 
 
 class SampleTests(TestCase):
+	def test_generated_handler_names(self):
+		app = create_application()
+		for route in app.router.routes:
+			if route.url.startswith('/api/auth/') and not route.url.endswith('/token'):
+				expected = 'RunAuth({})'.format(route.url.removeprefix('/api/auth/'))
+				self.assertEqual(route.object.properties.name, expected)
+			elif route.url.startswith('/api/content/'):
+				expected = 'RunContent({})'.format(route.url.removeprefix('/api/content/'))
+				self.assertEqual(route.object.properties.name, expected)
+			elif route.url == '/options':
+				self.assertEqual(route.object.properties.name, 'Options')
+			name = route.object.properties.name
+			self.assertNotIn('<locals>', name if name is not None else route.object.__qualname__)
+		return
+
 	def test_calculation_contract_has_inputs_examples_and_response_schema(self):
 		app = create_application()
 		document = app.exts['/api/doc'].document(app)

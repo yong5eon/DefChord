@@ -9,6 +9,8 @@ from os import (
 	environ,
 	getpid,
 )
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -24,6 +26,11 @@ from DefEssential.Startup import (
 	startup,
 	supports_color,
 )
+from DefEssential.Extensions import Ping
+from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+	Configuration,
+	Connection,
+)
 
 from test_server import running
 
@@ -34,6 +41,66 @@ class TerminalOutput(StringIO):
 
 
 class StartupTests(TestCase):
+	def test_handler_names_and_extension_paths(self):
+		class Named(
+			RequestRunner,
+			method='GET',
+			url='/named',
+			name='Example handler',
+		):
+			def run(self, request):
+				return Response()
+
+		class Unnamed(
+			RequestRunner,
+			method='GET',
+			url='/unnamed',
+		):
+			def run(self, request):
+				return Response()
+
+		with TemporaryDirectory() as directory:
+			root = Path(directory).resolve()
+			file = root / 'sample.txt'
+			file.write_bytes(b'content')
+			app = Application(exts=(Ping('/ping'),))
+			app.register(Named)
+			app.register(Unnamed)
+			app.add_file(file, '/file')
+			app.add_file_system_object(Connection(Configuration(directory)), '/files')
+			with redirect_stdout(StringIO()) as output:
+				with serve('127.0.0.1', 0, app) as server:
+					startup(server)
+			text = output.getvalue()
+			self.assertIn('    - Example handler\n      GET /named', text)
+			self.assertIn(f'    - {Unnamed.__qualname__}\n      GET /unnamed', text)
+			self.assertIn('    - Ping\n      GET /ping', text)
+			self.assertIn('    - Ping\n      HEAD /ping', text)
+			self.assertIn(f'    - RunFile({file})\n      GET /file', text)
+			self.assertIn(f'    - RunFileSystemObject({root})\n      GET /files', text)
+			self.assertIn('  Extensions: 1 extensions\n    - Ping: /ping', text)
+			self.assertNotIn('Factory.__call__', text)
+			self.assertNotIn('Ping: http://', text)
+		return
+
+	def test_invalid_handler_names(self):
+		for name in (
+			'',
+			'   ',
+			42,
+		):
+			with self.subTest(name=name):
+				with self.assertRaises(ValueError):
+					class Invalid(
+						RequestRunner,
+						method='GET',
+						url='/invalid',
+						name=name,
+					):
+						def run(self, request):
+							return Response()
+		return
+
 	def application(self):
 		class Health(
 			RequestRunner,

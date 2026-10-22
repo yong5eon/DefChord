@@ -1,3 +1,5 @@
+from typing import Type
+
 from DefEssential import (
 	Auth,
 	Authorization,
@@ -20,6 +22,8 @@ from DefEssential.Credentials import (
 )
 from DefEssential.Readers import FormUrlEncodedContentReader
 from DefEssential.Responses import ResponseJSON
+from DefEssential.Runners.RunFactory import RunFactory
+from DefEssential.Validators import Credentials
 from DefEssential.Validator.Patterns import (
 	IsIn,
 	IsObject,
@@ -55,28 +59,38 @@ class GetSession(Authorization):
 		}
 
 
-def auth_handler(
-	name,
-	credentials,
-):
-	class RunAuth(
-		RequestRunner,
-		method='GET',
-		url='/api/auth/' + name,
-		auth=Auth(
-			GetSession(),
-			credentials,
-		),
-		summary='Authenticate sample credentials and return a session',
-		tags='Auth',
-	):
-		def run(
-			self,
-			request: Request,
-		) -> ResponseJSON:
-			return ResponseJSON(request.session)
+class RunAuthFactory(RunFactory[Type[RequestRunner]]):
+	"""Create a named handler for a sample credential scheme."""
 
-	return RunAuth
+	def __init__(
+		self,
+		name: str,
+		credentials: Credentials,
+	):
+		self.name = name
+		self.credentials = credentials
+		return
+
+	def __call__(self) -> Type[RequestRunner]:
+		class RunAuth(
+			RequestRunner,
+			method='GET',
+			url='/api/auth/' + self.name,
+			name=f'RunAuth({self.name})',
+			auth=Auth(
+				GetSession(),
+				self.credentials,
+			),
+			summary='Authenticate sample credentials and return a session',
+			tags='Auth',
+		):
+			def run(
+				self,
+				request: Request,
+			) -> ResponseJSON:
+				return ResponseJSON(request.session)
+
+		return RunAuth
 
 
 def token_query(
@@ -179,10 +193,10 @@ class ClientCredentialsToken(
 
 HANDLERS = (
 	*(
-		auth_handler(
+		RunAuthFactory(
 			name,
 			credentials,
-		)
+		)()
 		for name, credentials in (
 			('query', Query('credentials')),
 			('header', Header('credentials')),
