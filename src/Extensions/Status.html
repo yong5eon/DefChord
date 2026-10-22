@@ -58,7 +58,7 @@
     }
   </style>
 </head>
-<body>
+<body data-metrics-uri="{{metrics_uri}}">
   <header><div class="heading">
     <div><h1>{{title}} Status</h1><p class="subtitle">{{description}}</p></div>
     <span class="badge">LIVE STATUS</span>
@@ -166,7 +166,7 @@
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       try {
-        const response = await fetch(location.pathname, {
+        const response = await fetch(document.body.dataset.metricsUri, {
           headers: {Accept: 'application/json'}, credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal: controller.signal
         });
         if (!response.ok) throw new Error('HTTP ' + response.status);

@@ -77,9 +77,9 @@ def create_application() -> Application:
 	spec = Spec('/api/doc', title='DefEssential HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),
-		Status('/status'),
+		Status('/status', metrics_uri='/metrics'),
 		spec,
-		Swagger('/swagger'),
+		Swagger('/swagger', spec_uri='/api/doc'),
 		Ping('/ping'),
 	))
 	for handler in (

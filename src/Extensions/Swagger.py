@@ -1,39 +1,34 @@
-from typing import Optional
-
 from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
 from .Pages import page
-from .Spec import Spec
 
 
 class Swagger(Extension):
-	"""Serve the same Application's Spec through CDN-hosted Swagger UI."""
+	"""Serve CDN-hosted Swagger UI for an explicit same-origin specification path."""
 
 	def __init__(
 		self,
 		path: str,
 		*,
+		spec_uri: str,
 		title: str = 'DefEssential',
 		description: str = '',
 	):
 		super().__init__(path)
+		if (
+			not isinstance(spec_uri, str)
+			or not spec_uri.startswith('/')
+			or spec_uri.startswith('//')
+			or any(character.isspace() or ord(character) < 32 or character == '\\' for character in spec_uri)
+		):
+			raise ValueError('Swagger spec_uri must be a same-origin absolute path')
 		if not isinstance(title, str) or not title or not isinstance(description, str):
 			raise ValueError('Swagger title must be a non-empty string and description must be a string')
 		self.title = title
 		self.description = description
-		self.spec: Optional[Spec] = None
-		return
-
-	def bind(
-		self,
-		app: Application,
-	) -> None:
-		specs = [extension for extension in app.exts.values() if isinstance(extension, Spec)]
-		if len(specs) != 1:
-			raise ValueError('Swagger requires exactly one Spec extension')
-		self.spec = specs[0]
+		self.spec_uri = spec_uri
 		return
 
 	def __call__(
@@ -41,13 +36,11 @@ class Swagger(Extension):
 		app: Application,
 		request: Request,
 	) -> Response:
-		if self.spec is None:
-			raise RuntimeError('Swagger is not bound to a Spec extension')
 		return page(
 			'Swagger',
 			self.title,
 			self.description,
-			parameters={'spec_url': self.spec.path},
+			parameters={'spec_url': self.spec_uri},
 			policy=(
 				"default-src 'none'; "
 				"script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/; "

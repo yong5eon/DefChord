@@ -72,6 +72,42 @@ class Echo(
 
 
 class ExtensionTests(TestCase):
+	def test_status_metrics_uri_and_independent_use(self):
+		status = Status('/status', metrics_uri='/custom-metrics?x=1&y=2')
+		app = Application(exts=(status,))
+		response = app(request('/status', headers={'Accept': 'application/json'}))
+		assert isinstance(response, Response)
+		assert isinstance(response.body, bytes)
+		self.assertIn(b'data-metrics-uri="/custom-metrics?x=1&amp;y=2"', response.body)
+		self.assertIn(b'fetch(document.body.dataset.metricsUri', response.body)
+		self.assertEqual(response.header('Content-Type'), 'text/html; charset=utf-8')
+		app = Application(exts=(
+			Metrics('/a'),
+			Metrics('/b'),
+			Status('/status', metrics_uri='/b'),
+		))
+		response = app(request('/status'))
+		assert isinstance(response, Response)
+		assert isinstance(response.body, bytes)
+		self.assertIn(b'data-metrics-uri="/b"', response.body)
+		return
+
+	def test_status_invalid_metrics_uri(self):
+		invalid_uris: tuple[Any, ...] = (
+			None,
+			'',
+			'metrics',
+			'https://example.com/metrics',
+			'//example.com/metrics',
+			'/\\example.com/metrics',
+			'/metrics\n',
+		)
+		for uri in invalid_uris:
+			with self.subTest(uri=uri):
+				with self.assertRaises(ValueError):
+					Status('/status', metrics_uri=uri)
+		return
+
 	def test_extension_handler_factory_contract(self):
 		with self.assertRaises(TypeError):
 			RunFactory()
@@ -128,8 +164,8 @@ class ExtensionTests(TestCase):
 		metrics = Metrics('/metrics')
 		spec = Spec('/spec')
 		app = Application(exts=(
-			Status('/status', title='<DefEssential>'),
-			Swagger('/swagger'),
+			Status('/status', metrics_uri='/metrics', title='<DefEssential>'),
+			Swagger('/swagger', spec_uri='/spec'),
 			metrics,
 			spec,
 			Ping('/ping'),
@@ -151,7 +187,10 @@ class ExtensionTests(TestCase):
 				self.assertTrue(app.running)
 				status, headers, body = self.get(address, '/echo/hello')
 				self.assertEqual(body, b'hello')
-				status, headers, body = self.get(address, '/status', {'Accept': 'application/json'})
+				status, headers, body = self.get(address, '/metrics', {'Accept': 'application/json'})
+				self.assertEqual(status, 200)
+				self.assertTrue(headers['Content-Type'].startswith('application/json'))
+				self.assertEqual(headers['Cache-Control'], 'no-store')
 				self.assertIn('GET /echo/:id', loads(body)['requests'])
 				status, headers, body = self.get(address, '/swagger')
 				self.assertIn(b'data-spec-url="/spec"', body)
@@ -159,6 +198,7 @@ class ExtensionTests(TestCase):
 				status, headers, body = self.get(address, '/status')
 				self.assertIn(b'&lt;DefEssential&gt;', body)
 				self.assertIn(b'<title>&lt;DefEssential&gt; Status</title>', body)
+				self.assertIn(b'data-metrics-uri="/metrics"', body)
 				self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
 				status, headers, body = self.get(address, '/ping')
 				self.assertEqual(status, 200)
@@ -177,11 +217,7 @@ class ExtensionTests(TestCase):
 
 	def test_dependency_collision_and_instance_ownership(self):
 		for extensions in (
-			(Status('/status'),),
-			(Swagger('/swagger'),),
 			(Metrics('/same'), Spec('/same')),
-			(Metrics('/a'), Metrics('/b'), Status('/status')),
-			(Spec('/a'), Spec('/b'), Swagger('/swagger')),
 		):
 			with self.assertRaises(ValueError):
 				Application(exts=extensions)
@@ -246,8 +282,8 @@ class ExtensionTests(TestCase):
 		self.assertEqual(events, ['start:/first', 'stop:/first'])
 		return
 
-	def test_swagger_spec_binding_escaping_headers_and_head(self):
-		swagger = Swagger('/swagger', title='<DefEssential>', description='</script>')
+	def test_swagger_spec_uri_escaping_headers_and_head(self):
+		swagger = Swagger('/swagger', spec_uri='/custom-spec', title='<DefEssential>', description='</script>')
 		spec = Spec('/custom-spec')
 		app = Application(exts=(
 			swagger,
@@ -290,7 +326,7 @@ class ExtensionTests(TestCase):
 					connection.close()
 		return
 
-	def test_swagger_invalid_settings_and_unbound_use(self):
+	def test_swagger_invalid_settings_and_independent_use(self):
 		invalid_settings: tuple[dict[str, Any], ...] = (
 			{'title': ''},
 			{'title': None},
@@ -299,9 +335,32 @@ class ExtensionTests(TestCase):
 		for settings in invalid_settings:
 			with self.subTest(settings=settings):
 				with self.assertRaises(ValueError):
-					Swagger('/swagger', **settings)
-		with self.assertRaises(RuntimeError):
-			Swagger('/swagger')(Application(), request('/swagger'))
+					Swagger('/swagger', spec_uri='/spec', **settings)
+		for uri in (
+			None,
+			'',
+			'spec.json',
+			'https://example.com/spec',
+			'//example.com/spec',
+			'/\\example.com/spec',
+			'/spec\n',
+		):
+			with self.subTest(uri=uri):
+				with self.assertRaises(ValueError):
+					Swagger('/swagger', spec_uri=uri)
+		swagger = Swagger('/swagger', spec_uri='/external-spec?format=json&version=1')
+		response = swagger(Application(), request('/swagger'))
+		assert isinstance(response.body, bytes)
+		self.assertIn(b'data-spec-url="/external-spec?format=json&amp;version=1"', response.body)
+		app = Application(exts=(
+			Spec('/a'),
+			Spec('/b'),
+			Swagger('/swagger', spec_uri='/b'),
+		))
+		response = app(request('/swagger'))
+		assert isinstance(response, Response)
+		assert isinstance(response.body, bytes)
+		self.assertIn(b'data-spec-url="/b"', response.body)
 		return
 
 	def test_metrics_windows_and_unmatched_cardinality(self):

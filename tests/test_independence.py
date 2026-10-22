@@ -41,7 +41,7 @@ class Sample(RequestRunner, method='GET', url='/'):
 app = Application()
 app.register(Sample)
 assert app(Request('127.0.0.1', 1, 'GET', '/')).body == b'OK'
-extended = Application(exts=(Metrics('/metrics'), Status('/status'), Spec('/spec'), Swagger('/swagger'), Ping('/ping')))
+extended = Application(exts=(Metrics('/metrics'), Status('/status', metrics_uri='/metrics'), Spec('/spec'), Swagger('/swagger', spec_uri='/spec'), Ping('/ping')))
 extended.start()
 try:
 	assert extended(Request('127.0.0.1', 1, 'GET', '/swagger')).status == 200

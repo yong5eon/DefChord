@@ -4,6 +4,10 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
+Swagger 확장은 `Swagger('/swagger', spec_uri='/api/doc')`처럼 명세 URI를 필수로 지정한다. `spec_uri`는 `/`로 시작하는 동일 출처 경로이며, `Spec` 확장 자동 탐색이나 개수 제한 없이 해당 주소의 OpenAPI 문서를 사용한다.
+
+Status 확장도 `Status('/status', metrics_uri='/metrics')`처럼 동일 출처의 메트릭 URI를 필수로 지정하며, `Metrics`를 직접 참조하거나 자동 탐색하지 않는다. Status는 HTML만 제공하고 브라우저가 지정한 URI에 `Accept: application/json`으로 요청한다. Metrics는 해당 헤더가 있으면 JSON 스냅샷을, 그 외에는 기존 Prometheus 텍스트를 반환한다.
+
 DefEssential를 설치했거나 개발용 import 경로가 연결된 환경에서 DefEssential 프로젝트 디렉터리를 기준으로 실행한다.
 
 ```powershell
@@ -120,7 +124,7 @@ curl.exe -o sample.jpg http://127.0.0.1:8000/thumbs/sample
 | 경로 | 기능 |
 | --- | --- |
 | `/metrics` | HTTP 요청·전송 완료 Metrics |
-| `/dashboard` | Status: 실시간 지표 UI; JSON은 Accept 헤더로 선택 |
+| `/status` | Status: 실시간 지표 UI; `/metrics`의 JSON 스냅샷 조회 |
 | `/api/doc` | OpenAPI 3.1 JSON |
 | `/swagger` | CDN 기반 Swagger UI·요청/응답 명세·Try it out |
 | `/health` | Ping: 실행 상태 확인 |

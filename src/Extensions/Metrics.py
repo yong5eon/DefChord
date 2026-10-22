@@ -12,6 +12,7 @@ from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
+from ..Responses import ResponseJSON
 
 @dataclass
 class RequestMetrics:
@@ -236,6 +237,11 @@ class Metrics(Extension):
 		app: Application,
 		request: Request,
 	) -> Response:
+		if request.header('Accept') == 'application/json':
+			return ResponseJSON(
+				self.snapshot(app),
+				headers={'Cache-Control': 'no-store'},
+			)
 		return Response(
 			body=self.render(app).encode('utf-8'),
 			format='text/plain; version=0.0.4',
