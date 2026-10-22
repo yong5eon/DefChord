@@ -92,10 +92,10 @@ def create_application() -> Application:
 	spec = Spec('/api/doc', title='DefEssential HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),
-		Status('/dashboard'),
+		Status('/status'),
 		spec,
 		Swagger('/swagger'),
-		Ping('/health'),
+		Ping('/ping'),
 	))
 	for handler in (
 		RunGet,
