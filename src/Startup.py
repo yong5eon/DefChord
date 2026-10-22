@@ -59,7 +59,7 @@ def startup(server: 'Server') -> None:
 		raise TypeError('HTTP listen address must be a string')
 	address = f'[{host}]' if ':' in host else host
 	logo = LOGO.rstrip()
-	starting = 'Starting Application'
+	starting = 'Starting'
 	if supports_color():
 		logo = colorize_logo(logo)
 		starting = f'\033[1;38;5;51m{starting}\033[0m'
