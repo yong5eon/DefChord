@@ -77,7 +77,7 @@ class CoreTests(TestCase):
 			app.router.routes,
 			[],
 		)
-		app.register(Sample)
+		app.add(Sample)
 		for _ in range(2):
 			response = app(request(
 				'CUSTOM',
@@ -121,8 +121,8 @@ class CoreTests(TestCase):
 				return Response(body=b'static')
 
 		app = Application()
-		app.register(Dynamic)
-		app.register(Static)
+		app.add(Dynamic)
+		app.add(Static)
 		self.assertEqual(
 			app(request(uri='/sample/fixed')).body,
 			b'static',
@@ -178,7 +178,7 @@ class CoreTests(TestCase):
 				return Response(body=str(request.body).encode())
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		self.assertEqual(
 			app(request()).body,
 			b'42',
@@ -228,7 +228,7 @@ class CoreTests(TestCase):
 				return Response()
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		self.assertEqual(
 			app(request()).status,
 			403,
@@ -286,7 +286,7 @@ class CoreTests(TestCase):
 				return Response()
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		for req, status in (
 			(request(uri='/missing'), 404),
 			(request(method='POST'), 405),
@@ -312,7 +312,7 @@ class CoreTests(TestCase):
 				return Response()
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		with self.assertRaises(ClientError):
 			app(request(
 				method='POST',
@@ -360,10 +360,10 @@ class CoreTests(TestCase):
 			pass
 
 		app = Application()
-		app.register(First)
-		app.register(First)
+		app.add(First)
+		app.add(First)
 		with self.assertRaises(ValueError):
-			app.register(Second)
+			app.add(Second)
 		return
 
 

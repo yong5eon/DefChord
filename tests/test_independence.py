@@ -39,7 +39,7 @@ class Sample(RequestRunner, method='GET', url='/'):
 		return Response(body=b'OK')
 
 app = Application()
-app.register(Sample)
+app.add(Sample)
 assert app(Request('127.0.0.1', 1, 'GET', '/')).body == b'OK'
 extended = Application(exts=(Metrics('/metrics'), Status('/status', metrics_uri='/metrics'), Specifications('/spec'), Swagger('/swagger', spec_uri='/spec'), Ping('/ping')))
 extended.start()

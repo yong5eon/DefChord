@@ -153,7 +153,7 @@ class ContentTests(TestCase):
 				return Response()
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		with self.assertRaises(ClientError) as caught:
 			app(self.request(
 				b'a',

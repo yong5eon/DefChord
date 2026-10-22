@@ -94,7 +94,7 @@ class ServerTests(TestCase):
 				return Response(body=request.parameters['id'].encode())
 
 		app = Application()
-		app.register(Sample)
+		app.add(Sample)
 		with running(app) as address:
 			connection = HTTPConnection(
 				*address,
@@ -150,7 +150,7 @@ class ServerTests(TestCase):
 							return Response(body=b''.join(received))
 
 					app = Application()
-					app.register(Upload)
+					app.add(Upload)
 					with running(app) as address:
 						with create_connection(
 							address,
@@ -195,7 +195,7 @@ class ServerTests(TestCase):
 				return Response()
 
 		app = Application()
-		app.register(Upload)
+		app.add(Upload)
 		with running(app) as address:
 			for headers in (
 				b'Content-Length: 1\r\n',

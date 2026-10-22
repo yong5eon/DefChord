@@ -107,7 +107,7 @@ def create_application() -> Application:
 		*AUTH_HANDLERS,
 		*CONTENT_HANDLERS,
 	):
-		app.register(handler)
+		app.add(handler)
 
 	class Options(
 		RequestRunner,
@@ -162,7 +162,7 @@ def create_application() -> Application:
 				headers=dict(response.headers()),
 			)
 
-	app.register(Options)
+	app.add(Options)
 	return app
 
 

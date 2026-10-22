@@ -170,7 +170,7 @@ class ExtensionTests(TestCase):
 			spec,
 			Ping('/ping'),
 		))
-		app.register(Echo)
+		app.add(Echo)
 		other = Application(exts=(Specifications('/spec'),))
 		with redirect_stdout(StringIO()) as output:
 			with running(app) as address:
@@ -237,7 +237,7 @@ class ExtensionTests(TestCase):
 		app = extension.application
 		assert app is not None
 		with self.assertRaises(ValueError):
-			app.register(Conflict)
+			app.add(Conflict)
 		with self.assertRaises(ValueError):
 			Metrics('/:variable')
 		return
@@ -267,7 +267,7 @@ class ExtensionTests(TestCase):
 		with self.assertRaises(RuntimeError):
 			app.start()
 		with self.assertRaises(RuntimeError):
-			app.register(Echo)
+			app.add(Echo)
 		app.stop()
 		app.stop()
 		self.assertEqual(events, ['start:/first', 'start:/last', 'stop:/last', 'stop:/first'])
@@ -367,7 +367,7 @@ class ExtensionTests(TestCase):
 		metrics_module = import_module('DefEssential.Extensions.Metrics')
 		metrics = Metrics('/metrics')
 		app = Application(exts=(metrics,))
-		app.register(Echo)
+		app.add(Echo)
 		with patch.object(metrics_module, 'monotonic', return_value=100.0):
 			app.start()
 			req = request('/echo/one')
@@ -427,8 +427,8 @@ class ExtensionTests(TestCase):
 
 		metrics = SignalMetrics('/metrics')
 		app = Application(exts=(metrics,))
-		app.register(Stream)
-		app.register(Invalid)
+		app.add(Stream)
+		app.add(Invalid)
 		with redirect_stdout(StringIO()):
 			with running(app) as address:
 				connection = HTTPConnection(*address, timeout=3)
@@ -472,7 +472,7 @@ class ExtensionTests(TestCase):
 
 		metrics = SignalMetrics('/metrics')
 		app = Application(exts=(metrics,))
-		app.register(Direct)
+		app.add(Direct)
 		with redirect_stdout(StringIO()):
 			with running(app) as address:
 				self.assertEqual(self.get(address, '/direct')[0], 400)
@@ -502,7 +502,7 @@ class ExtensionTests(TestCase):
 
 		metrics = SignalMetrics('/metrics')
 		app = Application(exts=(metrics,))
-		app.register(Broken)
+		app.add(Broken)
 		with redirect_stdout(StringIO()):
 			with self.assertLogs('DefEssential.Server', level='ERROR'):
 				with running(app) as address:
@@ -577,8 +577,8 @@ class SpecTests(TestCase):
 
 		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
-		app.register(Documented)
-		app.register(Custom)
+		app.add(Documented)
+		app.add(Custom)
 		document = spec.document(app)
 		operation = document['paths']['/items/{id}']['post']
 		self.assertEqual(operation['summary'], '항목 생성')
@@ -613,9 +613,9 @@ class SpecTests(TestCase):
 
 		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
-		app.register(handler('/one', Header('X-One')))
-		app.register(handler('/two', Header('X-Two')))
-		app.register(handler('/oauth', OAuth2Password('/token')))
+		app.add(handler('/one', Header('X-One')))
+		app.add(handler('/two', Header('X-Two')))
+		app.add(handler('/oauth', OAuth2Password('/token')))
 		document = spec.document(app)
 		schemes = document['components']['securitySchemes']
 		self.assertEqual(schemes['Header']['name'], 'X-One')
@@ -646,7 +646,7 @@ class SpecTests(TestCase):
 
 		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
-		app.register(Conflicting)
+		app.add(Conflicting)
 		with self.assertRaises(ValueError):
 			spec.document(app)
 		return

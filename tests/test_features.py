@@ -304,8 +304,8 @@ class FeatureTests(TestCase):
 				raise AssertionError('요청 필터에서 응답해야 합니다')
 
 		app = Application()
-		app.register(Direct)
-		app.register(Early)
+		app.add(Direct)
+		app.add(Early)
 		sent = []
 		req = request(
 			'/direct',
@@ -349,7 +349,7 @@ class FeatureTests(TestCase):
 				return Response(headers={'X-Result': 'yes'})
 
 		app = Application()
-		app.register(Secured)
+		app.add(Secured)
 		response = app(request(
 			method='POST',
 			headers={

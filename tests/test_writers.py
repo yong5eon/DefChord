@@ -207,7 +207,7 @@ class WriterTests(TestCase):
 				return None
 
 		app = Application()
-		app.register(Missing)
+		app.add(Missing)
 		with self.assertRaises(TypeError):
 			app(req)
 		return
@@ -243,7 +243,7 @@ class WriterTests(TestCase):
 
 		writer, output, starts = self.writer()
 		app = Application()
-		app.register(Direct)
+		app.add(Direct)
 		result = app(Request(
 			'127.0.0.1',
 			1,
@@ -346,7 +346,7 @@ class DirectServerTests(TestCase):
 				return None
 
 		app = Application()
-		app.register(Chunked)
+		app.add(Chunked)
 		with running(app) as address:
 			with create_connection(
 				address,
@@ -384,7 +384,7 @@ class DirectServerTests(TestCase):
 				return None
 
 		app = Application()
-		app.register(Direct)
+		app.add(Direct)
 		with self.assertLogs(
 			'DefEssential.Server',
 			level='ERROR',
@@ -463,7 +463,7 @@ class DirectServerTests(TestCase):
 				return None
 
 		app = Application(exts=(Completion('/completion'),))
-		app.register(Events)
+		app.add(Events)
 		with self.assertLogs(
 			'DefEssential.Server',
 			level='INFO',
@@ -541,8 +541,8 @@ class DirectServerTests(TestCase):
 						return Response(body=b'ok')
 
 				app = Application()
-				app.register(Events)
-				app.register(Normal)
+				app.add(Events)
+				app.add(Normal)
 				with running(app) as address:
 					connection = HTTPConnection(
 						*address,
@@ -601,7 +601,7 @@ class DirectServerTests(TestCase):
 				return None
 
 		app = Application()
-		app.register(Chunked)
+		app.add(Chunked)
 		with running(app) as address:
 			with create_connection(
 				address,
@@ -637,7 +637,7 @@ class DirectServerTests(TestCase):
 				raise ClientError('잘못된 요청')
 
 		app = Application()
-		app.register(Invalid)
+		app.add(Invalid)
 		with running(app) as address:
 			connection = HTTPConnection(
 				*address,
@@ -684,7 +684,7 @@ class DirectServerTests(TestCase):
 						raise ClientError('출력 후 오류')
 
 				app = Application()
-				app.register(Invalid)
+				app.add(Invalid)
 				with self.assertLogs(
 					'DefEssential.Server',
 					level='ERROR',
@@ -735,7 +735,7 @@ class DirectServerTests(TestCase):
 				return None
 
 		app = Application()
-		app.register(Echo)
+		app.add(Echo)
 		with running(app) as address:
 			connection = HTTPConnection(
 				*address,

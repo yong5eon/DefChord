@@ -99,12 +99,12 @@ class Application:
 				raise first_error
 		return
 
-	def register(
+	def add(
 		self,
 		handler: Type[RequestRunner],
 	) -> None:
 		if self.running:
-			raise RuntimeError('Cannot register handlers while Application is running')
+			raise RuntimeError('Cannot add handlers while Application is running')
 		if not issubclass(
 			handler,
 			RequestRunner,
@@ -138,7 +138,7 @@ class Application:
 					and value.__module__ == module.__name__
 					and not isabstract(value)
 				):
-					self.register(value)
+					self.add(value)
 		return
 
 	def __call__(

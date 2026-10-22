@@ -56,7 +56,7 @@ class StartupTests(TestCase):
 				return Response()
 
 		app = Application(exts=(Ping('/ping'),))
-		app.register(Submit)
+		app.add(Submit)
 		with redirect_stdout(StringIO()) as output:
 			with serve('127.0.0.1', 0, app) as server:
 				startup(server)
@@ -94,8 +94,8 @@ class StartupTests(TestCase):
 				File('/file', file),
 				FileSystem('/files', Connection(Configuration(directory))),
 			))
-			app.register(Named)
-			app.register(Unnamed)
+			app.add(Named)
+			app.add(Unnamed)
 			with redirect_stdout(StringIO()) as output:
 				with serve('127.0.0.1', 0, app) as server:
 					startup(server)
@@ -145,7 +145,7 @@ class StartupTests(TestCase):
 				return Response(body=b'OK')
 
 		app = Application()
-		app.register(Health)
+		app.add(Health)
 		return app
 
 	def test_creation_does_not_print_and_execution_reports_actual_state(self):

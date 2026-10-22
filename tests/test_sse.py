@@ -75,8 +75,8 @@ class SSETests(TestCase):
 				return Response(body=b'ok')
 
 		app = Application()
-		app.register(Events)
-		app.register(Normal)
+		app.add(Events)
+		app.add(Normal)
 		with running(app) as address:
 			streams = [HTTPConnection(*address, timeout=3) for _ in closed]
 			responses = []
@@ -144,7 +144,7 @@ class SSETests(TestCase):
 				)
 
 		app = Application()
-		app.register(Events)
+		app.add(Events)
 		with self.assertLogs(
 			'DefEssential.Server',
 			level='ERROR',
