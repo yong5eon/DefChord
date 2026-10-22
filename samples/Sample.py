@@ -18,7 +18,7 @@ from DefEssential.Extensions import (
 	Status,
 	Ping,
 	Metrics,
-	Spec,
+	Specifications,
 	Swagger,
 )
 from DefEssential.Responses import ResponseJSON
@@ -74,7 +74,7 @@ def to_jpeg(request: Request):
 
 def create_application() -> Application:
 	"""Create independent routes and filesystem connections on each call."""
-	spec = Spec('/api/doc', title='DefEssential HTTP Sample')
+	spec = Specifications('/api/doc', title='DefEssential HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),
 		Status('/status', metrics_uri='/metrics'),

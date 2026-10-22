@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from json import dumps
 from pathlib import Path
 
-from DefEssential.Extensions import Spec
+from DefEssential.Extensions import Specifications
 from ..Sample import create_application
 
 
@@ -12,7 +12,7 @@ def main() -> None:
 	parser.add_argument('output', type=Path)
 	args = parser.parse_args()
 	app = create_application()
-	spec = next(extension for extension in app.exts.values() if isinstance(extension, Spec))
+	spec = next(extension for extension in app.exts.values() if isinstance(extension, Specifications))
 	args.output.write_text(
 		dumps(
 			spec.document(app),

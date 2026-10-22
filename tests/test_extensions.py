@@ -43,7 +43,7 @@ from DefEssential.Extensions import (
 	Status,
 	Ping,
 	Metrics,
-	Spec,
+	Specifications,
 	Swagger,
 )
 from DefEssential.Readers import JavaScriptObjectNotationContentReader
@@ -162,7 +162,7 @@ class ExtensionTests(TestCase):
 
 	def test_real_http_extensions_startup_and_application_isolation(self):
 		metrics = Metrics('/metrics')
-		spec = Spec('/spec')
+		spec = Specifications('/spec')
 		app = Application(exts=(
 			Status('/status', metrics_uri='/metrics', title='<DefEssential>'),
 			Swagger('/swagger', spec_uri='/spec'),
@@ -171,7 +171,7 @@ class ExtensionTests(TestCase):
 			Ping('/ping'),
 		))
 		app.register(Echo)
-		other = Application(exts=(Spec('/spec'),))
+		other = Application(exts=(Specifications('/spec'),))
 		with redirect_stdout(StringIO()) as output:
 			with running(app) as address:
 				for path, expected in (
@@ -217,7 +217,7 @@ class ExtensionTests(TestCase):
 
 	def test_dependency_collision_and_instance_ownership(self):
 		for extensions in (
-			(Metrics('/same'), Spec('/same')),
+			(Metrics('/same'), Specifications('/same')),
 		):
 			with self.assertRaises(ValueError):
 				Application(exts=extensions)
@@ -284,7 +284,7 @@ class ExtensionTests(TestCase):
 
 	def test_swagger_spec_uri_escaping_headers_and_head(self):
 		swagger = Swagger('/swagger', spec_uri='/custom-spec', title='<DefEssential>', description='</script>')
-		spec = Spec('/custom-spec')
+		spec = Specifications('/custom-spec')
 		app = Application(exts=(
 			swagger,
 			spec,
@@ -353,8 +353,8 @@ class ExtensionTests(TestCase):
 		assert isinstance(response.body, bytes)
 		self.assertIn(b'data-spec-url="/external-spec?format=json&amp;version=1"', response.body)
 		app = Application(exts=(
-			Spec('/a'),
-			Spec('/b'),
+			Specifications('/a'),
+			Specifications('/b'),
 			Swagger('/swagger', spec_uri='/b'),
 		))
 		response = app(request('/swagger'))
@@ -575,7 +575,7 @@ class SpecTests(TestCase):
 			def run(self, req):
 				return Response()
 
-		spec = Spec('/spec')
+		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
 		app.register(Documented)
 		app.register(Custom)
@@ -611,7 +611,7 @@ class SpecTests(TestCase):
 					return Response()
 			return Secured
 
-		spec = Spec('/spec')
+		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
 		app.register(handler('/one', Header('X-One')))
 		app.register(handler('/two', Header('X-Two')))
@@ -644,7 +644,7 @@ class SpecTests(TestCase):
 			def run(self, req):
 				return Response()
 
-		spec = Spec('/spec')
+		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
 		app.register(Conflicting)
 		with self.assertRaises(ValueError):

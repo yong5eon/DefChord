@@ -4,7 +4,7 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
-Swagger 확장은 `Swagger('/swagger', spec_uri='/api/doc')`처럼 명세 URI를 필수로 지정한다. `spec_uri`는 `/`로 시작하는 동일 출처 경로이며, `Spec` 확장 자동 탐색이나 개수 제한 없이 해당 주소의 OpenAPI 문서를 사용한다.
+Swagger 확장은 `Swagger('/swagger', spec_uri='/api/doc')`처럼 명세 URI를 필수로 지정한다. `spec_uri`는 `/`로 시작하는 동일 출처 경로이며, `Specifications` 확장 자동 탐색이나 개수 제한 없이 해당 주소의 OpenAPI 문서를 사용한다.
 
 Status 확장도 `Status('/status', metrics_uri='/metrics')`처럼 동일 출처의 메트릭 URI를 필수로 지정하며, `Metrics`를 직접 참조하거나 자동 탐색하지 않는다. Status는 HTML만 제공하고 브라우저가 지정한 URI에 `Accept: application/json`으로 요청한다. Metrics는 해당 헤더가 있으면 JSON 스냅샷을, 그 외에는 기존 Prometheus 텍스트를 반환한다.
 
@@ -38,7 +38,7 @@ python -m samples.Sample
 | `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/sample`, `/favicon.ico`, `/css/sample.css`, `/` |
 | `Model.py` | [Requests.py](Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
 | `SampleHandler` 출력 | [Sample.py](Sample.py) | 표준 로깅과 서버 오류·연결 종료 로깅 사용 |
-| `RunGetDocument` | [Sample.py](Sample.py) | Spec 확장의 GET `/api/doc`에서 OpenAPI 3.1 제공 |
+| `RunGetDocument` | [Sample.py](Sample.py) | Specifications 확장의 GET `/api/doc`에서 OpenAPI 3.1 제공 |
 | `scripts/DescriptionToFile` | [DescriptionToFile.py](scripts/DescriptionToFile.py) | 같은 Application의 OpenAPI 문서를 파일로 저장 |
 
 다음 항목은 이번 실행 샘플에 포함하지 않는다.

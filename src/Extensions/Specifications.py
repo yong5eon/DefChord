@@ -35,7 +35,7 @@ from ..Validators import (
 	QueryString,
 )
 
-class Spec(Extension):
+class Specifications(Extension):
 	"""Convert registered Application handler declarations to OpenAPI 3.1."""
 
 	def __init__(
