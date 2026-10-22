@@ -8,7 +8,7 @@ from ..Responses import ResponseJSON
 class Ping(Extension):
 	"""HTTP 응답 여부와 Application 실행 상태를 제공한다."""
 
-	def handle(
+	def __call__(
 		self,
 		app: Application,
 		request: Request,

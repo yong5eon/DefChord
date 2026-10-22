@@ -231,7 +231,7 @@ class Metrics(Extension):
 				))
 		return '\n'.join(lines) + '\n'
 
-	def handle(
+	def __call__(
 		self,
 		app: Application,
 		request: Request,

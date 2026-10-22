@@ -262,7 +262,7 @@ class Spec(Extension):
 			document['x-defessential-operations'] = custom
 		return document
 
-	def handle(
+	def __call__(
 		self,
 		app: Application,
 		request: Request,

@@ -73,9 +73,10 @@ class Extension(ABC):
 		return
 
 	@abstractmethod
-	def handle(
+	def __call__(
 		self,
 		app: 'Application',
 		request: Request,
 	) -> Response:
+		"""애플리케이션과 요청을 받아 확장의 HTTP 응답을 반환한다."""
 		raise NotImplementedError

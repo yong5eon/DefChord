@@ -70,6 +70,17 @@ class Echo(
 
 
 class ExtensionTests(TestCase):
+	def test_call_is_the_required_extension_contract(self):
+		class Legacy(Extension):
+			def handle(self, app, request):
+				return Response()
+
+		with self.assertRaises(TypeError):
+			Legacy('/legacy')
+		self.assertTrue(callable(Ping('/ping')))
+		self.assertFalse(hasattr(Ping('/ping'), 'handle'))
+		return
+
 	def get(
 		self,
 		address,
@@ -135,7 +146,7 @@ class ExtensionTests(TestCase):
 		self.assertIn(f'http://127.0.0.1:{address[1]}/swagger', output.getvalue())
 		self.assertEqual(spec.document(other)['paths'], {})
 		self.assertNotIn('/spec', spec.document(app)['paths'])
-		ping = Ping('/state').handle(app, request())
+		ping = Ping('/state')(app, request())
 		assert isinstance(ping.body, bytes)
 		self.assertEqual(ping.status, 503)
 		self.assertEqual(loads(ping.body)['status'], 'stopped')
@@ -182,7 +193,7 @@ class ExtensionTests(TestCase):
 			def stop(self, app):
 				events.append('stop:' + self.path)
 
-			def handle(self, app, req):
+			def __call__(self, app, req):
 				return Response()
 
 		class Failing(Lifecycle):
@@ -267,7 +278,7 @@ class ExtensionTests(TestCase):
 				with self.assertRaises(ValueError):
 					Swagger('/swagger', **settings)
 		with self.assertRaises(RuntimeError):
-			Swagger('/swagger').handle(Application(), request('/swagger'))
+			Swagger('/swagger')(Application(), request('/swagger'))
 		return
 
 	def test_metrics_windows_and_unmatched_cardinality(self):

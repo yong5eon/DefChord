@@ -23,7 +23,7 @@ def extension_handler(
 			self,
 			request: Request,
 		) -> Response:
-			return extension.handle(
+			return extension(
 				app,
 				request,
 			)

@@ -431,7 +431,7 @@ class DirectServerTests(TestCase):
 				observed.set()
 				return
 
-			def handle(
+			def __call__(
 				self,
 				app,
 				request,

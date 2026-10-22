@@ -37,7 +37,7 @@ class Status(Extension):
 		self.metrics = metrics[0]
 		return
 
-	def handle(
+	def __call__(
 		self,
 		app: Application,
 		request: Request,
