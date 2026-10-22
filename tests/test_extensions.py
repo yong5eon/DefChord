@@ -47,6 +47,8 @@ from DefEssential.Extensions import (
 	Swagger,
 )
 from DefEssential.Readers import JavaScriptObjectNotationContentReader
+from DefEssential.Runners.RunFactory import RunFactory
+from DefEssential.Runners.RunExtension import RunExtensionFactory
 from DefEssential.Validator.Patterns import ToInteger
 from DefEssential.Writers import ChunkedStreamWriter
 
@@ -70,6 +72,26 @@ class Echo(
 
 
 class ExtensionTests(TestCase):
+	def test_extension_handler_factory_contract(self):
+		with self.assertRaises(TypeError):
+			RunFactory()
+		app = Application()
+		extension = Ping('/ping')
+		factory = RunExtensionFactory(
+			app,
+			extension,
+			'HEAD',
+		)
+		self.assertIsInstance(factory, RunFactory)
+		first = factory()
+		second = factory()
+		self.assertIsNot(first, second)
+		self.assertTrue(issubclass(first, RequestRunner))
+		self.assertEqual(first.properties.method, 'HEAD')
+		self.assertEqual(first.properties.url, '/ping')
+		self.assertEqual(first().run(request('/ping')).status, 503)
+		return
+
 	def test_call_is_the_required_extension_contract(self):
 		class Legacy(Extension):
 			def handle(self, app, request):

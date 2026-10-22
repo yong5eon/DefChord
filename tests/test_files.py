@@ -11,6 +11,12 @@ from DefEssential import (
 )
 from DefEssential.Responses import ResponseFile
 from DefEssential.Responses.ResponseFile import FileBody
+from DefEssential.Runners.RunFactory import RunFactory
+from DefEssential.Runners.RunFile import RunFileFactory
+from DefEssential.Runners.RunFileSystemObject import (
+	RunFileSystemObjectFactory,
+	FileSystemRoute,
+)
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
@@ -20,6 +26,26 @@ from test_features import request
 
 
 class FileTests(TestCase):
+	def test_file_factories_contract_and_independent_results(self):
+		with TemporaryDirectory() as directory:
+			fso = Connection(Configuration(directory))
+			factories = (
+				RunFileFactory(Path(directory) / 'sample.txt', '/file'),
+				RunFileSystemObjectFactory(fso, '/files'),
+			)
+			for factory in factories:
+				self.assertIsInstance(factory, RunFactory)
+				first = factory()
+				second = factory()
+				self.assertIsNot(first, second)
+				if isinstance(first, FileSystemRoute):
+					self.assertEqual(first.match('/files/sample.txt'), {'path': 'sample.txt'})
+					self.assertIsInstance(second, FileSystemRoute)
+				else:
+					self.assertEqual(first.properties.method, 'GET')
+					self.assertEqual(first.properties.url, '/file')
+		return
+
 	def test_local_connection_metadata_and_file_context(self):
 		with TemporaryDirectory() as directory:
 			path = Path(directory) / 'sample.txt'

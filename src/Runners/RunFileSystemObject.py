@@ -11,6 +11,7 @@ from ..Responses import ResponseFile
 from ..Responses.ResponseFile import file_error
 from ..Route import Route
 from ..Utils.FileSystemObject import Connection
+from .RunFactory import RunFactory
 
 
 class FileSystemRoute(Route):
@@ -46,44 +47,57 @@ class FileSystemRoute(Route):
 		return None
 
 
-def filesystem_handler(
-	fso: Connection,
-	prefix: str,
-	on_request=None,
-	on_response=None,
-) -> FileSystemRoute:
-	class RunFileSystemObject(
-		RequestRunner,
-		method='GET',
-		url=prefix,
-		onRequest=on_request,
-		onResponse=on_response,
-	):
-		def run(
-			self,
-			request: Request,
-		) -> Response:
-			path = request.parameters['path']
-			try:
-				format, encoding = fso.type(path)
-				file = fso.open(
-					path,
-					mode='rb',
-				)
-			except (
-				FileNotFoundError,
-				NotADirectoryError,
-				IsADirectoryError,
-				PermissionError,
-			) as error:
-				raise file_error(error) from error
-			return ResponseFile(
-				file,
-				format=format,
-				encoding=encoding,
-			)
+class RunFileSystemObjectFactory(RunFactory[FileSystemRoute]):
+	"""파일시스템 연결을 사용하는 접두사 경로와 처리 클래스를 생성한다."""
 
-	return FileSystemRoute(
-		prefix,
-		RunFileSystemObject,
-	)
+	def __init__(
+		self,
+		fso: Connection,
+		prefix: str,
+		on_request=None,
+		on_response=None,
+	):
+		self.fso = fso
+		self.prefix = prefix
+		self.on_request = on_request
+		self.on_response = on_response
+		return
+
+	def __call__(self) -> FileSystemRoute:
+		fso = self.fso
+
+		class RunFileSystemObject(
+			RequestRunner,
+			method='GET',
+			url=self.prefix,
+			onRequest=self.on_request,
+			onResponse=self.on_response,
+		):
+			def run(
+				self,
+				request: Request,
+			) -> Response:
+				path = request.parameters['path']
+				try:
+					format, encoding = fso.type(path)
+					file = fso.open(
+						path,
+						mode='rb',
+					)
+				except (
+					FileNotFoundError,
+					NotADirectoryError,
+					IsADirectoryError,
+					PermissionError,
+				) as error:
+					raise file_error(error) from error
+				return ResponseFile(
+					file,
+					format=format,
+					encoding=encoding,
+				)
+
+		return FileSystemRoute(
+			self.prefix,
+			RunFileSystemObject,
+		)

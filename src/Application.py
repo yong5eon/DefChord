@@ -17,11 +17,11 @@ from .Router import Router
 from .Runners import RunRequest
 from .Utils.Loader import Loader
 from .Runners.RunOptions import RunOptions
-from .Runners.RunFile import file_handler
-from .Runners.RunFileSystemObject import filesystem_handler
+from .Runners.RunFile import RunFileFactory
+from .Runners.RunFileSystemObject import RunFileSystemObjectFactory
 from .Utils.FileSystemObject import Connection
 from .Extension import Extension
-from .Runners.RunExtension import extension_handler
+from .Runners.RunExtension import RunExtensionFactory
 
 
 class Application:
@@ -47,11 +47,11 @@ class Application:
 		try:
 			for extension in extensions:
 				for method in extension.methods:
-					self.register(extension_handler(
+					self.register(RunExtensionFactory(
 						self,
 						extension,
 						method,
-					))
+					)())
 			for extension in extensions:
 				extension.bind(self)
 		except Exception:
@@ -149,12 +149,12 @@ class Application:
 		onResponse=None,
 	) -> None:
 		"""Register a file response at a fixed URL."""
-		self.register(file_handler(
+		self.register(RunFileFactory(
 			path,
 			url,
 			on_request=onRequest,
 			on_response=onResponse,
-		))
+		)())
 		return
 
 	def add_files(
@@ -189,12 +189,12 @@ class Application:
 		"""Bind a filesystem connection to an Application-owned prefix route."""
 		if self.running:
 			raise RuntimeError('Cannot register file paths while Application is running')
-		self.router.add(filesystem_handler(
+		self.router.add(RunFileSystemObjectFactory(
 			fso,
 			prefix,
 			on_request=onRequest,
 			on_response=onResponse,
-		))
+		)())
 		return
 
 	def __call__(
