@@ -1,17 +1,12 @@
-from typing import (
-	Optional,
-	TYPE_CHECKING,
-)
+from typing import Optional
 
+from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
 from ..Responses import ResponseJSON
 from .Metrics import Metrics
 from .Pages import page
-
-if TYPE_CHECKING:
-	from ..Application import Application
 
 
 class Status(Extension):
@@ -34,7 +29,7 @@ class Status(Extension):
 
 	def bind(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> None:
 		metrics = [extension for extension in app.exts.values() if isinstance(extension, Metrics)]
 		if len(metrics) != 1:
@@ -44,7 +39,7 @@ class Status(Extension):
 
 	def handle(
 		self,
-		app: 'Application',
+		app: Application,
 		request: Request,
 	) -> Response:
 		if request.header('Accept') == 'application/json':

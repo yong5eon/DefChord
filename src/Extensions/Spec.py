@@ -7,11 +7,9 @@ from re import (
 	fullmatch,
 	sub,
 )
-from typing import (
-	Any,
-	TYPE_CHECKING,
-)
+from typing import Any
 
+from ..Application import Application
 from ..Body import Body
 from ..Content import Content
 from ..Descriptor import (
@@ -37,10 +35,6 @@ from ..Validators import (
 	QueryString,
 )
 
-if TYPE_CHECKING:
-	from ..Application import Application
-
-
 class Spec(Extension):
 	"""Convert registered Application handler declarations to OpenAPI 3.1."""
 
@@ -62,7 +56,7 @@ class Spec(Extension):
 
 	def document(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> dict:
 		schemas: dict[str, Any] = {}
 		security: dict[str, Any] = {}
@@ -270,7 +264,7 @@ class Spec(Extension):
 
 	def handle(
 		self,
-		app: 'Application',
+		app: Application,
 		request: Request,
 	) -> Response:
 		return ResponseJSON(self.document(app))

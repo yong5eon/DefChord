@@ -1,16 +1,11 @@
-from typing import (
-	Optional,
-	TYPE_CHECKING,
-)
+from typing import Optional
 
+from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
 from .Pages import page
 from .Spec import Spec
-
-if TYPE_CHECKING:
-	from ..Application import Application
 
 
 class Swagger(Extension):
@@ -33,7 +28,7 @@ class Swagger(Extension):
 
 	def bind(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> None:
 		specs = [extension for extension in app.exts.values() if isinstance(extension, Spec)]
 		if len(specs) != 1:
@@ -43,7 +38,7 @@ class Swagger(Extension):
 
 	def handle(
 		self,
-		app: 'Application',
+		app: Application,
 		request: Request,
 	) -> Response:
 		if self.spec is None:

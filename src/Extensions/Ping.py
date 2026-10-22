@@ -1,12 +1,8 @@
-from typing import TYPE_CHECKING
-
+from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
 from ..Responses import ResponseJSON
-
-if TYPE_CHECKING:
-	from ..Application import Application
 
 
 class Ping(Extension):
@@ -14,7 +10,7 @@ class Ping(Extension):
 
 	def handle(
 		self,
-		app: 'Application',
+		app: Application,
 		request: Request,
 	) -> Response:
 		return ResponseJSON(

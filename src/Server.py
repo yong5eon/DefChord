@@ -3,11 +3,9 @@ from http.server import (
 	ThreadingHTTPServer,
 )
 from logging import getLogger
-from typing import (
-	Optional,
-	TYPE_CHECKING,
-)
+from typing import Optional
 
+from .Application import Application
 from .Error import Error
 from .Request import Request
 from .RequestReader import RequestReader
@@ -15,15 +13,12 @@ from .Response import Response
 from .ResponseWriter import ResponseWriter
 from .Startup import startup
 
-if TYPE_CHECKING:
-	from .Application import Application
-
 
 class Server(ThreadingHTTPServer):
 	"""Provide a threaded development HTTP server without WSGI."""
 
 	daemon_threads = True
-	app: 'Application'
+	app: Application
 
 	def serve_forever(
 		self,
@@ -248,7 +243,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 def serve(
 	host: str,
 	port: int,
-	app: 'Application',
+	app: Application,
 ) -> Server:
 	"""Create and return a server; the caller manages serving and shutdown."""
 	server = Server(

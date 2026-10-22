@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from ..CORS import (
 	allow_headers,
 	apply_cors,
@@ -9,9 +7,7 @@ from ..CORS import (
 from ..Error import ClientError
 from ..Request import Request
 from ..Response import Response
-
-if TYPE_CHECKING:
-	from ..Router import Router
+from ..Router import Router
 
 
 class RunOptions:
@@ -20,7 +16,7 @@ class RunOptions:
 	def run(
 		self,
 		request: Request,
-		router: 'Router',
+		router: Router,
 	) -> Response:
 		if request.uri == '*':
 			methods = {route.method for route in router.routes}

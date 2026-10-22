@@ -5,19 +5,13 @@ from dataclasses import (
 from math import floor
 from threading import Lock
 from time import monotonic
-from typing import (
-	Optional,
-	TYPE_CHECKING,
-)
+from typing import Optional
 from uuid import uuid4
 
+from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
-
-if TYPE_CHECKING:
-	from ..Application import Application
-
 
 @dataclass
 class RequestMetrics:
@@ -84,7 +78,7 @@ class Metrics(Extension):
 
 	def start(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> None:
 		with self.lock:
 			if any(stats.active for stats in self.requests.values()):
@@ -158,7 +152,7 @@ class Metrics(Extension):
 
 	def snapshot(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> dict:
 		with self.lock:
 			if self.started_at is None:
@@ -196,7 +190,7 @@ class Metrics(Extension):
 
 	def render(
 		self,
-		app: 'Application',
+		app: Application,
 	) -> str:
 		snapshot = self.snapshot(app)
 		lines = [
@@ -239,7 +233,7 @@ class Metrics(Extension):
 
 	def handle(
 		self,
-		app: 'Application',
+		app: Application,
 		request: Request,
 	) -> Response:
 		return Response(
