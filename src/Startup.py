@@ -16,7 +16,7 @@ LOGO = r"""
 ███  ███ ██▄█▀   ██  ███     ▀▀██▄ ▀▀██▄ ██▄█▀ ██ ██  ██  ██ ▄█▀██ ██
 ██████▀  ▀█▄▄▄   ██  ███████ ▀███▀ ▀███▀ ▀█▄▄▄ ██ ██  ██  ██ ▀█▄██ ██
 
-Just def. Let web applications do the work. You don't need to await this.
+Just def. Let web apps do the work. You don't need to await this.
 """
 
 
