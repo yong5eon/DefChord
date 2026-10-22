@@ -1,11 +1,28 @@
 body {
-  max-width: 56rem;
-  margin: 3rem auto;
-  padding: 0 1rem;
-  font-family: sans-serif;
-  line-height: 1.6;
 }
 
-img {
-  max-width: 100%;
+body header {
+	margin-bottom: 20px;
 }
+
+body footer {
+	margin-top: 20px;
+}
+
+body article {
+}
+
+body article h1 {
+	font-size: 32px;
+}
+
+body article h2 {
+	font-size: 26px;
+}
+
+body article h3 {
+	font-size: 21px;
+}
+
+
+

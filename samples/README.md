@@ -4,6 +4,8 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
+첫 화면의 `welcome.html`과 `sample.css`는 Liquirizia.WSGI 원본을 기반으로 한다. CDN 주소는 HTTPS로 명시하고, 지원하지 않는 WebSocket UI는 제거했다. 대신 Stream In·Chunked Stream In을 실제 서버 주소로 실행하는 curl 명령과 예상 응답을 제공한다. 브라우저에서 Transfer-Encoding을 직접 설정할 수 없으며 Chromium의 요청 스트리밍은 HTTP/2·3이 필요하므로, HTTP/1.1 chunked 업로드는 curl로 테스트한다. Windows PowerShell에서는 `curl.exe`를 사용한다. 계산·본문 검증 폼, 스트림 출력·SSE 버튼과 이미지 필터 테스트는 기존 UI를 유지한다. Bootstrap과 jQuery는 CDN에서 로드하므로 인터넷 연결이 필요하다.
+
 일반 요청 처리 클래스는 `app.add(RunExample)`로 등록하고, 확장은 `Application(exts=(...))`로 등록한다.
 
 Swagger 확장은 `Swagger('/swagger', spec_uri='/api/doc')`처럼 명세 URI를 필수로 지정한다. `spec_uri`는 `/`로 시작하는 동일 출처 경로이며, `Specifications` 확장 자동 탐색이나 개수 제한 없이 해당 주소의 OpenAPI 문서를 사용한다.

@@ -1,29 +1,301 @@
-<!doctype html>
-<html lang="ko">
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta charset="utf-8">
-  <title>DefEssential HTTP 샘플</title>
-  <link rel="stylesheet" href="/css/sample.css">
-  <link rel="icon" href="/favicon.ico">
+	<meta charset="utf-8" />
+	<title>Sample Web Application Server</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/sample.css" />
+	<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
-  <h1>DefEssential HTTP 샘플</h1>
-  <p>WSGI 없이 실행하는 동기식 HTTP 애플리케이션입니다.</p>
-  <ul>
-    <li><a href="/status">상태 확인</a></li>
-    <li><a href="/api/run/101/102?a=6&amp;b=10">경로·쿼리 검증과 계산</a></li>
-    <li><a href="/api/auth/query?credentials=1">쿼리 인증</a></li>
-    <li><a href="/api/run/stream">직접 스트림 출력</a></li>
-    <li><a href="/api/run/stream/chunked">Chunked 출력</a></li>
-    <li><a href="/api/run/stream/sse">SSE 출력</a></li>
-    <li><a href="/api/doc">OpenAPI 명세</a></li>
-    <li><a href="/swagger">Swagger UI</a></li>
-    <li><a href="/dashboard">Status</a></li>
-    <li><a href="/metrics">Prometheus Metrics</a></li>
-    <li><a href="/health">Ping</a></li>
-  </ul>
-  <p>POST·PUT·DELETE 및 토큰 요청 예시는 샘플 README를 참고하세요.</p>
-  <p>Swagger UI에서 API 명세를 확인하고 Try it out으로 실제 요청을 실행할 수 있습니다.</p>
-  <img src="/thumbs/sample" alt="파일시스템 연결로 제공하는 이미지">
+	<article>
+		<div class="container">
+			<h2>RequestRunner</h2>
+			<h3>URL: <span>/api/run/:a/:b</span>, 요청 URL: <span>/api/run/${INTEGER}/${INTEGER}</span></h3>
+			<form id="frm-test">
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">요청 방식</label>
+					<div class="col-9">
+						<select class="form-control" name="method">
+							<option selected></option>
+							<option value="GET">GET</option>
+							<option value="POST">POST</option>
+							<option value="PUT">PUT</option>
+							<option value="DELETE">DELETE</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">질의</label>
+					<div class="col-9">
+						<input type="text" class="form-control" name="querystring"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">본문 유형</label>
+					<div class="col-9">
+						<select class="form-control" name="type">
+							<option selected value="application/json; charset=utf-8">JavaScriptObjectNotation</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">본문</label>
+					<div class="col-9">
+						<input class="form-control" type="text" name="body"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<div class="col-12">
+						<button class="btn btn-primary btn-sm btn-block" type="button">테스트</button>
+					</div>
+				</div>
+			</form>
+			<h3>결과</h3>
+			<blockquote class="blockquote" id="frm-test-result">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestStreamRunner - Stream Out</h2>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestStreamOut">테스트</button>
+			<blockquote class="blockquote" id="frmTestStreamOutResult">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestStreamRunner - Chunked Stream Out</h2>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestChunkedStreamOut">테스트</button>
+			<blockquote class="blockquote" id="frmTestChunkedStreamOutResult">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestServerSentEventsRunner</h2>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestServerSentEventStart">테스트</button>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestServerSentEventStop" style="display: none;">테스트 종료</button>
+			<blockquote class="blockquote" id="frmTestServerSentEvent">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestStreamRunner - Stream In</h2>
+			<p>터미널에서 실행하세요. Content-Length가 있는 PUT 요청의 본문을 서버가 스트림으로 읽어 그대로 반환합니다.</p>
+			<pre id="stream-in-command"></pre>
+			<button type="button" class="btn btn-secondary mb-2" data-copy-command="stream-in-command">명령 복사</button>
+			<span role="status" aria-live="polite"></span>
+			<p>예상 응답 본문: <code>stream input</code></p>
+		</div>
+		<div class="container">
+			<h2>RequestStreamRunner - Chunked Stream In</h2>
+			<p>브라우저에서는 Transfer-Encoding을 직접 지정할 수 없고, Chromium의 스트리밍 업로드는 현재 서버의 HTTP/1.1에서 지원되지 않습니다. 터미널에서 curl로 실제 chunked 요청을 보내세요.</p>
+			<pre id="chunked-stream-in-command"></pre>
+			<button type="button" class="btn btn-secondary mb-2" data-copy-command="chunked-stream-in-command">명령 복사</button>
+			<span role="status" aria-live="polite"></span>
+			<p>예상 응답 본문: <code>chunked input</code>. <code>-v</code>를 추가하면 요청의 Transfer-Encoding: chunked 헤더를 확인할 수 있습니다.</p>
+			<p>명령의 <code>--data-binary "..."</code>를 <code>--data-binary "@파일경로"</code>로 바꾸면 파일도 전송할 수 있습니다.</p>
+		</div>
+		<div class="container">
+			<h2>Content Validation</h2>
+			<h3>URL: <span>/api/run/${TYPE}</span></h3>
+			<form id="frm-test-2">
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">켄텐츠 유형</label>
+					<div class="col-9">
+						<select class="form-control" name="content">
+							<option selected></option>
+							<option value="bool">Boolean</option>
+							<option value="integer">Integer</option>
+							<option value="number">Number</option>
+							<option value="string">String</option>
+							<option value="array">Array</option>
+							<option value="object">Object</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">본문 유형</label>
+					<div class="col-9">
+						<select class="form-control" name="type">
+							<option selected value="application/json; charset=utf-8">JavaScriptObjectNotation</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-form-label col-3 text-right">본문</label>
+					<div class="col-9">
+						<input class="form-control" type="text" name="body"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<div class="col-12">
+						<button class="btn btn-primary btn-sm btn-block" type="button">테스트</button>
+					</div>
+				</div>
+			</form>
+			<h3>결과</h3>
+			<blockquote class="blockquote" id="frm-test-2-result">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+
+		<div class="container">
+			<h2>필터 테스트</h2>
+			<img src="/thumbs/sample" class="img-fluid">
+		</div>
+	</article>
+	<script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+	<script type="application/javascript">
+		$(document).ready(function(e) {
+			$('#stream-in-command').text('curl --http1.1 -X PUT "' + location.origin + '/api/run/stream" -H "Content-Type: application/octet-stream" --data-binary "stream input"');
+			$('#chunked-stream-in-command').text('curl --http1.1 -X PUT "' + location.origin + '/api/run/stream/chunked" -H "Content-Type: application/octet-stream" -H "Transfer-Encoding: chunked" --data-binary "chunked input"');
+			$('[data-copy-command]').click(async function() {
+				const status = $(this).next('[role="status"]');
+				status.text('');
+				if (!navigator.clipboard || !navigator.clipboard.writeText) {
+					status.text('클립보드 복사를 사용할 수 없습니다. HTTPS 또는 localhost로 접속하거나 명령을 직접 선택해 복사하세요.');
+					return;
+				}
+				this.disabled = true;
+				try {
+					await navigator.clipboard.writeText(document.getElementById(this.dataset.copyCommand).textContent);
+					status.text('복사했습니다.');
+				} catch (error) {
+					status.text('복사하지 못했습니다: ' + error.message);
+				} finally {
+					this.disabled = false;
+				}
+			});
+			$('form[id=frm-test] button').click(function(e) {
+				method = $('form[id=frm-test] select[name=method]').val()
+				if(!method)
+					return;
+				qs = $('form[id=frm-test] input[name=querystring]').val()
+				type = $('form[id=frm-test] select[name=type]').val()
+				body = $('form[id=frm-test] input[name=body]').val()
+				const options = {
+					method: method,
+					headers: {}
+				};
+				options['headers']['X-Token'] = crypto.randomUUID();
+				if(method !=='GET' && body !== '') {
+					options['headers']['Content-Type'] = type;
+					options['body'] = body;
+				}
+				let url = '/api/run/' + Math.floor(Math.random() * 1000).toString() + '/' + Math.floor(Math.random() * 1000).toString();
+				if(qs)
+					url += '?' + qs;
+				console.log(options);
+				fetch(url, options).then(function(response) {
+					$('#frm-test-result p').text(response.status + ' ' + response.statusText)
+					response.text().then(function(data) {
+						$('#frm-test-result pre').text(data);
+					});
+				}).catch(function(error) {
+					console.log(error);
+				});
+			});
+			$('form[id=frm-test-2] button').click(function(e) {
+				content = $('form[id=frm-test-2] select[name=content]').val()
+				if(!content)
+					return;
+				type = $('form[id=frm-test-2] select[name=type]').val()
+				body = $('form[id=frm-test-2] input[name=body]').val()
+				const options = {
+					method: 'POST',
+					headers: {
+						'Content-Type': type,
+					},
+					body: body
+				};
+				let url = '/api/content/' + content;
+				console.log(options);
+				fetch(url, options).then(function(response) {
+					$('#frm-test-2-result p').text(response.status + ' ' + response.statusText)
+					response.text().then(function(data) {
+						$('#frm-test-2-result pre').text(data);
+					});
+				}).catch(function(error) {
+					console.log(error);
+				});
+			});
+			$('#btnTestStreamOut').click(function(e) {
+				const options = {method: 'GET'};
+				fetch('/api/run/stream', options).then(function(response) {
+					$('#frmTestStreamOutResult p').text(response.status + ' ' + response.statusText);
+					$('#frmTestStreamOutResult pre').text('');
+					const reader = response.body.getReader();
+					const decoder = new TextDecoder();
+					const read = function() {
+						reader.read().then(append);
+					};
+					const append = function(response) {
+						if(response.done)
+							return;
+						$('#frmTestStreamOutResult pre').append(decoder.decode(response.value));
+						read();
+					};
+					read();
+				}).catch(function(error) {
+					console.log(error);
+				});
+			});
+			$('#btnTestChunkedStreamOut').click(function(e) {
+				const options = {method: 'GET'};
+				fetch('/api/run/stream/chunked', options).then(function(response) {
+					$('#frmTestChunkedStreamOutResult p').text(response.status + ' ' + response.statusText);
+					$('#frmTestChunkedStreamOutResult pre').text('');
+					const reader = response.body.getReader();
+					const decoder = new TextDecoder();
+					const read = function() {
+						reader.read().then(append);
+					};
+					const append = function(response) {
+						if(response.done)
+							return;
+						$('#frmTestChunkedStreamOutResult pre').append(decoder.decode(response.value));
+						read();
+					};
+					read();
+				}).catch(function(error) {
+					console.log(error);
+				});
+			});
+			$('#btnTestServerSentEventStart').click(function(e) {
+				$('#btnTestServerSentEventStart').hide();
+				$('#btnTestServerSentEventStop').show();
+				const es = new EventSource('/api/run/stream/sse');
+				es.onopen = function(event) {
+					console.log(event.type);
+					$('#frmTestServerSentEvent p').text('open');
+					$('#frmTestServerSentEvent pre').text('');
+				};
+				es.onmessage = function(event) {
+					console.log(event.type);
+					$('#frmTestServerSentEvent p').text('message');
+					$('#frmTestServerSentEvent pre').append(event.data);
+					$('#frmTestServerSentEvent pre').append('\n');
+				};
+				es.onerror = function(event) {
+					console.log(event.type);
+					$('#frmTestServerSentEvent p').text('error');
+					$('#frmTestServerSentEvent pre').append(event);
+					$('#frmTestServerSentEvent pre').append('\n');
+				}
+				$('#btnTestServerSentEventStop').click(function(e) {
+					$('#btnTestServerSentEventStop').hide();
+					$('#btnTestServerSentEventStart').show();
+					$('#frmTestServerSentEvent p').text('stopped');
+					es.close();
+				});
+			});
+		});
+	</script>
 </body>
 </html>

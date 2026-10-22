@@ -32,6 +32,35 @@ create_application = import_module(PACKAGE_NAME + '.Sample').create_application
 
 
 class SampleTests(TestCase):
+	def test_original_welcome_page_and_styles_are_served_unchanged(self):
+		with running(create_application()) as address:
+			for url, file in (
+				('/', SAMPLE / 'res' / 'html' / 'welcome.html'),
+				('/css/sample.css', SAMPLE / 'res' / 'css' / 'sample.css'),
+			):
+				status, headers, data = self.call(address, 'GET', url)
+				self.assertEqual(status, 200)
+				self.assertEqual(data, file.read_bytes())
+			text = (SAMPLE / 'res' / 'html' / 'welcome.html').read_text(encoding='utf-8')
+			for marker in (
+				'id="frm-test"',
+				'id="frm-test-2"',
+				'id="btnTestStreamOut"',
+				'id="btnTestChunkedStreamOut"',
+				'id="btnTestServerSentEventStart"',
+				'id="stream-in-command"',
+				'id="chunked-stream-in-command"',
+				'Transfer-Encoding: chunked',
+				'/thumbs/sample',
+				'bootstrap@4.6.2',
+				'jquery-3.6.1.js',
+			):
+				self.assertIn(marker, text)
+			self.assertNotIn('WebSocket', text)
+			self.assertEqual(text.count(".text('curl --http1.1"), 2)
+			self.assertNotIn(".text('curl.exe ", text)
+		return
+
 	def test_generated_handler_names(self):
 		app = create_application()
 		for route in app.router.routes:
