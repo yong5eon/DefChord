@@ -67,21 +67,6 @@ else:
 	)
 
 
-class RunStatus(
-	RequestRunner,
-	method='GET',
-	url='/status',
-	origin=Origin(all=True),
-	summary='Check status and CORS',
-	tags='Common',
-):
-	def run(
-		self,
-		request: Request,
-	) -> Response:
-		return Response()
-
-
 def to_jpeg(request: Request):
 	request.params['path'] += '.jpg'
 	return request, None
@@ -108,7 +93,6 @@ def create_application() -> Application:
 		RunChunkedStreamIn,
 		RunChunkedStreamOut,
 		RunServerSentEvent,
-		RunStatus,
 		*AUTH_HANDLERS,
 		*CONTENT_HANDLERS,
 	):
