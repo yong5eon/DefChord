@@ -23,7 +23,7 @@ from .RequestRunner import (
 from .Request import Request
 from .RequestReader import RequestReader
 from .Response import Response
-from .ResponseSpec import ResponseSpec
+from .ResponseSpecification import ResponseSpecification
 from .ResponseWriter import ResponseWriter
 from .Server import serve
 
@@ -47,7 +47,7 @@ __all__ = (
 	'Request',
 	'RequestReader',
 	'Response',
-	'ResponseSpec',
+	'ResponseSpecification',
 	'ResponseWriter',
 	'serve',
 )

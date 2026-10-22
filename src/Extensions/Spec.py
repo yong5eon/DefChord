@@ -25,7 +25,7 @@ from ..Readers import (
 	TextContentReader,
 )
 from ..Response import Response
-from ..ResponseSpec import ResponseSpec
+from ..ResponseSpecification import ResponseSpecification
 from ..Runners.RunFileSystemObject import FileSystemRoute
 from ..Responses import ResponseJSON
 from ..Validators import (
@@ -90,7 +90,7 @@ class Spec(Extension):
 		def responses(value):
 			if value is None:
 				return {'default': {'description': 'No response specification declared'}}
-			if isinstance(value, ResponseSpec):
+			if isinstance(value, ResponseSpecification):
 				items = (value,)
 			elif isinstance(value, Mapping):
 				result = {}
@@ -111,11 +111,11 @@ class Spec(Extension):
 			elif isinstance(value, Sequence) and not isinstance(value, str):
 				items = value
 			else:
-				raise TypeError('response must be a ResponseSpec or response mapping')
+				raise TypeError('response must be a ResponseSpecification or response mapping')
 			result = {}
 			for item in items:
-				if not isinstance(item, ResponseSpec):
-					raise TypeError('Response lists must contain ResponseSpec instances')
+				if not isinstance(item, ResponseSpecification):
+					raise TypeError('Response lists must contain ResponseSpecification instances')
 				if not 100 <= item.status <= 599:
 					raise ValueError('Invalid response status code')
 				code = str(item.status)

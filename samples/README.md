@@ -36,7 +36,7 @@ python -m samples.Sample
 | `Request/RunServerSentEvent` | [Streaming.py](Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
 | `RunStatus`, `RunOptions` | [Sample.py](Sample.py) | `/status`, `/options?p=/status` 및 실제 OPTIONS |
 | `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/sample`, `/favicon.ico`, `/css/sample.css`, `/` |
-| `Model.py` | [Requests.py](Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpec으로 선언 |
+| `Model.py` | [Requests.py](Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
 | `SampleHandler` 출력 | [Sample.py](Sample.py) | 표준 로깅과 서버 오류·연결 종료 로깅 사용 |
 | `RunGetDocument` | [Sample.py](Sample.py) | Spec 확장의 GET `/api/doc`에서 OpenAPI 3.1 제공 |
 | `scripts/DescriptionToFile` | [DescriptionToFile.py](scripts/DescriptionToFile.py) | 같은 Application의 OpenAPI 문서를 파일로 저장 |

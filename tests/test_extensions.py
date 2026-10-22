@@ -24,7 +24,7 @@ from DefEssential import (
 	QueryString,
 	RequestRunner,
 	Response,
-	ResponseSpec,
+	ResponseSpecification,
 )
 from DefEssential.Credentials import (
 	Header,
@@ -553,7 +553,7 @@ class SpecTests(TestCase):
 					{'value': 1},
 				),
 			),
-			response=ResponseSpec(
+			response=ResponseSpecification(
 				201,
 				'생성됨',
 				Content('application/json', ToSchema(Model)),
@@ -629,12 +629,12 @@ class SpecTests(TestCase):
 			method='GET',
 			url='/conflict',
 			response=(
-				ResponseSpec(
+				ResponseSpecification(
 					200,
 					'정상',
 					Content('application/json', Schema('Same', String())),
 				),
-				ResponseSpec(
+				ResponseSpecification(
 					400,
 					'오류',
 					Content('application/json', Schema('Same', Integer())),

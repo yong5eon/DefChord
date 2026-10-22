@@ -10,7 +10,7 @@ from .Content import Content
 
 
 @dataclass(frozen=True)
-class ResponseSpec:
+class ResponseSpecification:
 	"""Declare an OpenAPI response independently of the actual Response."""
 
 	status: int

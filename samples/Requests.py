@@ -7,7 +7,7 @@ from DefEssential import (
 	Request,
 	RequestRunner,
 	Response,
-	ResponseSpec,
+	ResponseSpecification,
 )
 from DefEssential.Descriptor import Schema
 from DefEssential.Readers import (
@@ -123,7 +123,7 @@ JSON_BODY = Body(
 		},
 	),
 )
-CALCULATION_RESPONSE = ResponseSpec(
+CALCULATION_RESPONSE = ResponseSpecification(
 	200,
 	'Validated input and calculation result',
 	Content(
