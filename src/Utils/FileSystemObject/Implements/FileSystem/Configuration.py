@@ -3,7 +3,7 @@
 from DefEssential.Utils.FileSystemObject import Configuration as BaseConfiguration
 
 __all__ = (
-	'Configuration'
+	'Configuration',
 )
 
 
