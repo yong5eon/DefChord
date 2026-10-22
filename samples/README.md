@@ -116,10 +116,10 @@ curl.exe -o sample.jpg http://127.0.0.1:8000/thumbs/sample
 | 경로 | 기능 |
 | --- | --- |
 | `/metrics` | HTTP 요청·전송 완료 Metrics |
-| `/dashboard` | 실시간 지표 UI; JSON은 Accept 헤더로 선택 |
+| `/dashboard` | Status: 실시간 지표 UI; JSON은 Accept 헤더로 선택 |
 | `/api/doc` | OpenAPI 3.1 JSON |
 | `/swagger` | CDN 기반 Swagger UI·요청/응답 명세·Try it out |
-| `/health` | 실행 상태 확인 |
+| `/health` | Ping: 실행 상태 확인 |
 
 ```powershell
 python -m samples.scripts.DescriptionToFile .\openapi.json

@@ -15,8 +15,8 @@ from DefEssential import (
 )
 from DefEssential.Runners.RunOptions import RunOptions
 from DefEssential.Extensions import (
-	Dashboard,
-	HealthCheck,
+	Status,
+	Ping,
 	Metrics,
 	Spec,
 	Swagger,
@@ -92,10 +92,10 @@ def create_application() -> Application:
 	spec = Spec('/api/doc', title='DefEssential HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),
-		Dashboard('/dashboard'),
+		Status('/dashboard'),
 		spec,
 		Swagger('/swagger'),
-		HealthCheck('/health'),
+		Ping('/health'),
 	))
 	for handler in (
 		RunGet,

@@ -42,7 +42,7 @@ setup(
 	include_package_data=False,
 	package_data={
 		'DefEssential.Extensions': [
-			'Dashboard.html',
+			'Status.html',
 			'Swagger.html',
 		],
 	},

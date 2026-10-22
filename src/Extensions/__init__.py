@@ -1,12 +1,12 @@
-from .Dashboard import Dashboard
-from .HealthCheck import HealthCheck
+from .Status import Status
+from .Ping import Ping
 from .Metrics import Metrics
 from .Spec import Spec
 from .Swagger import Swagger
 
 __all__ = (
-	'Dashboard',
-	'HealthCheck',
+	'Status',
+	'Ping',
 	'Metrics',
 	'Spec',
 	'Swagger',

@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 	from ..Application import Application
 
 
-class Dashboard(Extension):
-	"""Display Metrics snapshots as HTML and JSON."""
+class Status(Extension):
+	"""Metrics 스냅샷을 HTML과 JSON으로 제공한다."""
 
 	def __init__(
 		self,
@@ -26,7 +26,7 @@ class Dashboard(Extension):
 	):
 		super().__init__(path)
 		if not isinstance(title, str) or not title or not isinstance(description, str):
-			raise ValueError('Dashboard title must be a non-empty string and description must be a string')
+			raise ValueError('Status title must be a non-empty string and description must be a string')
 		self.title = title
 		self.description = description
 		self.metrics: Optional[Metrics] = None
@@ -38,7 +38,7 @@ class Dashboard(Extension):
 	) -> None:
 		metrics = [extension for extension in app.exts.values() if isinstance(extension, Metrics)]
 		if len(metrics) != 1:
-			raise ValueError('Dashboard requires exactly one Metrics extension')
+			raise ValueError('Status requires exactly one Metrics extension')
 		self.metrics = metrics[0]
 		return
 
@@ -49,13 +49,13 @@ class Dashboard(Extension):
 	) -> Response:
 		if request.header('Accept') == 'application/json':
 			if self.metrics is None:
-				raise RuntimeError('Dashboard is not bound to a Metrics extension')
+				raise RuntimeError('Status is not bound to a Metrics extension')
 			return ResponseJSON(
 				self.metrics.snapshot(app),
 				headers={'Cache-Control': 'no-store'},
 			)
 		return page(
-			'Dashboard',
+			'Status',
 			self.title,
 			self.description,
 		)

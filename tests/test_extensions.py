@@ -40,8 +40,8 @@ from DefEssential.Descriptor import (
 	ToSchema,
 )
 from DefEssential.Extensions import (
-	Dashboard,
-	HealthCheck,
+	Status,
+	Ping,
 	Metrics,
 	Spec,
 	Swagger,
@@ -95,21 +95,21 @@ class ExtensionTests(TestCase):
 		metrics = Metrics('/metrics')
 		spec = Spec('/spec')
 		app = Application(exts=(
-			Dashboard('/dashboard', title='<DefEssential>'),
+			Status('/status', title='<DefEssential>'),
 			Swagger('/swagger'),
 			metrics,
 			spec,
-			HealthCheck('/health'),
+			Ping('/ping'),
 		))
 		app.register(Echo)
 		other = Application(exts=(Spec('/spec'),))
 		with redirect_stdout(StringIO()) as output:
 			with running(app) as address:
 				for path, expected in (
-					('/health', 'application/json'),
+					('/ping', 'application/json'),
 					('/metrics', 'text/plain'),
 					('/spec', 'application/json'),
-					('/dashboard', 'text/html'),
+					('/status', 'text/html'),
 					('/swagger', 'text/html'),
 				):
 					status, headers, body = self.get(address, path)
@@ -118,30 +118,35 @@ class ExtensionTests(TestCase):
 				self.assertTrue(app.running)
 				status, headers, body = self.get(address, '/echo/hello')
 				self.assertEqual(body, b'hello')
-				status, headers, body = self.get(address, '/dashboard', {'Accept': 'application/json'})
+				status, headers, body = self.get(address, '/status', {'Accept': 'application/json'})
 				self.assertIn('GET /echo/:id', loads(body)['requests'])
 				status, headers, body = self.get(address, '/swagger')
 				self.assertIn(b'data-spec-url="/spec"', body)
 				self.assertIn(b'SwaggerUIBundle', body)
-				status, headers, body = self.get(address, '/dashboard')
+				status, headers, body = self.get(address, '/status')
 				self.assertIn(b'&lt;DefEssential&gt;', body)
+				self.assertIn(b'<title>&lt;DefEssential&gt; Status</title>', body)
 				self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
+				status, headers, body = self.get(address, '/ping')
+				self.assertEqual(status, 200)
+				self.assertEqual(loads(body), {'status': 'running'})
 		self.assertFalse(app.running)
 		self.assertIn('Extensions: 5 extensions', output.getvalue())
 		self.assertIn(f'http://127.0.0.1:{address[1]}/swagger', output.getvalue())
 		self.assertEqual(spec.document(other)['paths'], {})
 		self.assertNotIn('/spec', spec.document(app)['paths'])
-		health = HealthCheck('/state').handle(app, request())
-		assert isinstance(health.body, bytes)
-		self.assertEqual(loads(health.body)['status'], 'stopped')
+		ping = Ping('/state').handle(app, request())
+		assert isinstance(ping.body, bytes)
+		self.assertEqual(ping.status, 503)
+		self.assertEqual(loads(ping.body)['status'], 'stopped')
 		return
 
 	def test_dependency_collision_and_instance_ownership(self):
 		for extensions in (
-			(Dashboard('/dashboard'),),
+			(Status('/status'),),
 			(Swagger('/swagger'),),
 			(Metrics('/same'), Spec('/same')),
-			(Metrics('/a'), Metrics('/b'), Dashboard('/dashboard')),
+			(Metrics('/a'), Metrics('/b'), Status('/status')),
 			(Spec('/a'), Spec('/b'), Swagger('/swagger')),
 		):
 			with self.assertRaises(ValueError):

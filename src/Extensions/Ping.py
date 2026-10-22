@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 	from ..Application import Application
 
 
-class HealthCheck(Extension):
-	"""Report HTTP responsiveness and Application running state."""
+class Ping(Extension):
+	"""HTTP 응답 여부와 Application 실행 상태를 제공한다."""
 
 	def handle(
 		self,
