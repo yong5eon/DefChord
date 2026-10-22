@@ -6,10 +6,12 @@ from unittest import TestCase
 from DefEssential import (
 	Application,
 	ClientError,
+	Error,
 	Request,
 	RequestReader,
 	RequestRunner,
 	Response,
+	ServerError,
 )
 
 
@@ -33,6 +35,25 @@ def request(
 
 
 class CoreTests(TestCase):
+	def test_server_error_status_and_reason(self):
+		error = ServerError('처리 실패')
+		self.assertIsInstance(error, Error)
+		self.assertEqual(error.status, 500)
+		self.assertEqual(error.message, 'Internal Server Error')
+		self.assertEqual(error.reason, '처리 실패')
+		self.assertEqual(str(error), '처리 실패')
+		error = ServerError('일시적으로 사용할 수 없음', status=503)
+		self.assertEqual(error.status, 503)
+		self.assertEqual(error.message, 'Service Unavailable')
+		for status in (
+			499,
+			600,
+		):
+			with self.subTest(status=status):
+				with self.assertRaises(ValueError):
+					ServerError('잘못된 상태 코드', status=status)
+		return
+
 	def test_custom_method_and_request_lifetime(self):
 		instances = []
 
