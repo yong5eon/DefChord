@@ -27,7 +27,10 @@ class Server(ThreadingHTTPServer):
 		self.app.start()
 		try:
 			startup(self)
-			super().serve_forever(poll_interval=poll_interval)
+			try:
+				super().serve_forever(poll_interval=poll_interval)
+			except KeyboardInterrupt:
+				getLogger('DefEssential.Server').info('Shutdown requested by keyboard interrupt')
 		finally:
 			self.app.stop()
 		return

@@ -16,6 +16,8 @@ python -m samples.Sample
 
 브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. `create_application()`을 호출할 때마다 라우터·파일 연결은 독립적으로 생성된다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
 
+`Ctrl+C`로 서버 실행 루프를 중단하면 traceback 없이 확장을 역순으로 종료하고 `with serve(...)` 블록을 빠져나오면서 수신 소켓을 닫는다. 정리 중 발생한 오류는 숨기지 않는다. 실행 중인 요청 스레드는 기존 daemon 정책을 따르며, 무한 스트림의 완료를 기다리는 종료 방식은 아니다.
+
 시작 출력의 핸들러 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. 확장 처리기는 확장 클래스 이름, 파일 처리기는 `RunFile(절대 파일 경로)`, 로컬 파일시스템 처리기는 `RunFileSystemObject(절대 루트 경로)`로 표시한다. 다른 파일시스템 연결은 `RunFileSystemObject(URL 접두사)`로 표시하며, 확장 목록에는 호스트 없이 등록 경로만 표시한다.
 
 ## 이전 대응표

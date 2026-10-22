@@ -6,10 +6,12 @@ from threading import (
 	Thread,
 )
 from unittest import TestCase
+from unittest.mock import patch
 
 from DefEssential import (
 	Application,
 	Body,
+	Extension,
 	RequestRunner,
 	Response,
 	serve,
@@ -42,6 +44,43 @@ def running(app):
 
 
 class ServerTests(TestCase):
+	def test_keyboard_interrupt_stops_application_and_closes_socket(self):
+		events = []
+
+		class Lifecycle(Extension):
+			def start(self, app):
+				events.append('start')
+				return
+
+			def stop(self, app):
+				events.append('stop')
+				return
+
+			def __call__(self, app, request):
+				return Response()
+
+		app = Application(exts=(Lifecycle('/lifecycle'),))
+		with serve('127.0.0.1', 0, app) as server:
+			with patch('DefEssential.Server.startup'):
+				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
+					with self.assertLogs('DefEssential.Server', level='INFO') as logs:
+						server.serve_forever()
+			self.assertFalse(app.running)
+			self.assertEqual(events, ['start', 'stop'])
+			self.assertIn('Shutdown requested', logs.output[0])
+		self.assertEqual(server.socket.fileno(), -1)
+		return
+
+	def test_keyboard_interrupt_does_not_hide_shutdown_errors(self):
+		app = Application()
+		with serve('127.0.0.1', 0, app) as server:
+			with patch('DefEssential.Server.startup'):
+				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
+					with patch.object(app, 'stop', side_effect=RuntimeError('shutdown failed')):
+						with self.assertRaisesRegex(RuntimeError, 'shutdown failed'):
+							server.serve_forever()
+		return
+
 	def test_real_http_and_custom_method(self):
 		class Sample(
 			RequestRunner,
