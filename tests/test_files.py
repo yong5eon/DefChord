@@ -3,15 +3,15 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	ClientError,
 	Response,
 	ResponseWriter,
 )
-from DefStar.Responses import ResponseFile
-from DefStar.Responses.ResponseFile import FileBody
-from DefStar.Utils.FileSystemObject.Implements.FileSystem import (
+from DefEssential.Responses import ResponseFile
+from DefEssential.Responses.ResponseFile import FileBody
+from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )

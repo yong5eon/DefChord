@@ -200,40 +200,40 @@ class Metrics(Extension):
 	) -> str:
 		snapshot = self.snapshot(app)
 		lines = [
-			'# HELP defstar_application_running Application lifecycle is running; not an external heartbeat.',
-			'# TYPE defstar_application_running gauge',
-			f'defstar_application_running {int(snapshot["running"])}',
-			'# HELP defstar_application_uptime_seconds Seconds since application startup.',
-			'# TYPE defstar_application_uptime_seconds gauge',
-			f'defstar_application_uptime_seconds {snapshot["uptime"]}',
-			'# HELP defstar_requests_active Requests whose response transfer has not completed.',
-			'# TYPE defstar_requests_active gauge',
-			'# HELP defstar_requests_total Completed HTTP requests by outcome.',
-			'# TYPE defstar_requests_total counter',
-			'# HELP defstar_request_duration_seconds Duration through response transfer.',
-			'# TYPE defstar_request_duration_seconds summary',
-			'# TYPE defstar_request_oldest_active_seconds gauge',
-			'# TYPE defstar_requests_window gauge',
-			'# TYPE defstar_request_window_duration_seconds_sum gauge',
-			'# TYPE defstar_request_window_duration_seconds_max gauge',
+			'# HELP defessential_application_running Application lifecycle is running; not an external heartbeat.',
+			'# TYPE defessential_application_running gauge',
+			f'defessential_application_running {int(snapshot["running"])}',
+			'# HELP defessential_application_uptime_seconds Seconds since application startup.',
+			'# TYPE defessential_application_uptime_seconds gauge',
+			f'defessential_application_uptime_seconds {snapshot["uptime"]}',
+			'# HELP defessential_requests_active Requests whose response transfer has not completed.',
+			'# TYPE defessential_requests_active gauge',
+			'# HELP defessential_requests_total Completed HTTP requests by outcome.',
+			'# TYPE defessential_requests_total counter',
+			'# HELP defessential_request_duration_seconds Duration through response transfer.',
+			'# TYPE defessential_request_duration_seconds summary',
+			'# TYPE defessential_request_oldest_active_seconds gauge',
+			'# TYPE defessential_requests_window gauge',
+			'# TYPE defessential_request_window_duration_seconds_sum gauge',
+			'# TYPE defessential_request_window_duration_seconds_max gauge',
 		]
 		for key, stats in snapshot['requests'].items():
 			tags = 'route="' + label(key) + '"'
 			lines.extend((
-				f'defstar_requests_active{{{tags}}} {stats["active"]}',
-				f'defstar_requests_total{{{tags},outcome="success"}} {stats["success"]}',
-				f'defstar_requests_total{{{tags},outcome="failure"}} {stats["failure"]}',
-				f'defstar_request_duration_seconds_count{{{tags}}} {stats["success"] + stats["failure"]}',
-				f'defstar_request_duration_seconds_sum{{{tags}}} {stats["duration"]}',
-				f'defstar_request_oldest_active_seconds{{{tags}}} {stats["oldest_active"]}',
+				f'defessential_requests_active{{{tags}}} {stats["active"]}',
+				f'defessential_requests_total{{{tags},outcome="success"}} {stats["success"]}',
+				f'defessential_requests_total{{{tags},outcome="failure"}} {stats["failure"]}',
+				f'defessential_request_duration_seconds_count{{{tags}}} {stats["success"] + stats["failure"]}',
+				f'defessential_request_duration_seconds_sum{{{tags}}} {stats["duration"]}',
+				f'defessential_request_oldest_active_seconds{{{tags}}} {stats["oldest_active"]}',
 			))
 			for seconds, window in stats['windows'].items():
 				window_tags = tags + ',window_seconds="' + seconds + '"'
 				lines.extend((
-					f'defstar_requests_window{{{window_tags},outcome="success"}} {window["success"]}',
-					f'defstar_requests_window{{{window_tags},outcome="failure"}} {window["failure"]}',
-					f'defstar_request_window_duration_seconds_sum{{{window_tags}}} {window["duration"]}',
-					f'defstar_request_window_duration_seconds_max{{{window_tags}}} {window["max_duration"]}',
+					f'defessential_requests_window{{{window_tags},outcome="success"}} {window["success"]}',
+					f'defessential_requests_window{{{window_tags},outcome="failure"}} {window["failure"]}',
+					f'defessential_request_window_duration_seconds_sum{{{window_tags}}} {window["duration"]}',
+					f'defessential_request_window_duration_seconds_max{{{window_tags}}} {window["max_duration"]}',
 				))
 		return '\n'.join(lines) + '\n'
 

@@ -1,7 +1,7 @@
 from io import BytesIO
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Auth,
 	Authorization,
@@ -18,7 +18,7 @@ from DefStar import (
 	Response,
 	ResponseWriter,
 )
-from DefStar.Credentials import (
+from DefEssential.Credentials import (
 	Cookie,
 	Header,
 	HTTP,
@@ -28,15 +28,15 @@ from DefStar.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefStar.Readers import (
+from DefEssential.Readers import (
 	ByteStringContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,
 	TextContentReader,
 	TypeReader,
 )
-from DefStar.Writers import StreamWriter
-from DefStar.Validator.Patterns import (
+from DefEssential.Writers import StreamWriter
+from DefEssential.Validator.Patterns import (
 	IsString,
 	SetDefault,
 	ToInteger,

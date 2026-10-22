@@ -3,7 +3,7 @@ from sys import modules
 from types import ModuleType
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	ClientError,
 	Request,
@@ -219,9 +219,9 @@ class CoreTests(TestCase):
 		return
 
 	def test_module_load_is_independent_and_idempotent(self):
-		module = ModuleType('defstar_test_handlers')
+		module = ModuleType('defessential_test_handlers')
 		exec(
-			'from DefStar import RequestRunner, Response\n'
+			'from DefEssential import RequestRunner, Response\n'
 			'class Sample(RequestRunner, method="GET", url="/sample"):\n'
 			'\tdef run(self, request):\n'
 			'\t\treturn Response(body=b"loaded")\n',

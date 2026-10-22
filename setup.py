@@ -7,7 +7,7 @@ from setuptools import (
 	setup,
 )
 
-PACKAGE = 'DefStar'
+PACKAGE = 'DefEssential'
 SOURCE = 'src'
 PACKAGES = [PACKAGE]
 PACKAGE_DIR = {PACKAGE: SOURCE}
@@ -20,16 +20,16 @@ for package in find_packages(SOURCE):
 	)
 
 setup(
-	name='DefStar',
-	description='The Modern Synchronous Python WSGI Framework',
+	name='DefEssential',
+	description='The Modern Synchronous Python Web Application Framework',
 	long_description=Path('README.md').read_text(encoding='utf-8'),
 	long_description_content_type='text/markdown',
 	author='Heo Yongseon',
-	url='https://github.com/yong5eon/DefStar',
+	url='https://github.com/yong5eon/DefEssential',
 	project_urls={
-		'Source': 'https://github.com/yong5eon/DefStar',
-		'Issues': 'https://github.com/yong5eon/DefStar/issues',
-		'Releases': 'https://github.com/yong5eon/DefStar/releases',
+		'Source': 'https://github.com/yong5eon/DefEssential',
+		'Issues': 'https://github.com/yong5eon/DefEssential/issues',
+		'Releases': 'https://github.com/yong5eon/DefEssential/releases',
 	},
 	use_scm_version={
 		'tag_regex': r'^v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:(?:rc|\.post)[0-9]+)?)$',
@@ -41,7 +41,7 @@ setup(
 	package_dir=PACKAGE_DIR,
 	include_package_data=False,
 	package_data={
-		'DefStar.Extensions': [
+		'DefEssential.Extensions': [
 			'Dashboard.html',
 			'Swagger.html',
 		],

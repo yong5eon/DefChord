@@ -4,7 +4,7 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
-DefStar를 설치했거나 개발용 import 경로가 연결된 환경에서 DefStar 프로젝트 디렉터리를 기준으로 실행한다.
+DefEssential를 설치했거나 개발용 import 경로가 연결된 환경에서 DefEssential 프로젝트 디렉터리를 기준으로 실행한다.
 
 ```powershell
 python -m samples.Sample

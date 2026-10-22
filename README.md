@@ -1,7 +1,7 @@
-# DefStar
+# DefEssential
 
-The Modern Synchronous Python WSGI Framework
+The Modern Synchronous Python Web Application Framework
 
 **Just def.**<br>
-**Let web applications do the work.**<br>
+**Let web apps do the work.**<br>
 **You don't need to await this.**

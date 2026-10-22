@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from json import dumps
 from pathlib import Path
 
-from DefStar.Extensions import Spec
+from DefEssential.Extensions import Spec
 from ..Sample import create_application
 
 

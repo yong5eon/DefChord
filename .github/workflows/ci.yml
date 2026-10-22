@@ -242,7 +242,7 @@ jobs:
           with Path(environ['GITHUB_ENV']).open('a', encoding='utf-8') as output:
               output.write(f'RELEASE_VERSION={version}\n')
           with Path(environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as summary:
-              summary.write(f'## DefStar {version}\n\nSource: `{environ["GITHUB_SHA"]}`\n')
+              summary.write(f'## DefEssential {version}\n\nSource: `{environ["GITHUB_SHA"]}`\n')
           PY
       - name: Install build tools
         run: python -m pip install --upgrade build twine wheel
@@ -366,7 +366,7 @@ jobs:
           with ZipFile(wheels[0]) as archive:
               metadata_path, = (name for name in archive.namelist() if name.endswith('.dist-info/METADATA'))
               metadata = BytesParser().parsebytes(archive.read(metadata_path))
-          project = 'DefStar'
+          project = 'DefEssential'
           if metadata['Name'] != project:
               raise ValueError(f'Unexpected distribution: {metadata["Name"]}')
           version = metadata['Version']

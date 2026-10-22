@@ -21,7 +21,7 @@ class Dashboard(Extension):
 		self,
 		path: str,
 		*,
-		title: str = 'DefStar',
+		title: str = 'DefEssential',
 		description: str = '',
 	):
 		super().__init__(path)

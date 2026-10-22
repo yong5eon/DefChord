@@ -7,14 +7,14 @@ from threading import (
 )
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Body,
 	RequestRunner,
 	Response,
 	serve,
 )
-from DefStar.Readers import StreamContentReader
+from DefEssential.Readers import StreamContentReader
 
 
 @contextmanager

@@ -1,12 +1,12 @@
-from DefStar import (
+from DefEssential import (
 	Body,
 	Request,
 	RequestRunner,
 )
-from DefStar.Readers import JavaScriptObjectNotationContentReader
-from DefStar.Responses import ResponseJSON
-from DefStar.Validator import Pattern
-from DefStar.Validator.Patterns import (
+from DefEssential.Readers import JavaScriptObjectNotationContentReader
+from DefEssential.Responses import ResponseJSON
+from DefEssential.Validator import Pattern
+from DefEssential.Validator.Patterns import (
 	IsArray,
 	IsBool,
 	IsInteger,

@@ -1,4 +1,4 @@
-from DefStar import (
+from DefEssential import (
 	Auth,
 	Authorization,
 	Body,
@@ -7,7 +7,7 @@ from DefStar import (
 	Request,
 	RequestRunner,
 )
-from DefStar.Credentials import (
+from DefEssential.Credentials import (
 	Cookie,
 	Header,
 	HTTP,
@@ -18,16 +18,16 @@ from DefStar.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefStar.Readers import FormUrlEncodedContentReader
-from DefStar.Responses import ResponseJSON
-from DefStar.Validator.Patterns import (
+from DefEssential.Readers import FormUrlEncodedContentReader
+from DefEssential.Responses import ResponseJSON
+from DefEssential.Validator.Patterns import (
 	IsIn,
 	IsObject,
 	IsOptional,
 	IsString,
 	SetDefault,
 )
-from DefStar.Validator.Patterns.Object import (
+from DefEssential.Validator.Patterns.Object import (
 	IsMappingOf,
 	IsRequiredIn,
 )

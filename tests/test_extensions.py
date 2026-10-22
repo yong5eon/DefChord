@@ -12,7 +12,7 @@ from typing import (
 from unittest import TestCase
 from unittest.mock import patch
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Auth,
 	Body,
@@ -26,12 +26,12 @@ from DefStar import (
 	Response,
 	ResponseSpec,
 )
-from DefStar.Credentials import (
+from DefEssential.Credentials import (
 	Header,
 	HTTP,
 	OAuth2Password,
 )
-from DefStar.Descriptor import (
+from DefEssential.Descriptor import (
 	Integer,
 	Object,
 	Properties,
@@ -39,16 +39,16 @@ from DefStar.Descriptor import (
 	String,
 	ToSchema,
 )
-from DefStar.Extensions import (
+from DefEssential.Extensions import (
 	Dashboard,
 	HealthCheck,
 	Metrics,
 	Spec,
 	Swagger,
 )
-from DefStar.Readers import JavaScriptObjectNotationContentReader
-from DefStar.Validator.Patterns import ToInteger
-from DefStar.Writers import ChunkedStreamWriter
+from DefEssential.Readers import JavaScriptObjectNotationContentReader
+from DefEssential.Validator.Patterns import ToInteger
+from DefEssential.Writers import ChunkedStreamWriter
 
 from test_features import (
 	SessionAuthorization,
@@ -95,7 +95,7 @@ class ExtensionTests(TestCase):
 		metrics = Metrics('/metrics')
 		spec = Spec('/spec')
 		app = Application(exts=(
-			Dashboard('/dashboard', title='<DefStar>'),
+			Dashboard('/dashboard', title='<DefEssential>'),
 			Swagger('/swagger'),
 			metrics,
 			spec,
@@ -124,7 +124,7 @@ class ExtensionTests(TestCase):
 				self.assertIn(b'data-spec-url="/spec"', body)
 				self.assertIn(b'SwaggerUIBundle', body)
 				status, headers, body = self.get(address, '/dashboard')
-				self.assertIn(b'&lt;DefStar&gt;', body)
+				self.assertIn(b'&lt;DefEssential&gt;', body)
 				self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
 		self.assertFalse(app.running)
 		self.assertIn('Extensions: 5 extensions', output.getvalue())
@@ -208,7 +208,7 @@ class ExtensionTests(TestCase):
 		return
 
 	def test_swagger_spec_binding_escaping_headers_and_head(self):
-		swagger = Swagger('/swagger', title='<DefStar>', description='</script>')
+		swagger = Swagger('/swagger', title='<DefEssential>', description='</script>')
 		spec = Spec('/custom-spec')
 		app = Application(exts=(
 			swagger,
@@ -218,7 +218,7 @@ class ExtensionTests(TestCase):
 		assert isinstance(response, Response)
 		assert isinstance(response.body, bytes)
 		self.assertIn(b'data-spec-url="/custom-spec"', response.body)
-		self.assertIn(b'&lt;DefStar&gt;', response.body)
+		self.assertIn(b'&lt;DefEssential&gt;', response.body)
 		self.assertIn(b'&lt;/script&gt;', response.body)
 		self.assertIn(b'validatorUrl: null', response.body)
 		self.assertIn(b'persistAuthorization: false', response.body)
@@ -266,7 +266,7 @@ class ExtensionTests(TestCase):
 		return
 
 	def test_metrics_windows_and_unmatched_cardinality(self):
-		metrics_module = import_module('DefStar.Extensions.Metrics')
+		metrics_module = import_module('DefEssential.Extensions.Metrics')
 		metrics = Metrics('/metrics')
 		app = Application(exts=(metrics,))
 		app.register(Echo)
@@ -406,7 +406,7 @@ class ExtensionTests(TestCase):
 		app = Application(exts=(metrics,))
 		app.register(Broken)
 		with redirect_stdout(StringIO()):
-			with self.assertLogs('DefStar.Server', level='ERROR'):
+			with self.assertLogs('DefEssential.Server', level='ERROR'):
 				with running(app) as address:
 					self.assertEqual(self.get(address, '/broken')[2], b'partial')
 					self.assertTrue(done.wait(3))
@@ -498,7 +498,7 @@ class SpecTests(TestCase):
 		self.assertEqual(parameters['header', 'X-Required']['schema']['enum'], ['yes', 'no'])
 		self.assertEqual(operation['requestBody']['content']['application/json']['example'], {'value': 1})
 		self.assertIn('Model', document['components']['schemas'])
-		self.assertEqual(document['x-defstar-operations'][0]['method'], 'CUSTOM')
+		self.assertEqual(document['x-defessential-operations'][0]['method'], 'CUSTOM')
 		return
 
 	def test_auth_schemes_with_same_kind_remain_distinct(self):

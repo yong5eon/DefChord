@@ -17,7 +17,7 @@ from test_server import running
 
 
 SAMPLE = Path(__file__).resolve().parent.parent / 'samples'
-PACKAGE_NAME = 'defstar_http_sample'
+PACKAGE_NAME = 'defessential_http_sample'
 SPEC = spec_from_file_location(
 	PACKAGE_NAME,
 	SAMPLE / '__init__.py',
@@ -211,7 +211,7 @@ class SampleTests(TestCase):
 		return
 
 	def test_stream_input_and_output_over_http(self):
-		with patch('defstar_http_sample.Streaming.sleep'):
+		with patch('defessential_http_sample.Streaming.sleep'):
 			with running(create_application()) as address:
 				for url, chunked in (
 					('/api/run/stream', False),
@@ -236,7 +236,7 @@ class SampleTests(TestCase):
 
 	def test_sse_writer_sample_contract(self):
 		from io import BytesIO
-		from DefStar import (
+		from DefEssential import (
 			Request,
 			ResponseWriter,
 		)
@@ -253,8 +253,8 @@ class SampleTests(TestCase):
 				output,
 			),
 		)
-		with patch('defstar_http_sample.Streaming.randrange', return_value=5):
-			with patch('defstar_http_sample.Streaming.sleep', side_effect=ConnectionResetError):
+		with patch('defessential_http_sample.Streaming.randrange', return_value=5):
+			with patch('defessential_http_sample.Streaming.sleep', side_effect=ConnectionResetError):
 				with self.assertRaises(ConnectionResetError):
 					RunServerSentEvent().run(req)
 		self.assertIn(b'data: 5\n', output.getvalue())

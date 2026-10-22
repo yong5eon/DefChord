@@ -4,7 +4,7 @@ from logging import (
 )
 from pathlib import Path
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Origin,
 	QueryString,
@@ -13,20 +13,20 @@ from DefStar import (
 	Response,
 	serve,
 )
-from DefStar.Runners.RunOptions import RunOptions
-from DefStar.Extensions import (
+from DefEssential.Runners.RunOptions import RunOptions
+from DefEssential.Extensions import (
 	Dashboard,
 	HealthCheck,
 	Metrics,
 	Spec,
 	Swagger,
 )
-from DefStar.Responses import ResponseJSON
-from DefStar.Validator.Patterns import (
+from DefEssential.Responses import ResponseJSON
+from DefEssential.Validator.Patterns import (
 	IsOptional,
 	IsString,
 )
-from DefStar.Utils.FileSystemObject.Implements.FileSystem import (
+from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )
@@ -89,7 +89,7 @@ def to_jpeg(request: Request):
 
 def create_application() -> Application:
 	"""Create independent routes and filesystem connections on each call."""
-	spec = Spec('/api/doc', title='DefStar HTTP Sample')
+	spec = Spec('/api/doc', title='DefEssential HTTP Sample')
 	app = Application(exts=(
 		Metrics('/metrics'),
 		Dashboard('/dashboard'),

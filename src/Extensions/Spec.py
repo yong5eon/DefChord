@@ -48,7 +48,7 @@ class Spec(Extension):
 		self,
 		path: str,
 		*,
-		title: str = 'DefStar',
+		title: str = 'DefEssential',
 		version: str = '1.0.0',
 		description=None,
 	):
@@ -162,7 +162,7 @@ class Spec(Extension):
 			path_names = [match.group(1) for match in route.variable.finditer(route.url)]
 			if isinstance(route, FileSystemRoute):
 				path_names = ['path']
-				operation['x-defstar-catch-all'] = True
+				operation['x-defessential-catch-all'] = True
 			for location, check, names in (
 				('path', properties.parameters, path_names),
 				('query', properties.qs, ()),
@@ -265,7 +265,7 @@ class Spec(Extension):
 			},
 		}
 		if custom:
-			document['x-defstar-operations'] = custom
+			document['x-defessential-operations'] = custom
 		return document
 
 	def handle(

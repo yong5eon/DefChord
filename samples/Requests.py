@@ -1,4 +1,4 @@
-from DefStar import (
+from DefEssential import (
 	Body,
 	Content,
 	Headers,
@@ -9,13 +9,13 @@ from DefStar import (
 	Response,
 	ResponseSpec,
 )
-from DefStar.Descriptor import Schema
-from DefStar.Readers import (
+from DefEssential.Descriptor import Schema
+from DefEssential.Readers import (
 	ByteStringContentReader,
 	JavaScriptObjectNotationContentReader,
 )
-from DefStar.Responses import ResponseJSON
-from DefStar.Validator.Patterns import (
+from DefEssential.Responses import ResponseJSON
+from DefEssential.Validator.Patterns import (
 	IsGreaterThan,
 	IsLessThan,
 	IsObject,
@@ -25,7 +25,7 @@ from DefStar.Validator.Patterns import (
 	ToFloat,
 	ToInteger,
 )
-from DefStar.Validator.Patterns.Object import (
+from DefEssential.Validator.Patterns.Object import (
 	IsMappingOf,
 	IsRequiredIn,
 )

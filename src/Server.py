@@ -41,8 +41,8 @@ class Server(ThreadingHTTPServer):
 class ServerRequestHandler(BaseHTTPRequestHandler):
 	server: Server
 	protocol_version = 'HTTP/1.1'
-	server_version = 'DefStar'
-	logger = getLogger('DefStar.Server')
+	server_version = 'DefEssential'
+	logger = getLogger('DefEssential.Server')
 
 	def request_reader(self) -> RequestReader:
 		lengths = self.headers.get_all('Content-Length', [])

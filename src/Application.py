@@ -76,7 +76,7 @@ class Application:
 					try:
 						extension.stop(self)
 					except Exception:
-						getLogger('DefStar.Application').exception('Cleanup failed after extension startup failure')
+						getLogger('DefEssential.Application').exception('Cleanup failed after extension startup failure')
 				raise
 			self.running = True
 		return
@@ -92,7 +92,7 @@ class Application:
 				try:
 					extension.stop(self)
 				except Exception as error:
-					getLogger('DefStar.Application').exception('Extension shutdown failed')
+					getLogger('DefEssential.Application').exception('Extension shutdown failed')
 					if first_error is None:
 						first_error = error
 			if first_error is not None:

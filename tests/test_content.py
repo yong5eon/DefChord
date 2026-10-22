@@ -1,7 +1,7 @@
 from io import BytesIO
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Body,
 	ClientError,
@@ -10,7 +10,7 @@ from DefStar import (
 	RequestRunner,
 	Response,
 )
-from DefStar.Readers import (
+from DefEssential.Readers import (
 	ByteStringContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,

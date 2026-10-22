@@ -22,17 +22,17 @@ class RejectExternal(MetaPathFinder):
 
 sys.meta_path.insert(0, RejectExternal())
 source = Path(sys.argv[1])
-spec = spec_from_file_location('DefStar', source / '__init__.py')
+spec = spec_from_file_location('DefEssential', source / '__init__.py')
 module = module_from_spec(spec)
-sys.modules['DefStar'] = module
+sys.modules['DefEssential'] = module
 spec.loader.exec_module(module)
-from DefStar import Application, Request, RequestRunner, Response, serve
-from DefStar.Readers import StreamContentReader
-from DefStar.Writers import ChunkedStreamWriter, ServerSentEventsWriter
-from DefStar.Credentials import OAuth2AuthorizationCode
-from DefStar.Responses import ResponseFile, ResponseJSON, ResponseText
-from DefStar.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection
-from DefStar.Extensions import Metrics, Dashboard, Spec, Swagger, HealthCheck
+from DefEssential import Application, Request, RequestRunner, Response, serve
+from DefEssential.Readers import StreamContentReader
+from DefEssential.Writers import ChunkedStreamWriter, ServerSentEventsWriter
+from DefEssential.Credentials import OAuth2AuthorizationCode
+from DefEssential.Responses import ResponseFile, ResponseJSON, ResponseText
+from DefEssential.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection
+from DefEssential.Extensions import Metrics, Dashboard, Spec, Swagger, HealthCheck
 
 class Sample(RequestRunner, method='GET', url='/'):
 	def run(self, request):

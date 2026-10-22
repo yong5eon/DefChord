@@ -12,13 +12,13 @@ from os import (
 from unittest import TestCase
 from unittest.mock import patch
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	RequestRunner,
 	Response,
 	serve,
 )
-from DefStar.Startup import (
+from DefEssential.Startup import (
 	LOGO,
 	colorize_logo,
 	startup,
@@ -117,7 +117,7 @@ class StartupTests(TestCase):
 		return
 
 	def test_failed_bind_does_not_print_startup(self):
-		with patch('DefStar.Server.Server.server_bind', side_effect=OSError('바인딩 실패')):
+		with patch('DefEssential.Server.Server.server_bind', side_effect=OSError('바인딩 실패')):
 			with redirect_stdout(StringIO()) as output:
 				with self.assertRaises(OSError):
 					serve('127.0.0.1', 0, Application())

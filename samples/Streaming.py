@@ -1,19 +1,19 @@
 from random import randrange
 from time import sleep
 
-from DefStar import (
+from DefEssential import (
 	Body,
 	Headers,
 	Request,
 	RequestRunner,
 )
-from DefStar.Readers import StreamContentReader
-from DefStar.Validator.Patterns import (
+from DefEssential.Readers import StreamContentReader
+from DefEssential.Validator.Patterns import (
 	IsIn,
 	IsString,
 	ToInteger,
 )
-from DefStar.Writers import (
+from DefEssential.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEventsWriter,
 	StreamWriter,

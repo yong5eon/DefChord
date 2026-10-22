@@ -10,7 +10,7 @@ from socket import (
 from threading import Event
 from unittest import TestCase
 
-from DefStar import (
+from DefEssential import (
 	Application,
 	Body,
 	ClientError,
@@ -20,8 +20,8 @@ from DefStar import (
 	Response,
 	ResponseWriter,
 )
-from DefStar.Readers import StreamContentReader
-from DefStar.Writers import (
+from DefEssential.Readers import StreamContentReader
+from DefEssential.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEvents,
 	ServerSentEventsWriter,
@@ -386,7 +386,7 @@ class DirectServerTests(TestCase):
 		app = Application()
 		app.register(Direct)
 		with self.assertLogs(
-			'DefStar.Server',
+			'DefEssential.Server',
 			level='ERROR',
 		):
 			with running(app) as address:
@@ -465,7 +465,7 @@ class DirectServerTests(TestCase):
 		app = Application(exts=(Completion('/completion'),))
 		app.register(Events)
 		with self.assertLogs(
-			'DefStar.Server',
+			'DefEssential.Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:
@@ -686,7 +686,7 @@ class DirectServerTests(TestCase):
 				app = Application()
 				app.register(Invalid)
 				with self.assertLogs(
-					'DefStar.Server',
+					'DefEssential.Server',
 					level='ERROR',
 				):
 					with running(app) as address:
