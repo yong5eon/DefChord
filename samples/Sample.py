@@ -15,6 +15,8 @@ from DefEssential import (
 )
 from DefEssential.Runners.RunOptions import RunOptions
 from DefEssential.Extensions import (
+	File,
+	FileSystem,
 	Status,
 	Ping,
 	Metrics,
@@ -75,12 +77,21 @@ def to_jpeg(request: Request):
 def create_application() -> Application:
 	"""Create independent routes and filesystem connections on each call."""
 	spec = Specifications('/api/doc', title='DefEssential HTTP Sample')
+	resources = Path(__file__).resolve().parent / 'res'
 	app = Application(exts=(
 		Metrics('/metrics'),
 		Status('/status', metrics_uri='/metrics'),
 		spec,
 		Swagger('/swagger', spec_uri='/api/doc'),
 		Ping('/ping'),
+		File('/', resources / 'html' / 'welcome.html'),
+		File('/favicon.ico', resources / 'favicon.ico'),
+		FileSystem('/css', Connection(Configuration(str(resources / 'css')))),
+		FileSystem(
+			'/thumbs',
+			Connection(Configuration(str(resources / 'images'))),
+			onRequest=to_jpeg,
+		),
 	))
 	for handler in (
 		RunGet,
@@ -152,17 +163,6 @@ def create_application() -> Application:
 			)
 
 	app.register(Options)
-	resources = Path(__file__).resolve().parent / 'res'
-	app.add_file(resources / 'html' / 'welcome.html', '/')
-	app.add_file(resources / 'favicon.ico', '/favicon.ico')
-	app.add_files(resources / 'css', '/css')
-	images = Connection(Configuration(str(resources / 'images')))
-	images.connect()
-	app.add_file_system_object(
-		images,
-		'/thumbs',
-		onRequest=to_jpeg,
-	)
 	return app
 
 

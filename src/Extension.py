@@ -4,11 +4,20 @@ from abc import (
 )
 from typing import (
 	Optional,
+	Sequence,
+	Type,
 	TYPE_CHECKING,
+	Union,
 )
 
 from .Request import Request
 from .Response import Response
+from .RequestRunner import (
+	RequestRunner,
+	RequestFilter,
+	ResponseFilter,
+)
+from .Route import Route
 
 if TYPE_CHECKING:
 	from .Application import Application
@@ -25,6 +34,9 @@ class Extension(ABC):
 	def __init__(
 		self,
 		path: str,
+		*,
+		onRequest: Union[RequestFilter, Sequence[RequestFilter], None] = None,
+		onResponse: Union[ResponseFilter, Sequence[ResponseFilter], None] = None,
 	):
 		if not isinstance(path, str) or not path.startswith('/') or any(
 			character in path for character in (
@@ -36,7 +48,21 @@ class Extension(ABC):
 			raise ValueError('Extensions require an absolute HTTP path without parameters')
 		self.path = path
 		self.application: Optional['Application'] = None
+		self.on_request = onRequest
+		self.on_response = onResponse
 		return
+
+	def route(
+		self,
+		method: str,
+		handler: Type[RequestRunner],
+	) -> Route:
+		"""Create the route used to dispatch this extension."""
+		return Route(
+			method,
+			self.path,
+			handler,
+		)
 
 	def bind(
 		self,

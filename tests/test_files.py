@@ -2,6 +2,8 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
+from unittest.mock import patch
+from http.client import HTTPConnection
 
 from DefEssential import (
 	Application,
@@ -11,11 +13,9 @@ from DefEssential import (
 )
 from DefEssential.Responses import ResponseFile
 from DefEssential.Responses.ResponseFile import FileBody
-from DefEssential.Runners.RunFactory import RunFactory
-from DefEssential.Runners.RunFile import RunFileFactory
-from DefEssential.Runners.RunFileSystemObject import (
-	RunFileSystemObjectFactory,
-	FileSystemRoute,
+from DefEssential.Extensions import (
+	File,
+	FileSystem,
 )
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
@@ -23,27 +23,57 @@ from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 )
 
 from test_features import request
+from test_server import running
 
 
 class FileTests(TestCase):
-	def test_file_factories_contract_and_independent_results(self):
+	def test_filesystem_lifecycle_dynamic_files_and_http_head(self):
+		with TemporaryDirectory() as directory:
+			root = Path(directory)
+			file = root / 'sample.txt'
+			file.write_bytes(b'content')
+			connection = Connection(Configuration(directory))
+			app = Application(exts=(
+				File('/fixed', file),
+				FileSystem('/files', connection),
+			))
+			with patch.object(connection, 'connect', wraps=connection.connect) as connect:
+				with patch.object(connection, 'close', wraps=connection.close) as close:
+					with running(app) as address:
+						connect.assert_called_once_with()
+						(root / 'new.txt').write_bytes(b'new')
+						client = HTTPConnection(*address, timeout=3)
+						try:
+							for path in (
+								'/fixed',
+								'/files/sample.txt',
+							):
+								client.request('HEAD', path)
+								response = client.getresponse()
+								self.assertEqual(response.status, 200)
+								self.assertEqual(response.getheader('Content-Type'), 'text/plain')
+								self.assertEqual(response.read(), b'')
+							client.request('GET', '/files/new.txt')
+							response = client.getresponse()
+							self.assertEqual(response.status, 200)
+							self.assertEqual(response.read(), b'new')
+						finally:
+							client.close()
+					close.assert_called_once_with()
+			self.assertFalse(app.running)
+		return
+
+	def test_file_extensions_ownership_and_routes(self):
 		with TemporaryDirectory() as directory:
 			fso = Connection(Configuration(directory))
-			factories = (
-				RunFileFactory(Path(directory) / 'sample.txt', '/file'),
-				RunFileSystemObjectFactory(fso, '/files'),
-			)
-			for factory in factories:
-				self.assertIsInstance(factory, RunFactory)
-				first = factory()
-				second = factory()
-				self.assertIsNot(first, second)
-				if isinstance(first, FileSystemRoute):
-					self.assertEqual(first.match('/files/sample.txt'), {'path': 'sample.txt'})
-					self.assertIsInstance(second, FileSystemRoute)
-				else:
-					self.assertEqual(first.properties.method, 'GET')
-					self.assertEqual(first.properties.url, '/file')
+			file = File('/file', Path(directory) / 'sample.txt')
+			files = FileSystem('/files', fso)
+			app = Application(exts=(file, files))
+			self.assertEqual(set(app.router.matches('/file')), {'GET', 'HEAD'})
+			self.assertEqual(set(app.router.matches('/files/sample.txt')), {'GET', 'HEAD'})
+			self.assertIs(files.application, app)
+			with self.assertRaises(ValueError):
+				Application(exts=(files,))
 		return
 
 	def test_local_connection_metadata_and_file_context(self):
@@ -72,16 +102,17 @@ class FileTests(TestCase):
 			(root / 'sample.txt').write_bytes(b'content')
 			(root / 'nested').mkdir()
 			(root / 'nested' / 'file.bin').write_bytes(b'\x00\xff')
-			app = Application()
-			app.add_file(root / 'sample.txt', '/fixed')
-			app.add_files(root, '/tree')
 			fso = Connection(Configuration(directory))
 
 			def rewrite(req):
 				req.params['path'] += '.txt'
 				return req, None
 
-			app.add_file_system_object(fso, '/dynamic', onRequest=rewrite)
+			app = Application(exts=(
+				File('/fixed', root / 'sample.txt'),
+				FileSystem('/tree', Connection(Configuration(directory))),
+				FileSystem('/dynamic', fso, onRequest=rewrite),
+			))
 			for url, expected in (
 				('/fixed', b'content'),
 				('/tree/sample.txt', b'content'),
@@ -144,10 +175,11 @@ class FileTests(TestCase):
 				response.body = b'mutated'
 				return response
 
-			app = Application()
-			app.add_file(path, '/replace', onResponse=replace)
-			app.add_file(path, '/fail', onResponse=fail)
-			app.add_file(path, '/mutate', onResponse=mutate)
+			app = Application(exts=(
+				File('/replace', path, onResponse=replace),
+				File('/fail', path, onResponse=fail),
+				File('/mutate', path, onResponse=mutate),
+			))
 			replacement = app(request('/replace'))
 			assert isinstance(replacement, Response)
 			self.assertEqual(replacement.body, b'replaced')
@@ -165,10 +197,11 @@ class FileTests(TestCase):
 			content = b'x' * 200000
 			(root / 'large.bin').write_bytes(content)
 			(root / 'file.txt.gz').write_bytes(b'compressed')
-			app = Application()
-			app.add_file_system_object(Connection(Configuration(directory)), '/files')
-			app.add_file_system_object(Connection(Configuration(directory)), '/files/nested')
-			app.add_file(root / 'large.bin', '/files/fixed')
+			app = Application(exts=(
+				FileSystem('/files', Connection(Configuration(directory))),
+				FileSystem('/files/nested', Connection(Configuration(directory))),
+				File('/files/fixed', root / 'large.bin'),
+			))
 			for url in (
 				'/files/large.bin',
 				'/files/nested/large.bin',

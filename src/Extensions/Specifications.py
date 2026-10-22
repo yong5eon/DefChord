@@ -26,7 +26,7 @@ from ..Readers import (
 )
 from ..Response import Response
 from ..ResponseSpecification import ResponseSpecification
-from ..Runners.RunFileSystemObject import FileSystemRoute
+from ..FileSystemRoute import FileSystemRoute
 from ..Responses import ResponseJSON
 from ..Validators import (
 	Auth,

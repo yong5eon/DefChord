@@ -1,5 +1,4 @@
 from inspect import isabstract
-from pathlib import Path
 from logging import getLogger
 from threading import RLock
 from typing import (
@@ -17,9 +16,6 @@ from .Router import Router
 from .Runners import RunRequest
 from .Utils.Loader import Loader
 from .Runners.RunOptions import RunOptions
-from .Runners.RunFile import RunFileFactory
-from .Runners.RunFileSystemObject import RunFileSystemObjectFactory
-from .Utils.FileSystemObject import Connection
 from .Extension import Extension
 from .Runners.RunExtension import RunExtensionFactory
 
@@ -47,11 +43,15 @@ class Application:
 		try:
 			for extension in extensions:
 				for method in extension.methods:
-					self.register(RunExtensionFactory(
+					handler = RunExtensionFactory(
 						self,
 						extension,
 						method,
-					)())
+					)()
+					self.router.add(extension.route(
+						method,
+						handler,
+					))
 			for extension in extensions:
 				extension.bind(self)
 		except Exception:
@@ -139,62 +139,6 @@ class Application:
 					and not isabstract(value)
 				):
 					self.register(value)
-		return
-
-	def add_file(
-		self,
-		path,
-		url: str,
-		onRequest=None,
-		onResponse=None,
-	) -> None:
-		"""Register a file response at a fixed URL."""
-		self.register(RunFileFactory(
-			path,
-			url,
-			on_request=onRequest,
-			on_response=onResponse,
-		)())
-		return
-
-	def add_files(
-		self,
-		path,
-		prefix: str,
-		onRequest=None,
-		onResponse=None,
-	) -> None:
-		"""Register each file in an existing file tree as a separate route."""
-		root = Path(path).resolve(strict=True)
-		if not root.is_dir():
-			raise NotADirectoryError(str(root))
-		for file in sorted(root.rglob('*')):
-			if file.is_file():
-				file.resolve().relative_to(root)
-				self.add_file(
-					file,
-					prefix.rstrip('/') + '/' + file.relative_to(root).as_posix(),
-					onRequest=onRequest,
-					onResponse=onResponse,
-				)
-		return
-
-	def add_file_system_object(
-		self,
-		fso: Connection,
-		prefix: str,
-		onRequest=None,
-		onResponse=None,
-	) -> None:
-		"""Bind a filesystem connection to an Application-owned prefix route."""
-		if self.running:
-			raise RuntimeError('Cannot register file paths while Application is running')
-		self.router.add(RunFileSystemObjectFactory(
-			fso,
-			prefix,
-			on_request=onRequest,
-			on_response=onResponse,
-		)())
 		return
 
 	def __call__(

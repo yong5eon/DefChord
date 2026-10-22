@@ -63,14 +63,18 @@ def startup(server: 'Server') -> None:
 	if supports_color():
 		logo = colorize_logo(logo)
 		starting = f'\033[1;38;5;51m{starting}\033[0m'
-	routes = server.app.router.routes
+	routes = [
+		route for route in server.app.router.routes
+		if route.url not in server.app.exts
+		or route.method not in server.app.exts[route.url].methods
+	]
 	lines = [
 		logo,
 		'',
 		starting,
 		f'  PID: {getpid()}',
 		f'  Listen: http://{address}:{port}',
-		f'  Handlers: {len(routes)} handlers',
+		f'  Applications: {len(routes)} applications',
 	]
 	for route in routes:
 		lines.extend((

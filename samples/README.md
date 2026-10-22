@@ -18,7 +18,9 @@ python -m samples.Sample
 
 `Ctrl+C`로 서버 실행 루프를 중단하면 traceback 없이 확장을 역순으로 종료하고 `with serve(...)` 블록을 빠져나오면서 수신 소켓을 닫는다. 정리 중 발생한 오류는 숨기지 않는다. 실행 중인 요청 스레드는 기존 daemon 정책을 따르며, 무한 스트림의 완료를 기다리는 종료 방식은 아니다.
 
-시작 출력의 핸들러 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. 확장 처리기는 확장 클래스 이름, 파일 처리기는 `RunFile(절대 파일 경로)`, 로컬 파일시스템 처리기는 `RunFileSystemObject(절대 루트 경로)`로 표시한다. 다른 파일시스템 연결은 `RunFileSystemObject(URL 접두사)`로 표시하며, 확장 목록에는 호스트 없이 등록 경로만 표시한다.
+시작 출력의 `Applications` 목록과 개수는 확장 라우트를 제외한 `RequestRunner` 등록만 대상으로 한다. 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. `File`, `FileSystem`을 포함한 확장은 `Extensions` 목록에만 확장 클래스 이름과 호스트 없는 등록 경로로 표시한다.
+
+파일 제공도 `Application(exts=(...))`로 등록한다. 단일 파일은 `File('/favicon.ico', 파일경로)`, 디렉터리는 `FileSystem('/css', Connection(Configuration(디렉터리경로)))`로 연결한다. `add_file`, `add_files`, `add_file_system_object`는 제거했다. 기존 `add_files`와 달리 FileSystem은 요청 시 파일을 조회하므로 등록 이후 생성한 파일도 제공한다. 두 확장은 GET·HEAD와 `onRequest`·`onResponse` 필터를 지원한다. FileSystem 연결은 애플리케이션 시작 시 `connect()`, 종료 시 `close()`를 호출하며 중첩 접두사 우선순위와 로컬 파일시스템의 경로 접근 제한을 유지한다. 다른 확장과 마찬가지로 리소스 경로는 OpenAPI 명세에서 제외된다.
 
 ## 이전 대응표
 
