@@ -5,6 +5,7 @@ from DefEssential import (
 	Application,
 	Body,
 	ClientError,
+	Content,
 	Request,
 	RequestReader,
 	RequestRunner,
@@ -20,6 +21,42 @@ from DefEssential.Readers import (
 
 
 class ContentTests(TestCase):
+	def test_content_format_validation(self):
+		body = Body(
+			ByteStringContentReader(),
+			content=Content('application/octet-stream'),
+		)
+		req = self.request(
+			b'body',
+			'Application/Octet-Stream; charset=utf-8',
+		)
+		self.assertEqual(body(req), b'body')
+		for format, status in (
+			('text/plain', 415),
+			('bad-format', 400),
+		):
+			with self.subTest(format=format):
+				with self.assertRaises(ClientError) as caught:
+					body(self.request(
+						b'body',
+						format,
+					))
+				self.assertEqual(caught.exception.status, status)
+		req = Request(
+			address='127.0.0.1',
+			port=1,
+			method='POST',
+			uri='/',
+			reader=RequestReader(
+				BytesIO(b'body'),
+				size=4,
+			),
+		)
+		with self.assertRaises(ClientError) as caught:
+			body(req)
+		self.assertEqual(caught.exception.status, 400)
+		return
+
 	def request(
 		self,
 		body,

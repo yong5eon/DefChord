@@ -30,9 +30,10 @@ class Body:
 			if self.required:
 				raise ClientError('Required request body is missing')
 			return None
-		if request.header('Content-Type') is None:
+		format = request.format
+		if format is None:
 			raise ClientError('Content-Type is required for requests with a body')
-		if self.content and request.format not in (
+		if self.content and format not in (
 			content.format.lower() for content in self.content
 		):
 			raise ClientError(
