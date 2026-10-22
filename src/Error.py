@@ -31,3 +31,20 @@ class ClientError(Error):
 			reason,
 		)
 		return
+
+
+class ServerError(Error):
+	"""Represent a server-side processing failure."""
+
+	def __init__(
+		self,
+		reason: str,
+		status: int = 500,
+	):
+		if not 500 <= status < 600:
+			raise ValueError('ServerError status code must be in the 5xx range')
+		super().__init__(
+			status,
+			reason,
+		)
+		return

@@ -3,6 +3,7 @@ from .Extension import Extension
 from .Error import (
 	Error,
 	ClientError,
+	ServerError,
 )
 from .Body import Body
 from .Content import Content
@@ -31,6 +32,7 @@ __all__ = (
 	'Extension',
 	'Error',
 	'ClientError',
+	'ServerError',
 	'RequestRunner',
 	'RequestFilter',
 	'ResponseFilter',
