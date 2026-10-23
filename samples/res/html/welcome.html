@@ -10,49 +10,147 @@
 <body>
 	<article>
 		<div class="container">
-			<h2>RequestRunner</h2>
-			<h3>URL: <span>/api/run/:a/:b</span>, 요청 URL: <span>/api/run/${INTEGER}/${INTEGER}</span></h3>
-			<form id="frm-test">
+			<h2>RequestRunner - GET</h2>
+			<p>GET /api/run/:a/:b — 경로 a·b는 100 초과, 쿼리 a는 5 초과·b는 9 초과여야 합니다. 본문은 전송하지 않습니다.</p>
+			<p>기본값 예상 결과: <code>ret = 12432</code></p>
+			<form id="frm-test-get" data-request-runner data-method="GET">
 				<div class="form-group row">
-					<label class="col-form-label col-3 text-right">요청 방식</label>
+					<label for="get-path-a" class="col-form-label col-3 text-right">경로 a</label>
 					<div class="col-9">
-						<select class="form-control" name="method">
-							<option selected></option>
-							<option value="GET">GET</option>
-							<option value="POST">POST</option>
-							<option value="PUT">PUT</option>
-							<option value="DELETE">DELETE</option>
-						</select>
+						<input id="get-path-a" type="number" class="form-control" name="path-a" value="101" required/>
 					</div>
 				</div>
 				<div class="form-group row">
-					<label class="col-form-label col-3 text-right">질의</label>
+					<label for="get-path-b" class="col-form-label col-3 text-right">경로 b</label>
 					<div class="col-9">
-						<input type="text" class="form-control" name="querystring"/>
+						<input id="get-path-b" type="number" class="form-control" name="path-b" value="102" required/>
 					</div>
 				</div>
 				<div class="form-group row">
-					<label class="col-form-label col-3 text-right">본문 유형</label>
+					<label for="get-query" class="col-form-label col-3 text-right">쿼리 문자열</label>
 					<div class="col-9">
-						<select class="form-control" name="type">
-							<option selected value="application/json; charset=utf-8">JavaScriptObjectNotation</option>
-						</select>
+						<input id="get-query" type="text" class="form-control" name="querystring" value="a=6&amp;b=10"/>
 					</div>
 				</div>
-				<div class="form-group row">
-					<label class="col-form-label col-3 text-right">본문</label>
-					<div class="col-9">
-						<input class="form-control" type="text" name="body"/>
-					</div>
-				</div>
-				<div class="form-group row">
-					<div class="col-12">
-						<button class="btn btn-primary btn-sm btn-block" type="button">테스트</button>
-					</div>
-				</div>
+				<button class="btn btn-primary btn-sm btn-block" type="submit">GET 테스트</button>
 			</form>
 			<h3>결과</h3>
-			<blockquote class="blockquote" id="frm-test-result">
+			<blockquote class="blockquote" id="frm-test-get-result" aria-live="polite">
+				<code class="request-url"></code>
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestRunner - POST</h2>
+			<p>POST /api/run/:a/:b — 경로 a·b는 100 초과, 쿼리 a는 5 초과·b는 9 초과여야 합니다. JSON 본문의 a는 5 미만, b는 9 미만이어야 합니다.</p>
+			<p>기본값 예상 결과: <code>ret = 12995</code></p>
+			<form id="frm-test-post" data-request-runner data-method="POST">
+				<div class="form-group row">
+					<label for="post-path-a" class="col-form-label col-3 text-right">경로 a</label>
+					<div class="col-9">
+						<input id="post-path-a" type="number" class="form-control" name="path-a" value="101" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="post-path-b" class="col-form-label col-3 text-right">경로 b</label>
+					<div class="col-9">
+						<input id="post-path-b" type="number" class="form-control" name="path-b" value="102" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="post-query" class="col-form-label col-3 text-right">쿼리 문자열</label>
+					<div class="col-9">
+						<input id="post-query" type="text" class="form-control" name="querystring" value="a=6&amp;b=10"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="post-body" class="col-form-label col-3 text-right">JSON 본문</label>
+					<div class="col-9">
+						<input id="post-body" class="form-control" type="text" name="body" value='{"a":2,"b":3}'/>
+					</div>
+				</div>
+				<button class="btn btn-primary btn-sm btn-block" type="submit">POST 테스트</button>
+			</form>
+			<h3>결과</h3>
+			<blockquote class="blockquote" id="frm-test-post-result" aria-live="polite">
+				<code class="request-url"></code>
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestRunner - PUT</h2>
+			<p>PUT /api/run/:a/:b — 경로 a·b는 100 초과, 쿼리 a는 5 초과·b는 9 초과여야 합니다. JSON 본문의 a는 5 미만, b는 9 미만이어야 합니다.</p>
+			<p>기본값 예상 결과: <code>ret = 15972</code></p>
+			<form id="frm-test-put" data-request-runner data-method="PUT">
+				<div class="form-group row">
+					<label for="put-path-a" class="col-form-label col-3 text-right">경로 a</label>
+					<div class="col-9">
+						<input id="put-path-a" type="number" class="form-control" name="path-a" value="101" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="put-path-b" class="col-form-label col-3 text-right">경로 b</label>
+					<div class="col-9">
+						<input id="put-path-b" type="number" class="form-control" name="path-b" value="102" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="put-query" class="col-form-label col-3 text-right">쿼리 문자열</label>
+					<div class="col-9">
+						<input id="put-query" type="text" class="form-control" name="querystring" value="a=6&amp;b=10"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="put-body" class="col-form-label col-3 text-right">JSON 본문</label>
+					<div class="col-9">
+						<input id="put-body" class="form-control" type="text" name="body" value='{"a":2,"b":3}'/>
+					</div>
+				</div>
+				<button class="btn btn-primary btn-sm btn-block" type="submit">PUT 테스트</button>
+			</form>
+			<h3>결과</h3>
+			<blockquote class="blockquote" id="frm-test-put-result" aria-live="polite">
+				<code class="request-url"></code>
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
+			<h2>RequestRunner - DELETE</h2>
+			<p>DELETE /api/run/:a/:b — 경로 a·b는 100 초과, 쿼리 a는 5 초과·b는 9 초과여야 합니다. JSON 본문의 a는 5 미만, b는 9 미만이어야 합니다.</p>
+			<p>기본값 예상 결과: <code>ret = 11881</code></p>
+			<form id="frm-test-delete" data-request-runner data-method="DELETE">
+				<div class="form-group row">
+					<label for="delete-path-a" class="col-form-label col-3 text-right">경로 a</label>
+					<div class="col-9">
+						<input id="delete-path-a" type="number" class="form-control" name="path-a" value="101" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="delete-path-b" class="col-form-label col-3 text-right">경로 b</label>
+					<div class="col-9">
+						<input id="delete-path-b" type="number" class="form-control" name="path-b" value="102" required/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="delete-query" class="col-form-label col-3 text-right">쿼리 문자열</label>
+					<div class="col-9">
+						<input id="delete-query" type="text" class="form-control" name="querystring" value="a=6&amp;b=10"/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="delete-body" class="col-form-label col-3 text-right">JSON 본문</label>
+					<div class="col-9">
+						<input id="delete-body" class="form-control" type="text" name="body" value='{"a":2,"b":3}'/>
+					</div>
+				</div>
+				<button class="btn btn-primary btn-sm btn-block" type="submit">DELETE 테스트</button>
+			</form>
+			<h3>결과</h3>
+			<blockquote class="blockquote" id="frm-test-delete-result" aria-live="polite">
+				<code class="request-url"></code>
 				<p class="mb-0"></p>
 				<pre class="mb-0"></pre>
 			</blockquote>
@@ -171,34 +269,35 @@
 					this.disabled = false;
 				}
 			});
-			$('form[id=frm-test] button').click(function(e) {
-				method = $('form[id=frm-test] select[name=method]').val()
-				if(!method)
-					return;
-				qs = $('form[id=frm-test] input[name=querystring]').val()
-				type = $('form[id=frm-test] select[name=type]').val()
-				body = $('form[id=frm-test] input[name=body]').val()
-				const options = {
-					method: method,
-					headers: {}
-				};
-				options['headers']['X-Token'] = crypto.randomUUID();
-				if(method !=='GET' && body !== '') {
-					options['headers']['Content-Type'] = type;
-					options['body'] = body;
+			$('form[data-request-runner]').submit(async function(event) {
+				event.preventDefault();
+				const values = new FormData(this);
+				const options = {method: this.dataset.method};
+				if (options.method !== 'GET') {
+					options.headers = {'Content-Type': 'application/json; charset=utf-8'};
+					options.body = values.get('body');
 				}
-				let url = '/api/run/' + Math.floor(Math.random() * 1000).toString() + '/' + Math.floor(Math.random() * 1000).toString();
-				if(qs)
-					url += '?' + qs;
-				console.log(options);
-				fetch(url, options).then(function(response) {
-					$('#frm-test-result p').text(response.status + ' ' + response.statusText)
-					response.text().then(function(data) {
-						$('#frm-test-result pre').text(data);
-					});
-				}).catch(function(error) {
-					console.log(error);
-				});
+				let url = '/api/run/' + encodeURIComponent(values.get('path-a')) + '/' + encodeURIComponent(values.get('path-b'));
+				const query = values.get('querystring').trim().replace(/^\?/, '');
+				if (query) {
+					url += '?' + query;
+				}
+				const result = $('#' + this.id + '-result');
+				const button = $(this).find('button[type=submit]');
+				result.find('.request-url').text(options.method + ' ' + url);
+				result.find('p').text('요청 중…');
+				result.find('pre').text('');
+				button.prop('disabled', true);
+				try {
+					const response = await fetch(url, options);
+					result.find('p').text(response.status + ' ' + response.statusText);
+					result.find('pre').text(await response.text());
+				} catch (error) {
+					result.find('p').text('요청 실패');
+					result.find('pre').text(error.message);
+				} finally {
+					button.prop('disabled', false);
+				}
 			});
 			$('form[id=frm-test-2] button').click(function(e) {
 				content = $('form[id=frm-test-2] select[name=content]').val()

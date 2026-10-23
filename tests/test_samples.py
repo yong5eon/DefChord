@@ -1,15 +1,13 @@
 from http.client import HTTPConnection
+from html.parser import HTMLParser
 from importlib import import_module
-from importlib.util import (
-	module_from_spec,
-	spec_from_file_location,
-)
 from json import (
 	dumps,
 	loads,
 )
 from pathlib import Path
-from sys import modules
+from runpy import run_path
+from sys import path
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -17,22 +15,51 @@ from test_server import running
 
 
 SAMPLE = Path(__file__).resolve().parent.parent / 'samples'
-PACKAGE_NAME = 'defessential_http_sample'
-SPEC = spec_from_file_location(
-	PACKAGE_NAME,
-	SAMPLE / '__init__.py',
-)
-if SPEC is None or SPEC.loader is None:
-	raise RuntimeError('HTTP 샘플 패키지를 로드할 수 없습니다')
-PACKAGE = module_from_spec(SPEC)
-modules[SPEC.name] = PACKAGE
-SPEC.loader.exec_module(PACKAGE)
 
-create_application = import_module(PACKAGE_NAME + '.Sample').create_application
+
+def create_application():
+	"""직접 실행하는 샘플에서 서버를 열지 않고 등록된 앱을 가져온다."""
+	with patch('sys.path', [str(SAMPLE), *path]):
+		with patch('DefEssential.serve') as serve:
+			with patch('logging.basicConfig'):
+				run_path(
+					str(SAMPLE / 'Sample.py'),
+					run_name='__main__',
+				)
+			return serve.call_args.args[2]
+
+
+class RequestRunnerForms(HTMLParser):
+	def __init__(self):
+		super().__init__()
+		self.forms = {}
+		self.method = None
+		return
+
+	def handle_starttag(
+		self,
+		tag,
+		attrs,
+	):
+		attributes = dict(attrs)
+		if tag == 'form' and 'data-request-runner' in attributes:
+			self.method = attributes['data-method']
+			self.forms[self.method] = {}
+		elif tag == 'input' and self.method is not None:
+			self.forms[self.method][attributes['name']] = attributes['value']
+		return
+
+	def handle_endtag(
+		self,
+		tag,
+	):
+		if tag == 'form':
+			self.method = None
+		return
 
 
 class SampleTests(TestCase):
-	def test_original_welcome_page_and_styles_are_served_unchanged(self):
+	def test_welcome_page_and_styles_are_served(self):
 		with running(create_application()) as address:
 			for url, file in (
 				('/', SAMPLE / 'res' / 'html' / 'welcome.html'),
@@ -43,7 +70,10 @@ class SampleTests(TestCase):
 				self.assertEqual(data, file.read_bytes())
 			text = (SAMPLE / 'res' / 'html' / 'welcome.html').read_text(encoding='utf-8')
 			for marker in (
-				'id="frm-test"',
+				'id="frm-test-get"',
+				'id="frm-test-post"',
+				'id="frm-test-put"',
+				'id="frm-test-delete"',
 				'id="frm-test-2"',
 				'id="btnTestStreamOut"',
 				'id="btnTestChunkedStreamOut"',
@@ -59,6 +89,62 @@ class SampleTests(TestCase):
 			self.assertNotIn('WebSocket', text)
 			self.assertEqual(text.count(".text('curl --http1.1"), 2)
 			self.assertNotIn(".text('curl.exe ", text)
+		return
+
+	def test_request_runner_form_defaults_and_validation_over_http(self):
+		parser = RequestRunnerForms()
+		parser.feed((SAMPLE / 'res' / 'html' / 'welcome.html').read_text(encoding='utf-8'))
+		self.assertEqual(set(parser.forms), {
+			'GET',
+			'POST',
+			'PUT',
+			'DELETE',
+		})
+		expected = {
+			'GET': 12432,
+			'POST': 12995,
+			'PUT': 15972,
+			'DELETE': 11881,
+		}
+		with running(create_application()) as address:
+			for method, fields in parser.forms.items():
+				with self.subTest(method=method):
+					url = '/api/run/{}/{}?{}'.format(
+						fields['path-a'],
+						fields['path-b'],
+						fields['querystring'],
+					)
+					if method == 'GET':
+						self.assertNotIn('body', fields)
+					body = fields['body'].encode() if method != 'GET' else None
+					headers = {'Content-Type': 'application/json'} if body is not None else {}
+					status, _, data = self.call(address, method, url, body, headers)
+					self.assertEqual(status, 200, data)
+					value = loads(data)['data']
+					self.assertEqual(value['ret'], expected[method])
+					self.assertEqual(value['args']['content'], loads(body) if body is not None else None)
+					for invalid_url in (
+						'/api/run/100/102?a=6&b=10',
+						'/api/run/101/100?a=6&b=10',
+						'/api/run/101/102?a=5&b=10',
+						'/api/run/101/102?a=6&b=9',
+						'/api/run/101/102',
+					):
+						self.assertEqual(
+							self.call(address, method, invalid_url, body, headers)[0],
+							400,
+						)
+					if method != 'GET':
+						for invalid_body in (
+							b'{"a":5,"b":3}',
+							b'{"a":2,"b":9}',
+							b'{}',
+							b'{',
+						):
+							self.assertEqual(
+								self.call(address, method, url, invalid_body, headers)[0],
+								400,
+							)
 		return
 
 	def test_generated_handler_names(self):
@@ -250,8 +336,9 @@ class SampleTests(TestCase):
 		return
 
 	def test_stream_input_and_output_over_http(self):
-		with patch('defessential_http_sample.runners.Streaming.sleep'):
-			with running(create_application()) as address:
+		app = create_application()
+		with patch('runners.Streaming.sleep'):
+			with running(app) as address:
 				for url, chunked in (
 					('/api/run/stream', False),
 					('/api/run/stream/chunked', True),
@@ -279,7 +366,8 @@ class SampleTests(TestCase):
 			Request,
 			ResponseWriter,
 		)
-		RunServerSentEvent = import_module(PACKAGE_NAME + '.runners.Streaming').RunServerSentEvent
+		with patch('sys.path', [str(SAMPLE), *path]):
+			RunServerSentEvent = import_module('runners.Streaming').RunServerSentEvent
 
 		output = BytesIO()
 		req = Request(
@@ -292,8 +380,8 @@ class SampleTests(TestCase):
 				output,
 			),
 		)
-		with patch('defessential_http_sample.runners.Streaming.randrange', return_value=5):
-			with patch('defessential_http_sample.runners.Streaming.sleep', side_effect=ConnectionResetError):
+		with patch('runners.Streaming.randrange', return_value=5):
+			with patch('runners.Streaming.sleep', side_effect=ConnectionResetError):
 				with self.assertRaises(ConnectionResetError):
 					RunServerSentEvent().run(req)
 		self.assertIn(b'data: 5\n', output.getvalue())

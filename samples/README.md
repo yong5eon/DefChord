@@ -4,7 +4,9 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
-첫 화면의 `welcome.html`과 `sample.css`는 Liquirizia.WSGI 원본을 기반으로 한다. CDN 주소는 HTTPS로 명시하고, 지원하지 않는 WebSocket UI는 제거했다. 대신 Stream In·Chunked Stream In을 실제 서버 주소로 실행하는 curl 명령과 예상 응답을 제공한다. 브라우저에서 Transfer-Encoding을 직접 설정할 수 없으며 Chromium의 요청 스트리밍은 HTTP/2·3이 필요하므로, HTTP/1.1 chunked 업로드는 curl로 테스트한다. Windows PowerShell에서는 `curl.exe`를 사용한다. 계산·본문 검증 폼, 스트림 출력·SSE 버튼과 이미지 필터 테스트는 기존 UI를 유지한다. Bootstrap과 jQuery는 CDN에서 로드하므로 인터넷 연결이 필요하다.
+첫 화면의 `welcome.html`과 `sample.css`는 Liquirizia.WSGI 원본을 기반으로 한다. CDN 주소는 HTTPS로 명시하고, 지원하지 않는 WebSocket UI는 제거했다. 대신 Stream In·Chunked Stream In을 실제 서버 주소로 실행하는 curl 명령과 예상 응답을 제공한다. 브라우저에서 Transfer-Encoding을 직접 설정할 수 없으며 Chromium의 요청 스트리밍은 HTTP/2·3이 필요하므로, HTTP/1.1 chunked 업로드는 curl로 테스트한다. Windows PowerShell에서는 `curl.exe`를 사용한다. RequestRunner 계산 테스트는 GET·POST·PUT·DELETE별 독립 폼으로 제공한다. 본문 검증 폼, 스트림 출력·SSE 버튼과 이미지 필터 테스트는 유지한다. Bootstrap과 jQuery는 CDN에서 로드하므로 인터넷 연결이 필요하다.
+
+네 계산 폼은 유효한 경로 `101/102`와 쿼리 `a=6&b=10`을 기본값으로 제공한다. GET은 본문을 전송하지 않으며 POST·PUT·DELETE는 JSON `{"a":2,"b":3}`을 전송한다. 기본값의 `ret`은 각각 `12432`, `12995`, `15972`, `11881`이다. 경로·쿼리·본문을 변경해 검증 실패도 확인할 수 있으며, 실제 요청 주소와 HTTP 상태·응답 본문 또는 통신 오류는 각 폼의 결과 영역에 표시된다.
 
 일반 요청 처리 클래스는 `app.add(RunExample)`로 등록하고, 확장은 `Application(exts=(...))`로 등록한다.
 
@@ -18,7 +20,7 @@ DefEssential를 설치했거나 개발용 import 경로가 연결된 환경에�
 python samples\Sample.py
 ```
 
-브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. `create_application()`을 호출할 때마다 라우터·파일 연결은 독립적으로 생성된다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
+브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. 스크립트를 실행하면 애플리케이션과 라우트·파일 연결을 생성한다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
 
 `Ctrl+C`로 서버 실행 루프를 중단하면 traceback 없이 확장을 역순으로 종료하고 `with serve(...)` 블록을 빠져나오면서 수신 소켓을 닫는다. 정리 중 발생한 오류는 숨기지 않는다. 실행 중인 요청 스레드는 기존 daemon 정책을 따르며, 무한 스트림의 완료를 기다리는 종료 방식은 아니다.
 
