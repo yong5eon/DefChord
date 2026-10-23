@@ -20,6 +20,13 @@ class Adapter(ABC):
 		self.app = app
 		return
 
+	def application(
+		self,
+		request: Request,
+	) -> Optional[Response]:
+		"""Invoke the shared application using the adapter's internal request."""
+		return self.app(request)
+
 	def dispatch(
 		self,
 		request: Request,
@@ -41,7 +48,6 @@ class Adapter(ABC):
 					raise
 				response = Response(
 					status=error.status,
-					headers=error.headers,
 					body=error.reason.encode('utf-8'),
 					format='text/plain',
 					charset='utf-8',
@@ -64,7 +70,7 @@ class Adapter(ABC):
 			elif not request.writer.ended:
 				raise RuntimeError('Response was neither returned nor completed successfully')
 			else:
-				status = getattr(request.writer.sender, 'status', status)
+				status = getattr(request.writer.writer, 'status', status)
 		finally:
 			if response is not None:
 				try:

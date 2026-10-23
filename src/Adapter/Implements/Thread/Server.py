@@ -117,7 +117,11 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 						extension,
 						context,
 					))
-				response = self.server.app(request)
+				adapter = getattr(self.server, 'adapter', None)
+				response = (
+					adapter.application(request)
+					if adapter is not None else self.server.app(request)
+				)
 			except Error as error:
 				status = error.status
 				failure = error

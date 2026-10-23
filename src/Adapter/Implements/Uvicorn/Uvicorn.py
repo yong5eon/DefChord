@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import Queue
+from queue import Queue as SyncQueue
 from threading import Lock
 from typing import Optional
 
@@ -15,11 +16,20 @@ class _Output:
 		self.loop = loop
 		self.events = events
 		self.status: Optional[int] = None
+		self.chunked = False
 		return
 
 	def write(self, data: bytes) -> int:
-		self.loop.call_soon_threadsafe(self.events.put_nowait, ('body', data))
-		return len(data)
+		length = len(data)
+		if self.chunked:
+			line, data = data.split(b'\r\n', 1)
+			size = int(line.split(b';', 1)[0], 16)
+			if size == 0:
+				return length
+			data = data[:size]
+		if data:
+			self.loop.call_soon_threadsafe(self.events.put_nowait, ('body', data))
+		return length
 
 	def flush(self) -> None:
 		return
@@ -121,32 +131,63 @@ class UvicornAdapter(Adapter):
 				return
 
 	async def http(self, scope, receive, send) -> None:
+		await asyncio.to_thread(self.start)
 		headers = {
 			key.decode('latin-1'): value.decode('latin-1')
 			for key, value in scope.get('headers', ())
 		}
 		length = headers.get('content-length')
-		input_events = __import__('queue').Queue()
+		first_message = None
+		first_body = b''
+		prefetched = False
+		if length is None and headers.get('transfer-encoding', '').lower() != 'chunked':
+			prefetched = True
+			while True:
+				first_message = await receive()
+				if first_message['type'] == 'http.disconnect':
+					first_message = None
+					break
+				first_body = first_message.get('body', b'')
+				if first_body or not first_message.get('more_body', False):
+					break
+		chunked = length is None and (
+			headers.get('transfer-encoding', '').lower() == 'chunked'
+			or bool(first_body)
+		)
+		if chunked:
+			headers['Transfer-Encoding'] = 'chunked'
+		input_events = SyncQueue()
 		input_reader = _Input(input_events)
 		output_events = Queue()
 		output = _Output(asyncio.get_running_loop(), output_events)
 
+		def enqueue_body(message) -> bool:
+			if message is None or message['type'] == 'http.disconnect':
+				return True
+			body = message.get('body', b'')
+			if body:
+				input_events.put(
+					format(len(body), 'x').encode('ascii') + b'\r\n' + body + b'\r\n'
+					if chunked else body,
+				)
+			return not message.get('more_body', False)
+
 		async def receive_body() -> None:
 			try:
+				if prefetched and enqueue_body(first_message):
+					return
 				while True:
 					message = await receive()
-					if message['type'] == 'http.disconnect':
-						break
-					body = message.get('body', b'')
-					if body:
-						input_events.put(body)
-					if not message.get('more_body', False):
+					if enqueue_body(message):
 						break
 			finally:
+				if chunked:
+					input_events.put(b'0\r\n\r\n')
 				input_events.put(None)
 
 		def sender(response: Response, chunked: bool) -> None:
 			output.status = response.status
+			output.chunked = chunked
 			headers_out = [
 				(key.lower().encode('latin-1'), value.encode('latin-1'))
 				for key, value in response.headers()
@@ -160,13 +201,14 @@ class UvicornAdapter(Adapter):
 
 		reader = RequestReader(
 			input_reader,
-			size=int(length) if length else 0,
+			size=None if chunked else int(length) if length else 0,
+			chunked=chunked,
 		)
 		writer = ResponseWriter(
 			sender,
 			output,
 			method=scope.get('method', 'GET'),
-			version=scope.get('http_version', '1.1'),
+			version='HTTP/' + scope.get('http_version', '1.1'),
 		)
 		client = scope.get('client') or ('', 0)
 		request = Request(
@@ -182,7 +224,15 @@ class UvicornAdapter(Adapter):
 			writer=writer,
 		)
 		input_task = asyncio.create_task(receive_body())
-		app_task = asyncio.create_task(asyncio.to_thread(self.dispatch, request))
+
+		async def run() -> None:
+			try:
+				await asyncio.to_thread(self.dispatch, request)
+			finally:
+				await output_events.put(('end',))
+			return
+
+		app_task = asyncio.create_task(run())
 		started = False
 		try:
 			while True:

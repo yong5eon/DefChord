@@ -1,7 +1,10 @@
 from atexit import register
 from io import BytesIO
 from queue import Queue
-from threading import Thread
+from threading import (
+	Lock,
+	Thread,
+)
 from typing import Optional
 
 from ...Adapter import Adapter
@@ -15,11 +18,20 @@ class _Output:
 	def __init__(self, events):
 		self.events = events
 		self.status: Optional[int] = None
+		self.chunked = False
 		return
 
 	def write(self, data: bytes) -> int:
-		self.events.put(('body', data))
-		return len(data)
+		length = len(data)
+		if self.chunked:
+			line, data = data.split(b'\r\n', 1)
+			size = int(line.split(b';', 1)[0], 16)
+			if size == 0:
+				return length
+			data = data[:size]
+		if data:
+			self.events.put(('body', data))
+		return length
 
 	def flush(self) -> None:
 		return
@@ -31,7 +43,7 @@ class GunicornAdapter(Adapter):
 	def __init__(self, app):
 		super().__init__(app)
 		self.started = False
-		self._start_lock = __import__('threading').Lock()
+		self._start_lock = Lock()
 		register(self.stop)
 		return
 
@@ -73,12 +85,12 @@ class GunicornAdapter(Adapter):
 
 		def send(response: Response, chunked: bool) -> None:
 			output.status = response.status
+			output.chunked = chunked
 			response_headers = response.headers()
-			if chunked:
-				response_headers = [
-					(key, value) for key, value in response_headers
-					if key.lower() != 'transfer-encoding'
-				]
+			response_headers = [
+				(key, value) for key, value in response_headers
+				if key.lower() not in ('transfer-encoding', 'connection')
+			]
 			events.put(('start', response.status, response.message, response_headers))
 			return
 
@@ -103,6 +115,8 @@ class GunicornAdapter(Adapter):
 		def run() -> None:
 			try:
 				self.dispatch(request)
+			except Exception as error:
+				events.put(('error', error))
 			finally:
 				events.put(('end',))
 
@@ -119,6 +133,8 @@ class GunicornAdapter(Adapter):
 				elif event[0] == 'body':
 					if started:
 						yield event[1]
+				elif event[0] == 'error':
+					raise event[1]
 				else:
 					break
 			return
