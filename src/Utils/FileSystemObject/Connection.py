@@ -5,7 +5,7 @@ from .Configuration import Configuration
 from abc import ABCMeta, abstractmethod
 
 __all__ = (
-	'Connection'
+	'Connection',
 )
 
 

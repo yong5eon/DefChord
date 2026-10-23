@@ -10,6 +10,10 @@ from ...Connection import Connection as BaseConnection
 from .Configuration import Configuration
 from .File import File
 
+__all__ = (
+	'Connection',
+)
+
 
 class Connection(BaseConnection):
 	"""Provide local filesystem access restricted to the configured root."""

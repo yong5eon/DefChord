@@ -5,7 +5,7 @@ from .Connection import Connection
 from abc import ABCMeta, abstractmethod
 
 __all__ = (
-	'File'
+	'File',
 )
 
 

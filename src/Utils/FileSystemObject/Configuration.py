@@ -3,7 +3,7 @@
 from abc import ABCMeta, abstractmethod
 
 __all__ = (
-	'Configuration'
+	'Configuration',
 )
 
 
