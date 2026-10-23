@@ -209,6 +209,7 @@ class ExtensionTests(TestCase):
 		self.assertNotIn(f'Swagger: http://127.0.0.1:{address[1]}', output.getvalue())
 		self.assertEqual(spec.document(other)['paths'], {})
 		self.assertNotIn('/spec', spec.document(app)['paths'])
+		self.assertNotIn('/status', spec.document(app)['paths'])
 		ping = Ping('/state')(app, request())
 		assert isinstance(ping.body, bytes)
 		self.assertEqual(ping.status, 503)

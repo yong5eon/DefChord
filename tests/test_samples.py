@@ -208,7 +208,7 @@ class SampleTests(TestCase):
 			self.assertEqual(self.call(address, 'GET', '/console')[0], 404)
 			status, headers, data = self.call(address, 'GET', '/options?p=/status')
 			self.assertEqual(status, 200)
-			self.assertIn('/status', loads(data))
+			self.assertNotIn('/status', loads(data))
 		return
 
 	def test_authentication_and_tokens_over_http(self):
