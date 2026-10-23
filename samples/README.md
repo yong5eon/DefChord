@@ -40,7 +40,7 @@ RequestRunner 샘플은 [runners/](runners/) 디렉터리에 기능별로 모았
 | `Auth/RunAuth*` | [runners/Authentication.py](runners/Authentication.py) | Query·Header·Cookie·HTTP와 네 OAuth2 흐름 인증 |
 | `Auth/*Token` | [runners/Authentication.py](runners/Authentication.py) | 기존 토큰 요청 경로·쿼리·폼 처리 |
 | `Request/RunStreamIn`, `RunStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream` |
-| `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream/chunked` |
+| `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream/chunked`; PUT은 `ChunkedStreamContentReader`로 받은 청크를 하나씩 응답 청크로 반환 |
 | `Request/RunServerSentEvent` | [runners/Streaming.py](runners/Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
 | `RunStatus` | [Sample.py](Sample.py) | `/status`; 실제 OPTIONS·CORS 사전 요청은 프레임워크가 처리 |
 | `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/request/sample`은 JPG, `/thumbs/response/sample`은 응답 필터로 PNG 교체; `/favicon.ico`, `/css/sample.css`, `/` |
@@ -115,7 +115,7 @@ curl.exe -N -X PUT -H "Content-Type: application/octet-stream" --data-binary "he
 curl.exe -N -X PUT -H "Content-Type: application/octet-stream" -H "Transfer-Encoding: chunked" --data-binary "hello" http://127.0.0.1:8000/api/run/stream/chunked
 ```
 
-GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다. PUT은 `hello`를 반환한다. SSE는 무한히 임의 숫자와 ID를 보내고 5의 배수일 때 `retry: 1000`을 보낸다. 클라이언트를 종료해 연결을 닫는다.
+GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다. PUT은 `hello`를 반환한다. 일반 PUT은 `StreamContentReader`로 Content-Length만큼 읽으며 chunked 요청은 411로 거부한다. Chunked PUT은 `ChunkedStreamContentReader`가 chunked 프로토콜(청크 크기·구분자·트레일러)을 직접 해석하며 `Transfer-Encoding: chunked`가 아닌 요청을 400으로 거부한다. SSE는 무한히 임의 숫자와 ID를 보내고 5의 배수일 때 `retry: 1000`을 보낸다. 클라이언트를 종료해 연결을 닫는다.
 
 ### CORS·OPTIONS·파일
 

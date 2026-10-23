@@ -16,7 +16,10 @@ from DefEssential import (
 	ResponseFilter,
 	ServerError,
 )
-from DefEssential.Readers import TextContentReader
+from DefEssential.Readers import (
+	ChunkedStream,
+	TextContentReader,
+)
 from DefEssential.RequestReader import ClientDisconnected
 
 
@@ -410,29 +413,76 @@ class ReaderTests(TestCase):
 		)
 		return
 
+	def test_chunked_body_requires_chunked_stream(self):
+		reader = RequestReader(
+			BytesIO(b'3\r\nabc\r\n0\r\n\r\n'),
+			chunked=True,
+		)
+		with self.assertRaises(ClientError) as caught:
+			reader.read()
+		self.assertEqual(caught.exception.status, 411)
+		with self.assertRaises(ValueError):
+			ChunkedStream(RequestReader(
+				BytesIO(b'abc'),
+				size=3,
+			))
+		return
+
 	def test_chunked_decoding_and_trailers(self):
 		source = BytesIO(b'3;ext=value\r\nabc\r\n2\r\nde\r\n0\r\nX-End: yes\r\n\r\nNEXT')
 		reader = RequestReader(
 			source,
 			chunked=True,
 		)
+		stream = ChunkedStream(reader)
 		self.assertEqual(
-			reader.read(2),
+			stream.read(2),
 			b'ab',
 		)
 		self.assertEqual(
-			reader.read(2),
+			stream.read(2),
 			b'cd',
 		)
 		self.assertEqual(
-			reader.read(),
+			stream.read(),
 			b'e',
 		)
+		self.assertTrue(stream.finished)
 		self.assertTrue(reader.finished)
 		self.assertEqual(
 			source.read(),
 			b'NEXT',
 		)
+		return
+
+	def test_chunk_reads_do_not_cross_chunk_boundaries(self):
+		stream = ChunkedStream(RequestReader(
+			BytesIO(b'3\r\nabc\r\n2\r\nde\r\n0\r\n\r\nNEXT'),
+			chunked=True,
+		))
+		self.assertEqual(
+			stream.read(1),
+			b'a',
+		)
+		self.assertEqual(
+			stream.chunk(),
+			b'bc',
+		)
+		self.assertEqual(
+			stream.chunk(0),
+			b'',
+		)
+		self.assertEqual(
+			stream.chunk(10),
+			b'de',
+		)
+		self.assertEqual(
+			stream.chunk(),
+			b'',
+		)
+		self.assertTrue(stream.finished)
+		with self.assertRaises(ValueError):
+			stream.chunk(-2)
 		return
 
 	def test_malformed_and_interrupted_inputs(self):
@@ -445,19 +495,18 @@ class ReaderTests(TestCase):
 			b'0\r\n',
 		):
 			with self.subTest(payload=payload):
-				reader = RequestReader(
+				stream = ChunkedStream(RequestReader(
 					BytesIO(payload),
 					chunked=True,
-				)
+				))
 				with self.assertRaises(ClientError):
-					reader.read()
+					stream.read()
 		with self.assertRaises(ClientError):
 			RequestReader(
 				BytesIO(b'ab'),
 				size=3,
 			).read()
 		return
-
 	def test_socket_errors_are_client_disconnects(self):
 		class Disconnected:
 			def read(
@@ -483,6 +532,6 @@ class ReaderTests(TestCase):
 					chunked=chunked,
 				)
 				with self.assertRaises(ClientDisconnected) as raised:
-					reader.read()
+					(ChunkedStream(reader) if chunked else reader).read()
 				self.assertIsInstance(raised.exception.__cause__, ConnectionError)
 		return

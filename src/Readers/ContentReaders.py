@@ -17,6 +17,7 @@ from ..Validator import (
 	Pattern,
 	Validator,
 )
+from .ChunkedStream import ChunkedStream
 from .ContentReader import ContentReader
 
 
@@ -82,7 +83,7 @@ class ByteStringContentReader(ContentReader):
 
 
 class StreamContentReader(ByteStringContentReader):
-	"""Expose length-delimited or chunked input as a binary stream without pre-reading."""
+	"""Expose a Content-Length body as a binary stream without pre-reading."""
 
 	def read_content(
 		self,
@@ -93,7 +94,29 @@ class StreamContentReader(ByteStringContentReader):
 			request,
 			'application/octet-stream',
 		)
+		if reader.chunked:
+			raise ClientError(
+				'Content-Length is required',
+				status=411,
+			)
 		return reader
+
+
+class ChunkedStreamContentReader(StreamContentReader):
+	"""Decode a chunked body as a binary stream that can read client chunks one at a time."""
+
+	def read_content(
+		self,
+		request: Request,
+		reader: RequestReader,
+	) -> ChunkedStream:
+		self.require(
+			request,
+			'application/octet-stream',
+		)
+		if not reader.chunked:
+			raise ClientError('Chunked transfer encoding is required')
+		return ChunkedStream(reader)
 
 
 class TextContentReader(ByteStringContentReader):

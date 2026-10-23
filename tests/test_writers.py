@@ -24,7 +24,10 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Readers import StreamContentReader
+from DefEssential.Readers import (
+	ChunkedStreamContentReader,
+	StreamContentReader,
+)
 from DefEssential.RequestReader import ClientDisconnected
 from DefEssential.Writers import (
 	ChunkedStreamWriter,
@@ -797,7 +800,7 @@ class DirectServerTests(TestCase):
 			RequestRunner,
 			method='PUT',
 			url='/echo',
-			body=Body(StreamContentReader()),
+			body=Body(ChunkedStreamContentReader()),
 		):
 			def run(
 				self,

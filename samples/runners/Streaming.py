@@ -3,15 +3,12 @@ from time import sleep
 
 from DefEssential import (
 	Body,
-	Headers,
 	Request,
 	RequestRunner,
 )
-from DefEssential.Readers import StreamContentReader
-from DefEssential.Validator.Patterns import (
-	IsIn,
-	IsString,
-	ToInteger,
+from DefEssential.Readers import (
+	ChunkedStreamContentReader,
+	StreamContentReader,
 )
 from DefEssential.Writers import (
 	ChunkedStreamWriter,
@@ -20,26 +17,10 @@ from DefEssential.Writers import (
 )
 
 
-def echo(request: Request) -> None:
-	writer = ChunkedStreamWriter(request.writer)
-	writer.begin(format='application/octet-stream')
-	while True:
-		data = request.body.read(65536)
-		if not data:
-			break
-		writer.chunk(data)
-	writer.end()
-	return
-
-
 class RunStreamIn(
 	RequestRunner,
 	method='PUT',
 	url='/api/run/stream',
-	headers=Headers(
-		{'Content-Length': ToInteger()},
-		requires='Content-Length',
-	),
 	body=Body(StreamContentReader()),
 	tags='Streaming',
 ):
@@ -47,7 +28,14 @@ class RunStreamIn(
 		self,
 		request: Request,
 	) -> None:
-		echo(request)
+		writer = ChunkedStreamWriter(request.writer)
+		writer.begin(format='application/octet-stream')
+		while True:
+			data = request.body.read(65536)
+			if not data:
+				break
+			writer.chunk(data)
+		writer.end()
 		return
 
 
@@ -55,18 +43,21 @@ class RunChunkedStreamIn(
 	RequestRunner,
 	method='PUT',
 	url='/api/run/stream/chunked',
-	headers=Headers(
-		{'Transfer-Encoding': IsString(IsIn('chunked'))},
-		requires='Transfer-Encoding',
-	),
-	body=Body(StreamContentReader()),
+	body=Body(ChunkedStreamContentReader()),
 	tags='Streaming',
 ):
 	def run(
 		self,
 		request: Request,
 	) -> None:
-		echo(request)
+		writer = ChunkedStreamWriter(request.writer)
+		writer.begin(format='application/octet-stream')
+		while True:
+			data = request.body.chunk(65536)
+			if not data:
+				break
+			writer.chunk(data)
+		writer.end()
 		return
 
 

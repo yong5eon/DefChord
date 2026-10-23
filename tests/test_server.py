@@ -16,7 +16,10 @@ from DefEssential import (
 	Response,
 	serve,
 )
-from DefEssential.Readers import StreamContentReader
+from DefEssential.Readers import (
+	ChunkedStreamContentReader,
+	StreamContentReader,
+)
 
 
 @contextmanager
@@ -138,7 +141,7 @@ class ServerTests(TestCase):
 						RequestRunner,
 						method=method,
 						url='/upload',
-						body=Body(StreamContentReader()),
+						body=Body(ChunkedStreamContentReader() if chunked else StreamContentReader()),
 					):
 						def run(
 							self,

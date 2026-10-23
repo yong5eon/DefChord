@@ -27,7 +27,7 @@ class ClientDisconnected(ConnectionError):
 
 
 class RequestReader:
-	"""Remove transfer framing and read within request body boundaries."""
+	"""Read a Content-Length body and expose raw input primitives for chunked readers."""
 
 	def __init__(
 		self,
@@ -42,23 +42,24 @@ class RequestReader:
 		self.reader = reader
 		self.remaining = size if size is not None else 0
 		self.chunked = chunked
-		self.chunk_remaining = 0
 		self.finished = not chunked and self.remaining == 0
 		return
 
 	def line(self) -> bytes:
+		"""Read one raw CRLF-terminated line without the line ending."""
 		try:
 			line = self.reader.readline(65537)
 		except ConnectionError as error:
 			raise ClientDisconnected(*error.args) from error
 		if len(line) > 65536 or not line.endswith(b'\r\n'):
-			raise ClientError('Invalid or truncated chunked framing')
+			raise ClientError('Invalid or truncated body line')
 		return line[:-2]
 
 	def exact(
 		self,
 		size: int,
 	) -> bytes:
+		"""Read exactly size raw bytes."""
 		parts = []
 		while size:
 			try:
@@ -71,56 +72,24 @@ class RequestReader:
 			size -= len(part)
 		return b''.join(parts)
 
-	def next_chunk(self) -> None:
-		line = self.line()
-		size = line.split(b';', 1)[0]
-		if not size or any(byte not in b'0123456789abcdefABCDEF' for byte in size):
-			raise ClientError('Invalid chunk size')
-		self.chunk_remaining = int(size, 16)
-		if self.chunk_remaining == 0:
-			while True:
-				trailer = self.line()
-				if not trailer:
-					break
-				name, separator, _ = trailer.partition(b':')
-				if not separator or name.lower() in (
-					b'content-length',
-					b'transfer-encoding',
-					b'host',
-				):
-					raise ClientError('Invalid chunked trailer')
-			self.finished = True
-		return
-
 	def read(
 		self,
 		size: int = -1,
 	) -> bytes:
 		if size < -1:
 			raise ValueError('Read size must be at least -1')
+		if self.chunked:
+			raise ClientError(
+				'Content-Length is required',
+				status=411,
+			)
 		if size == 0 or self.finished:
 			return b''
-		if not self.chunked:
-			count = self.remaining if size == -1 else min(size, self.remaining)
-			data = self.exact(count)
-			self.remaining -= len(data)
-			self.finished = self.remaining == 0
-			return data
-		parts = []
-		while not self.finished and (size == -1 or size > 0):
-			if self.chunk_remaining == 0:
-				self.next_chunk()
-				if self.finished:
-					break
-			count = self.chunk_remaining if size == -1 else min(size, self.chunk_remaining)
-			part = self.exact(count)
-			parts.append(part)
-			self.chunk_remaining -= count
-			if size != -1:
-				size -= count
-			if self.chunk_remaining == 0 and self.exact(2) != b'\r\n':
-				raise ClientError('Invalid chunk delimiter')
-		return b''.join(parts)
+		count = self.remaining if size == -1 else min(size, self.remaining)
+		data = self.exact(count)
+		self.remaining -= len(data)
+		self.finished = self.remaining == 0
+		return data
 
 	def readline(
 		self,

@@ -13,6 +13,8 @@ from DefEssential import (
 )
 from DefEssential.Readers import (
 	ByteStringContentReader,
+	ChunkedStream,
+	ChunkedStreamContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,
 	StreamContentReader,
@@ -111,6 +113,44 @@ class ContentTests(TestCase):
 			source.tell(),
 			0,
 		)
+		return
+
+	def test_chunked_stream_reads_client_chunks_and_requires_chunked_framing(self):
+		source = BytesIO(b'5\r\nfirst\r\n6\r\nsecond\r\n0\r\n\r\n')
+		req = self.request(
+			b'',
+			'application/octet-stream',
+		)
+		req.reader = RequestReader(
+			source,
+			chunked=True,
+		)
+		stream = Body(ChunkedStreamContentReader())(req)
+		self.assertIsInstance(
+			stream,
+			ChunkedStream,
+		)
+		self.assertEqual(
+			source.tell(),
+			0,
+		)
+		self.assertEqual(
+			[stream.chunk(), stream.chunk(4), stream.chunk(4), stream.chunk()],
+			[b'first', b'seco', b'nd', b''],
+		)
+		with self.assertRaises(ClientError) as caught:
+			Body(ChunkedStreamContentReader())(self.request(
+				b'body',
+				'application/octet-stream',
+			))
+		self.assertEqual(caught.exception.status, 400)
+		req.reader = RequestReader(
+			BytesIO(b'5\r\nfirst\r\n0\r\n\r\n'),
+			chunked=True,
+		)
+		with self.assertRaises(ClientError) as caught:
+			Body(StreamContentReader())(req)
+		self.assertEqual(caught.exception.status, 411)
 		return
 
 	def test_invalid_content(self):
