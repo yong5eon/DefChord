@@ -22,6 +22,10 @@ class BinaryReader(Protocol):
 		...
 
 
+class ClientDisconnected(ConnectionError):
+	"""Represent a client connection lost while receiving the request body."""
+
+
 class RequestReader:
 	"""Remove transfer framing and read within request body boundaries."""
 
@@ -43,7 +47,10 @@ class RequestReader:
 		return
 
 	def line(self) -> bytes:
-		line = self.reader.readline(65537)
+		try:
+			line = self.reader.readline(65537)
+		except ConnectionError as error:
+			raise ClientDisconnected(*error.args) from error
 		if len(line) > 65536 or not line.endswith(b'\r\n'):
 			raise ClientError('Invalid or truncated chunked framing')
 		return line[:-2]
@@ -54,7 +61,10 @@ class RequestReader:
 	) -> bytes:
 		parts = []
 		while size:
-			part = self.reader.read(size)
+			try:
+				part = self.reader.read(size)
+			except ConnectionError as error:
+				raise ClientDisconnected(*error.args) from error
 			if not part:
 				raise ClientError('Connection closed while receiving the request body')
 			parts.append(part)

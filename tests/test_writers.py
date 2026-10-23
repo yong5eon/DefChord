@@ -6,7 +6,10 @@ from io import BytesIO
 from socket import (
 	create_connection,
 	SHUT_RDWR,
+	SO_LINGER,
+	SOL_SOCKET,
 )
+from struct import pack
 from threading import Event
 from unittest import TestCase
 
@@ -22,6 +25,7 @@ from DefEssential import (
 	ResponseWriter,
 )
 from DefEssential.Readers import StreamContentReader
+from DefEssential.RequestReader import ClientDisconnected
 from DefEssential.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEvents,
@@ -501,9 +505,78 @@ class DirectServerTests(TestCase):
 					release.set()
 					client.close()
 		self.assertIn(
-			'Connection closed while sending response',
+			'WARNING:DefEssential.Server:Client disconnected',
 			'\n'.join(logged.output),
 		)
+		self.assertTrue(all(record.exc_info is None for record in logged.records))
+		return
+
+	def test_client_reset_while_receiving_body_is_logged_as_disconnect(self):
+		reading = Event()
+		observed = Event()
+		failures = []
+
+		class Completion(Extension):
+			def end(
+				self,
+				request,
+				context,
+				status,
+				error,
+			):
+				failures.append(error)
+				observed.set()
+				return
+
+			def __call__(
+				self,
+				app,
+				request,
+			):
+				return Response()
+
+		class Upload(
+			RequestRunner,
+			method='POST',
+			url='/',
+			body=Body(StreamContentReader()),
+		):
+			def run(
+				self,
+				request,
+			):
+				reading.set()
+				request.reader.read()
+				return Response()
+
+		app = Application(exts=(Completion('/completion'),))
+		app.add(Upload)
+		with self.assertLogs(
+			'DefEssential.Server',
+			level='INFO',
+		) as logged:
+			with running(app) as address:
+				client = create_connection(
+					address,
+					timeout=3,
+				)
+				try:
+					client.sendall(b'POST / HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/octet-stream\r\nContent-Length: 100\r\n\r\nabc')
+					self.assertTrue(reading.wait(3))
+					client.setsockopt(
+						SOL_SOCKET,
+						SO_LINGER,
+						pack('ii', 1, 0),
+					)
+				finally:
+					client.close()
+				self.assertTrue(observed.wait(3))
+		self.assertIsInstance(failures[0], ClientDisconnected)
+		self.assertIn(
+			'Client disconnected',
+			'\n'.join(logged.output),
+		)
+		self.assertTrue(all(record.levelname == 'WARNING' and record.exc_info is None for record in logged.records))
 		return
 
 	def test_direct_output_before_handler_returns_and_other_requests_progress(self):

@@ -8,7 +8,10 @@ from typing import Optional
 from .Application import Application
 from .Error import Error
 from .Request import Request
-from .RequestReader import RequestReader
+from .RequestReader import (
+	ClientDisconnected,
+	RequestReader,
+)
 from .Response import Response
 from .ResponseWriter import ResponseWriter
 from .Startup import startup
@@ -76,16 +79,20 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 
 	def handle_one_request(self) -> None:
 		self.close_connection = True
-		self.raw_requestline = self.rfile.readline(65537)
-		if len(self.raw_requestline) > 65536:
-			self.requestline = ''
-			self.request_version = ''
-			self.command = ''
-			self.send_error(414)
-			return
-		if not self.raw_requestline:
-			return
-		if not self.parse_request():
+		try:
+			self.raw_requestline = self.rfile.readline(65537)
+			if len(self.raw_requestline) > 65536:
+				self.requestline = ''
+				self.request_version = ''
+				self.command = ''
+				self.send_error(414)
+				return
+			if not self.raw_requestline:
+				return
+			if not self.parse_request():
+				return
+		except ConnectionError as error:
+			self.logger.warning('Client disconnected: %s', error)
 			return
 		self.close_connection = True
 		response = None
@@ -118,6 +125,8 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 						context,
 					))
 				response = self.server.app(request)
+			except ClientDisconnected:
+				raise
 			except Error as error:
 				status = error.status
 				failure = error
@@ -148,9 +157,12 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 				raise RuntimeError('Response was neither returned nor completed successfully')
 			else:
 				status = self.response_status
-		except (ConnectionError, OSError) as error:
+		except ConnectionError as error:
 			failure = error
-			self.logger.info('Connection closed while sending response', exc_info=True)
+			self.logger.warning('Client disconnected: %s', error)
+		except OSError as error:
+			failure = error
+			self.logger.warning('Connection closed while sending response', exc_info=True)
 		except Exception as error:
 			failure = error
 			self.logger.exception('Response transmission failed: closing connection without another error response')

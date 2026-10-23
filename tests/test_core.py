@@ -17,6 +17,7 @@ from DefEssential import (
 	ServerError,
 )
 from DefEssential.Readers import TextContentReader
+from DefEssential.RequestReader import ClientDisconnected
 
 
 def request(
@@ -455,4 +456,33 @@ class ReaderTests(TestCase):
 				BytesIO(b'ab'),
 				size=3,
 			).read()
+		return
+
+	def test_socket_errors_are_client_disconnects(self):
+		class Disconnected:
+			def read(
+				self,
+				size=-1,
+			):
+				raise ConnectionResetError('reset by peer')
+
+			def readline(
+				self,
+				size=-1,
+			):
+				raise ConnectionAbortedError('aborted')
+
+		for chunked, size in (
+			(False, 3),
+			(True, None),
+		):
+			with self.subTest(chunked=chunked):
+				reader = RequestReader(
+					Disconnected(),
+					size=size,
+					chunked=chunked,
+				)
+				with self.assertRaises(ClientDisconnected) as raised:
+					reader.read()
+				self.assertIsInstance(raised.exception.__cause__, ConnectionError)
 		return
