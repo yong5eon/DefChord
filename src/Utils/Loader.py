@@ -13,6 +13,10 @@ from typing import (
 	Optional,
 )
 
+__all__ = (
+	'Loader',
+)
+
 
 class Loader:
 	"""Load modules, files, or directories without re-executing imported modules."""

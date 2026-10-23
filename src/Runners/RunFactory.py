@@ -7,6 +7,10 @@ from typing import (
 	TypeVar,
 )
 
+__all__ = (
+	'RunFactory',
+)
+
 
 T = TypeVar('T')
 

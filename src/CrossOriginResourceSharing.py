@@ -10,6 +10,10 @@ from .Validators import (
 	Origin,
 )
 
+__all__ = (
+	'CrossOriginResourceSharing',
+)
+
 
 class CrossOriginResourceSharing:
 	"""요청 설정에 따라 Cross-Origin Resource Sharing 정책을 적용한다."""

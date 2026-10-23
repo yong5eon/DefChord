@@ -8,6 +8,10 @@ from ..ResponseWriter import ResponseWriter
 from .ServerSentEvents import ServerSentEvents
 from .StreamWriter import StreamWriter
 
+__all__ = (
+	'ServerSentEventsWriter',
+)
+
 
 class ServerSentEventsWriter:
 	"""Wrap a plain or chunked stream to send SSE events immediately."""

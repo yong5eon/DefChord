@@ -7,6 +7,10 @@ from typing import (
 	Union,
 )
 
+__all__ = (
+	'Response',
+)
+
 
 class Response:
 	"""Represent an HTTP response with a byte body or sequential output."""

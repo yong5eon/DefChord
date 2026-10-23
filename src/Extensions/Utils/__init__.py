@@ -5,6 +5,10 @@ from typing import Optional
 
 from ...Response import Response
 
+__all__ = (
+	'page',
+)
+
 
 def page(
 	name: str,

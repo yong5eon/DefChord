@@ -4,6 +4,10 @@ from ..Request import Request
 from ..Response import Response
 from .Utils import page
 
+__all__ = (
+	'Swagger',
+)
+
 
 class Swagger(Extension):
 	"""Serve CDN-hosted Swagger UI for an explicit same-origin specification path."""

@@ -1,5 +1,9 @@
 from struct import pack
 
+__all__ = (
+	'WebSocketFrame',
+)
+
 
 class WebSocketFrame:
 	"""WebSocket 프레임 하나를 표현하고 서버가 보내는 마스크 없는 바이트로 인코딩한다."""

@@ -10,6 +10,10 @@ from typing import (
 
 from ..Application import Application
 
+__all__ = (
+	'Server',
+)
+
 
 ServerType = TypeVar(
 	'ServerType',

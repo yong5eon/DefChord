@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 
+__all__ = (
+	'ServerSentEvents',
+)
+
 
 @dataclass(frozen=True)
 class ServerSentEvents:

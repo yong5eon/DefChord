@@ -9,6 +9,10 @@ from ..RequestRunner import RequestRunner
 from ..Response import Response
 from .RunFactory import RunFactory
 
+__all__ = (
+	'RunExtensionFactory',
+)
+
 if TYPE_CHECKING:
 	from ..Application import Application
 

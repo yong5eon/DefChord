@@ -9,6 +9,10 @@ from typing import (
 
 from .RequestRunner import RequestRunner
 
+__all__ = (
+	'Route',
+)
+
 
 class Route:
 	"""Represent a route using the existing :name path parameter syntax."""

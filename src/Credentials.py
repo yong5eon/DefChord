@@ -13,6 +13,18 @@ from .Error import ClientError
 from .Request import Request
 from .Validators import Credentials
 
+__all__ = (
+	'HTTPAuthorization',
+	'Query',
+	'Header',
+	'Cookie',
+	'HTTP',
+	'OAuth2Implicit',
+	'OAuth2Password',
+	'OAuth2ClientCredentials',
+	'OAuth2AuthorizationCode',
+)
+
 
 @dataclass(frozen=True)
 class HTTPAuthorization:

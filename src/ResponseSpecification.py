@@ -8,6 +8,10 @@ from typing import (
 
 from .Content import Content
 
+__all__ = (
+	'ResponseSpecification',
+)
+
 
 @dataclass(frozen=True)
 class ResponseSpecification:

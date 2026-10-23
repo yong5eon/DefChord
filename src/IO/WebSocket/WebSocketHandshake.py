@@ -9,6 +9,10 @@ from ...Error import ClientError
 from ...Request import Request
 from ...Response import Response
 
+__all__ = (
+	'WebSocketHandshake',
+)
+
 
 class WebSocketHandshake:
 	"""WebSocket 열기 핸드셰이크 요청을 검증하고 101 응답을 만든다."""

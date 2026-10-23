@@ -2,6 +2,13 @@ from os import environ
 import sys
 from .Application import Application
 
+__all__ = (
+	'LOGO',
+	'supports_color',
+	'colorize_logo',
+	'startup',
+)
+
 
 LOGO = r"""
 ▄▄▄▄▄▄           ▄▄ ▄▄▄▄▄▄▄                              ▄▄       ▄▄

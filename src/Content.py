@@ -4,6 +4,10 @@ from typing import (
 	Optional,
 )
 
+__all__ = (
+	'Content',
+)
+
 
 @dataclass(frozen=True)
 class Content:

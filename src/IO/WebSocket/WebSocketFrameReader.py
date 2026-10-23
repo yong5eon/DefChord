@@ -8,6 +8,10 @@ from ..RequestReader import (
 from .WebSocketError import WebSocketError
 from .WebSocketFrame import WebSocketFrame
 
+__all__ = (
+	'WebSocketFrameReader',
+)
+
 
 class WebSocketFrameReader:
 	"""업그레이드된 연결에서 클라이언트 프레임을 하나씩 읽고 프레임 규칙을 검사한다."""

@@ -4,6 +4,10 @@ from ..Request import Request
 from ..Response import Response
 from .Utils import page
 
+__all__ = (
+	'Status',
+)
+
 
 class Status(Extension):
 	"""Display JSON metrics from an explicit same-origin path."""

@@ -5,6 +5,10 @@ from typing import (
 
 from .Route import Route
 
+__all__ = (
+	'Router',
+)
+
 
 class Router:
 	"""Maintain per-Application registrations and prioritize static routes."""

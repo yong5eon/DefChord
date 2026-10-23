@@ -7,6 +7,10 @@ from urllib.parse import unquote
 from .RequestRunner import RequestRunner
 from .Route import Route
 
+__all__ = (
+	'FileSystemRoute',
+)
+
 
 class FileSystemRoute(Route):
 	"""Map file paths, including path separators, under a URL prefix."""

@@ -15,6 +15,10 @@ from .WebSocketFrame import WebSocketFrame
 from .WebSocketFrameReader import WebSocketFrameReader
 from .WebSocketHandshake import WebSocketHandshake
 
+__all__ = (
+	'WebSocket',
+)
+
 
 class WebSocket:
 	"""업그레이드된 HTTP 연결에서 WebSocket 메시지를 주고받는다.

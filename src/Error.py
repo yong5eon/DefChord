@@ -4,6 +4,12 @@ from typing import (
 	Optional,
 )
 
+__all__ = (
+	'Error',
+	'ClientError',
+	'ServerError',
+)
+
 
 class Error(Exception):
 	"""Represent an error to be returned as an HTTP response."""

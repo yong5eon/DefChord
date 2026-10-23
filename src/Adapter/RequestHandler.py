@@ -8,6 +8,10 @@ from ..IO.ResponseWriter import ResponseWriter
 from ..Request import Request
 from ..Response import Response
 
+__all__ = (
+	'handle_request',
+)
+
 
 def handle_request(
 	application: Application,

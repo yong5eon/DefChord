@@ -4,6 +4,10 @@ from ....Application import Application
 from ....Startup import startup
 from ...Server import Server as ServerAdapter
 
+__all__ = (
+	'Server',
+)
+
 
 class Server(ServerAdapter):
 	"""a2wsgi로 동기 애플리케이션을 Uvicorn에서 실행한다."""

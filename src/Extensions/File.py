@@ -13,6 +13,10 @@ from ..RequestRunner import (
 )
 from ..Responses import ResponseFile
 
+__all__ = (
+	'File',
+)
+
 
 class File(Extension):
 	"""Serve a file at a fixed HTTP path."""

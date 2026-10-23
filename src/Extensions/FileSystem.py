@@ -17,6 +17,10 @@ from ..Responses.ResponseFile import file_error
 from ..FileSystemRoute import FileSystemRoute
 from ..Utils.FileSystemObject import Connection
 
+__all__ = (
+	'FileSystem',
+)
+
 
 class FileSystem(Extension):
 	"""Serve files from a connection under an HTTP path prefix."""

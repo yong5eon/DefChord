@@ -7,6 +7,10 @@ from typing import (
 	Union,
 )
 
+__all__ = (
+	'Body',
+)
+
 
 class Body:
 	"""Apply body requirements and the explicitly selected reader."""

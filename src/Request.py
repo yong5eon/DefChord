@@ -16,6 +16,10 @@ from .IO.RequestReader import RequestReader
 from .IO.ResponseWriter import ResponseWriter
 from .Error import ClientError
 
+__all__ = (
+	'Request',
+)
+
 
 class Request:
 	"""Represent an HTTP request independently of server environment dictionaries."""

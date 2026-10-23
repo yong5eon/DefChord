@@ -1,3 +1,8 @@
+__all__ = (
+	'WebSocketError',
+)
+
+
 class WebSocketError(Exception):
 	"""클라이언트의 WebSocket 프로토콜 위반을 닫기 코드와 함께 표현한다."""
 

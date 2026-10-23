@@ -6,6 +6,10 @@ from typing import (
 from ...Response import Response
 from ..ResponseWriter import ResponseWriter
 
+__all__ = (
+	'StreamWriter',
+)
+
 
 class StreamWriter:
 	"""Start a response and write bytes directly to the stream."""

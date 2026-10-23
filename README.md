@@ -6,6 +6,13 @@ The Modern Synchronous Python Web Application Framework
 **Let web apps do the work.**<br>
 **You don't need to await this.**
 
+## 공개 API
+
+모든 Python 모듈은 임포트 다음, 구현·정의 이전에 `__all__` 튜플로 공개할 클래스·함수·객체를 명시합니다.
+공개할 심볼이 없는 패키지는 `__all__ = ()`를 사용합니다.
+외부 라이브러리에서 가져온 구현 의존성과 내부 보조 심볼은 공개 목록에 포함하지 않으며, 기존 패키지의 재노출 API는 유지합니다.
+`from ... import *`는 이 목록에 있는 심볼만 가져옵니다. `__all__`은 명시적인 개별 임포트를 차단하지 않습니다.
+
 ## 서버 어댑터
 
 서버 인터페이스는 `DefEssential.Adapter.Server`이며, 사용할 구현에서 `Server`를 가져옵니다.

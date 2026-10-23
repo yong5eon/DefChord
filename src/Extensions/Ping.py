@@ -4,6 +4,10 @@ from ..Request import Request
 from ..Response import Response
 from ..Responses import ResponseJSON
 
+__all__ = (
+	'Ping',
+)
+
 
 class Ping(Extension):
 	"""HTTP 응답 여부와 Application 실행 상태를 제공한다."""

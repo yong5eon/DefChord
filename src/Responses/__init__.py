@@ -7,6 +7,12 @@ from json import dumps
 from ..Response import Response
 from .ResponseFile import ResponseFile
 
+__all__ = (
+	'ResponseFile',
+	'ResponseJSON',
+	'ResponseText',
+)
+
 
 class ResponseJSON(Response):
 	"""Serialize JSON or dataclass values as UTF-8 responses."""
@@ -55,10 +61,3 @@ class ResponseText(Response):
 			charset=charset,
 		)
 		return
-
-
-__all__ = (
-	'ResponseFile',
-	'ResponseJSON',
-	'ResponseText',
-)

@@ -8,6 +8,11 @@ from typing import (
 from ..Error import ClientError
 from ..Response import Response
 
+__all__ = (
+	'FileBody',
+	'ResponseFile',
+)
+
 
 def file_error(error: OSError) -> ClientError:
 	if isinstance(

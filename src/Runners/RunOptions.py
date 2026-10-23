@@ -4,6 +4,10 @@ from ..Response import Response
 from ..Router import Router
 from ..CrossOriginResourceSharing import CrossOriginResourceSharing
 
+__all__ = (
+	'RunOptions',
+)
+
 
 class RunOptions:
 	"""Compute Allow and CORS preflight responses from Application-owned routes."""

@@ -19,6 +19,10 @@ from .RequestRunner import (
 )
 from .Route import Route
 
+__all__ = (
+	'Extension',
+)
+
 if TYPE_CHECKING:
 	from .Application import Application
 

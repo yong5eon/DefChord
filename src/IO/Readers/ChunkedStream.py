@@ -1,6 +1,10 @@
 from ...Error import ClientError
 from ..RequestReader import RequestReader
 
+__all__ = (
+	'ChunkedStream',
+)
+
 
 class ChunkedStream:
 	"""Decode HTTP/1.1 chunked transfer coding from raw request input."""

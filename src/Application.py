@@ -19,6 +19,10 @@ from .Runners.RunOptions import RunOptions
 from .Extension import Extension
 from .Runners.RunExtension import RunExtensionFactory
 
+__all__ = (
+	'Application',
+)
+
 
 class Application:
 	"""Own registration state and execute a new handler instance per request."""
