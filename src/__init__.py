@@ -14,6 +14,7 @@ from .Validators import (
 	Parameters,
 	QueryString,
 	Headers,
+	RequestValidator,
 )
 from .RequestRunner import (
 	RequestRunner,
@@ -44,6 +45,7 @@ __all__ = (
 	'Parameters',
 	'QueryString',
 	'Headers',
+	'RequestValidator',
 	'Request',
 	'RequestReader',
 	'Response',

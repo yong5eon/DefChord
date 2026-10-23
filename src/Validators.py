@@ -25,7 +25,18 @@ from .Validator.Patterns.Object import (
 )
 
 
-class Origin:
+class RequestValidator(ABC):
+	"""HTTP 요청 검증 객체의 인터페이스를 정의한다."""
+
+	@abstractmethod
+	def __call__(
+		self,
+		request: Request,
+	) -> None:
+		raise NotImplementedError
+
+
+class Origin(RequestValidator):
 	"""Allow only configured origins and provide the CORS response policy."""
 
 	def __init__(
@@ -95,7 +106,7 @@ class Authorization(ABC):
 		raise NotImplementedError
 
 
-class Auth:
+class Auth(RequestValidator):
 	"""Perform required or optional authentication and attach a session to the request."""
 
 	def __init__(
@@ -132,7 +143,7 @@ class Auth:
 		return
 
 
-class Parameters:
+class Parameters(RequestValidator):
 	"""Validate and convert mapped path parameters and retain their schemas."""
 
 	def __init__(

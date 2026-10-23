@@ -24,7 +24,7 @@ python -m samples.Sample
 
 시작 출력의 `Applications` 목록과 개수는 확장 라우트를 제외한 `RequestRunner` 등록만 대상으로 한다. 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. `File`, `FileSystem`을 포함한 확장은 `Extensions` 목록에만 확장 클래스 이름과 호스트 없는 등록 경로로 표시한다.
 
-파일 제공도 `Application(exts=(...))`로 등록한다. 단일 파일은 `File('/favicon.ico', 파일경로)`, 디렉터리는 `FileSystem('/css', Connection(Configuration(디렉터리경로)))`로 연결한다. `add_file`, `add_files`, `add_file_system_object`는 제거했다. 기존 `add_files`와 달리 FileSystem은 요청 시 파일을 조회하므로 등록 이후 생성한 파일도 제공한다. 두 확장은 GET·HEAD와 `onRequest`·`onResponse` 필터를 지원한다. FileSystem 연결은 애플리케이션 시작 시 `connect()`, 종료 시 `close()`를 호출하며 중첩 접두사 우선순위와 로컬 파일시스템의 경로 접근 제한을 유지한다. 다른 확장과 마찬가지로 리소스 경로는 OpenAPI 명세에서 제외된다.
+파일 제공도 `Application(exts=(...))`로 등록한다. 단일 파일은 `File('/favicon.ico', 파일경로)`, 디렉터리는 `FileSystem('/css', Connection(Configuration(디렉터리경로)))`로 연결한다. `add_file`, `add_files`, `add_file_system_object`는 제거했다. 기존 `add_files`와 달리 FileSystem은 요청 시 파일을 조회하므로 등록 이후 생성한 파일도 제공한다. 두 확장은 GET·HEAD와 `onRequest`·`onResponse` 필터를 지원한다. 필터는 함수를 직접 넘기지 않고 `RequestFilter` 또는 `ResponseFilter`를 상속한 객체로 구현하며, 각각 `__call__(request)`와 `__call__(request, response)`를 정의한다. 요청 검증은 `RequestValidator` 인터페이스를 구현하며, 핸들러에는 역할에 맞는 `Origin`, `Auth`, `Parameters`, `QueryString`, `Headers` 객체를 지정한다. FileSystem 연결은 애플리케이션 시작 시 `connect()`, 종료 시 `close()`를 호출하며 중첩 접두사 우선순위와 로컬 파일시스템의 경로 접근 제한을 유지한다. 다른 확장과 마찬가지로 리소스 경로는 OpenAPI 명세에서 제외된다.
 
 ## 이전 대응표
 

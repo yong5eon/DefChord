@@ -13,6 +13,8 @@ from DefEssential import (
 	Parameters,
 	QueryString,
 	Request,
+	RequestValidator,
+	RequestFilter,
 	RequestReader,
 	RequestRunner,
 	Response,
@@ -77,6 +79,17 @@ class SessionAuthorization(Authorization):
 
 
 class FeatureTests(TestCase):
+	def test_builtin_validators_implement_request_validator(self):
+		for validator in (
+			Origin,
+			Auth,
+			Parameters,
+			QueryString,
+			Headers,
+		):
+			self.assertTrue(issubclass(validator, RequestValidator))
+		return
+
 	def test_all_credentials_and_optional_auth(self):
 		for extractor, uri, headers in (
 			(Query('credentials'), '/?credentials=1', {}),
@@ -271,8 +284,9 @@ class FeatureTests(TestCase):
 		return
 
 	def test_cors_is_applied_to_direct_output_and_early_filter_response(self):
-		def early(req):
-			return req, Response(body=b'early')
+		class EarlyResponse(RequestFilter):
+			def __call__(self, req):
+				return req, Response(body=b'early')
 
 		class Direct(
 			RequestRunner,
@@ -295,7 +309,7 @@ class FeatureTests(TestCase):
 			method='GET',
 			url='/early',
 			origin=Origin(all=True),
-			onRequest=early,
+			onRequest=EarlyResponse(),
 		):
 			def run(
 				self,

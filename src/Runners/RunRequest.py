@@ -1,5 +1,4 @@
 from typing import (
-	Callable,
 	Optional,
 	Sequence,
 	Type,
@@ -14,20 +13,19 @@ from ..CORS import (
 	apply_cors,
 	check_origin,
 )
-from ..Validators import Origin
 
 
 T = TypeVar('T')
 
 
 def filters(
-	value: Union[Callable[..., T], Sequence[Callable[..., T]], None],
-) -> Sequence[Callable[..., T]]:
+	value: Union[T, Sequence[T], None],
+) -> Sequence[T]:
 	if value is None:
 		return ()
-	if callable(value):
-		return (value,)
-	return value
+	if isinstance(value, Sequence):
+		return value
+	return (value,)
 
 
 class RunRequest:
@@ -49,9 +47,6 @@ class RunRequest:
 			properties,
 			request,
 		)
-		for origin in filters(properties.origin):
-			if not isinstance(origin, Origin):
-				origin(request)
 		for check in (
 			properties.auth,
 			properties.parameters,

@@ -9,6 +9,7 @@ from DefEssential import (
 	Origin,
 	QueryString,
 	Request,
+	RequestFilter,
 	RequestRunner,
 	Response,
 	serve,
@@ -69,9 +70,10 @@ else:
 	)
 
 
-def to_jpeg(request: Request):
-	request.params['path'] += '.jpg'
-	return request, None
+class AddJpegExtension(RequestFilter):
+	def __call__(self, request: Request):
+		request.params['path'] += '.jpg'
+		return request, None
 
 
 def create_application() -> Application:
@@ -90,7 +92,7 @@ def create_application() -> Application:
 		FileSystem(
 			'/thumbs',
 			Connection(Configuration(str(resources / 'images'))),
-			onRequest=to_jpeg,
+			onRequest=AddJpegExtension(),
 		),
 	))
 	for handler in (

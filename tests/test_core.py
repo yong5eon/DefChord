@@ -7,12 +7,16 @@ from DefEssential import (
 	Application,
 	ClientError,
 	Error,
+	Body,
 	Request,
+	RequestFilter,
 	RequestReader,
 	RequestRunner,
 	Response,
+	ResponseFilter,
 	ServerError,
 )
+from DefEssential.Readers import TextContentReader
 
 
 def request(
@@ -132,43 +136,36 @@ class CoreTests(TestCase):
 	def test_all_settings_and_execution_order(self):
 		calls = []
 
-		def check(name):
-			def apply(request):
-				calls.append(name)
+		class SampleBody(Body):
+			def __init__(self):
+				super().__init__(TextContentReader())
 				return
-			return apply
 
-		def body(request):
-			calls.append('body')
-			return 42
+			def __call__(self, request):
+				calls.append('body')
+				return 42
 
-		def before(request):
-			calls.append('request')
-			return request, None
+		class Before(RequestFilter):
+			def __call__(self, request):
+				calls.append('request')
+				return request, None
 
-		def after(
-			request,
-			response,
-		):
-			calls.append('response')
-			return response
+		class After(ResponseFilter):
+			def __call__(self, request, response):
+				calls.append('response')
+				return response
 
 		class Sample(
 			RequestRunner,
 			method='GET',
 			url='/sample',
-			origin=check('origin'),
-			auth=check('auth'),
-			parameters=check('parameters'),
-			qs=check('qs'),
-			headers=check('headers'),
-			body=body,
+			body=SampleBody(),
 			response={'200': 'sample'},
 			summary='요약',
 			description='설명',
 			tags=['sample'],
-			onRequest=[before, before],
-			onResponse=after,
+			onRequest=[Before(), Before()],
+			onResponse=After(),
 		):
 			def run(
 				self,
@@ -186,11 +183,6 @@ class CoreTests(TestCase):
 		self.assertEqual(
 			calls,
 			[
-				'origin',
-				'auth',
-				'parameters',
-				'qs',
-				'headers',
 				'body',
 				'request',
 				'request',
@@ -211,14 +203,15 @@ class CoreTests(TestCase):
 	def test_request_filter_short_circuit(self):
 		calls = []
 
-		def before(request):
-			return request, Response(status=403)
+		class Before(RequestFilter):
+			def __call__(self, request):
+				return request, Response(status=403)
 
 		class Sample(
 			RequestRunner,
 			method='GET',
 			url='/sample',
-			onRequest=before,
+			onRequest=Before(),
 		):
 			def run(
 				self,
@@ -341,6 +334,30 @@ class CoreTests(TestCase):
 				{},
 				method='GET',
 			)
+		def run(self, request):
+			return Response()
+
+		for declaration in (
+			{'origin': lambda request: None},
+			{'auth': lambda request: None},
+			{'parameters': lambda request: None},
+			{'qs': lambda request: None},
+			{'headers': lambda request: None},
+			{'body': lambda request: None},
+			{'onRequest': lambda request: (request, None)},
+			{'onResponse': lambda request, response: response},
+		):
+			with self.subTest(declaration=tuple(declaration)):
+				with self.assertRaises(TypeError):
+					type(
+						'InvalidContract',
+						(RequestRunner,),
+						{'run': run},
+						method='GET',
+						url='/invalid',
+						**declaration,
+					)
+
 		class First(
 			RequestRunner,
 			method='GET',

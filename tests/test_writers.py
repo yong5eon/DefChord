@@ -16,6 +16,7 @@ from DefEssential import (
 	ClientError,
 	Extension,
 	Request,
+	ResponseFilter,
 	RequestRunner,
 	Response,
 	ResponseWriter,
@@ -215,22 +216,24 @@ class WriterTests(TestCase):
 	def test_filter_applies_once_before_direct_headers(self):
 		calls = []
 
-		def after(
-			request,
-			response,
-		):
-			calls.append('response')
-			response.header(
-				'X-Filtered',
-				'yes',
-			)
-			return response
+		class After(ResponseFilter):
+			def __call__(
+				self,
+				request,
+				response,
+			):
+				calls.append('response')
+				response.header(
+					'X-Filtered',
+					'yes',
+				)
+				return response
 
 		class Direct(
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=after,
+			onResponse=After(),
 		):
 			def run(
 				self,
@@ -363,18 +366,20 @@ class DirectServerTests(TestCase):
 		return
 
 	def test_filters_cannot_replace_direct_output_body(self):
-		def after(
-			request,
-			response,
-		):
-			response.body = b'invalid filter body'
-			return response
+		class After(ResponseFilter):
+			def __call__(
+				self,
+				request,
+				response,
+			):
+				response.body = b'invalid filter body'
+				return response
 
 		class Direct(
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=after,
+			onResponse=After(),
 		):
 			def run(
 				self,

@@ -6,19 +6,68 @@ from abc import (
 from dataclasses import dataclass
 from re import fullmatch
 from typing import (
-	Callable,
+	Mapping,
 	Optional,
 	Sequence,
+	Type,
 	Union,
 )
 
+from .Body import Body
 from .Request import Request
 from .Response import Response
+from .ResponseSpecification import ResponseSpecification
+from .Validators import (
+	Auth,
+	Headers,
+	Origin,
+	Parameters,
+	QueryString,
+)
 
 
-RequestCheck = Callable[[Request], None]
-RequestFilter = Callable[[Request], tuple[Request, Optional[Response]]]
-ResponseFilter = Callable[[Request, Response], Response]
+class RequestFilter(ABC):
+	"""조기 응답을 반환할 수 있는 요청 필터의 인터페이스를 정의한다."""
+
+	@abstractmethod
+	def __call__(
+		self,
+		request: Request,
+	) -> tuple[Request, Optional[Response]]:
+		raise NotImplementedError
+
+
+class ResponseFilter(ABC):
+	"""요청에 대한 응답 필터의 인터페이스를 정의한다."""
+
+	@abstractmethod
+	def __call__(
+		self,
+		request: Request,
+		response: Response,
+	) -> Response:
+		raise NotImplementedError
+
+
+def require_contract(
+	value: object,
+	contract: Type,
+	name: str,
+	*,
+	multiple: bool = False,
+) -> None:
+	if value is None:
+		return
+	values = (value,) if isinstance(value, contract) else value
+	if multiple:
+		if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+			raise TypeError(name + ' must contain ' + contract.__name__ + ' instances')
+		if any(not isinstance(item, contract) for item in values):
+			raise TypeError(name + ' must contain ' + contract.__name__ + ' instances')
+		return
+	if not isinstance(value, contract):
+		raise TypeError(name + ' must be a ' + contract.__name__ + ' instance')
+	return
 
 
 class RequestRunnerMeta(ABCMeta):
@@ -44,17 +93,22 @@ class RequestRunnerMeta(ABCMeta):
 
 @dataclass(frozen=True)
 class RequestProperties:
-	"""Store handler settings on the class for Application registration."""
+	"""애플리케이션 등록에 사용할 요청 핸들러 설정을 보관한다."""
 
 	method: Optional[str]
 	url: Optional[str]
-	origin: Union[RequestCheck, Sequence[RequestCheck], None]
-	auth: Optional[RequestCheck]
-	parameters: Optional[RequestCheck]
-	qs: Optional[RequestCheck]
-	headers: Optional[RequestCheck]
-	body: Optional[Callable[[Request], object]]
-	response: object
+	origin: Union[Origin, Sequence[Origin], None]
+	auth: Optional[Auth]
+	parameters: Optional[Parameters]
+	qs: Optional[QueryString]
+	headers: Optional[Headers]
+	body: Optional[Body]
+	response: Union[
+		ResponseSpecification,
+		Mapping[str, Union[str, Mapping[str, object]]],
+		Sequence[ResponseSpecification],
+		None,
+	]
 	summary: Optional[str]
 	description: Optional[str]
 	tags: Union[str, Sequence[str], None]
@@ -77,13 +131,18 @@ class RequestRunner(
 		method: Optional[str] = None,
 		url: Optional[str] = None,
 		request_runner_name: Optional[str] = None,
-		origin: Union[RequestCheck, Sequence[RequestCheck], None] = None,
-		auth: Optional[RequestCheck] = None,
-		parameters: Optional[RequestCheck] = None,
-		qs: Optional[RequestCheck] = None,
-		headers: Optional[RequestCheck] = None,
-		body: Optional[Callable[[Request], object]] = None,
-		response: object = None,
+		origin: Union[Origin, Sequence[Origin], None] = None,
+		auth: Optional[Auth] = None,
+		parameters: Optional[Parameters] = None,
+		qs: Optional[QueryString] = None,
+		headers: Optional[Headers] = None,
+		body: Optional[Body] = None,
+		response: Union[
+			ResponseSpecification,
+			Mapping[str, Union[str, Mapping[str, object]]],
+			Sequence[ResponseSpecification],
+			None,
+		] = None,
 		summary: Optional[str] = None,
 		description: Optional[str] = None,
 		tags: Union[str, Sequence[str], None] = None,
@@ -101,6 +160,14 @@ class RequestRunner(
 			raise ValueError('Invalid HTTP method token')
 		if url is not None and (not url.startswith('/') or '?' in url or '#' in url):
 			raise ValueError('url must be a path starting with /')
+		require_contract(origin, Origin, 'origin', multiple=True)
+		require_contract(auth, Auth, 'auth')
+		require_contract(parameters, Parameters, 'parameters')
+		require_contract(qs, QueryString, 'qs')
+		require_contract(headers, Headers, 'headers')
+		require_contract(body, Body, 'body')
+		require_contract(onRequest, RequestFilter, 'onRequest', multiple=True)
+		require_contract(onResponse, ResponseFilter, 'onResponse', multiple=True)
 		cls.properties = RequestProperties(
 			method=method,
 			url=url,

@@ -8,6 +8,8 @@ from http.client import HTTPConnection
 from DefEssential import (
 	Application,
 	ClientError,
+	RequestFilter,
+	ResponseFilter,
 	Response,
 	ResponseWriter,
 )
@@ -104,14 +106,15 @@ class FileTests(TestCase):
 			(root / 'nested' / 'file.bin').write_bytes(b'\x00\xff')
 			fso = Connection(Configuration(directory))
 
-			def rewrite(req):
-				req.params['path'] += '.txt'
-				return req, None
+			class Rewrite(RequestFilter):
+				def __call__(self, req):
+					req.params['path'] += '.txt'
+					return req, None
 
 			app = Application(exts=(
 				File('/fixed', root / 'sample.txt'),
 				FileSystem('/tree', Connection(Configuration(directory))),
-				FileSystem('/dynamic', fso, onRequest=rewrite),
+				FileSystem('/dynamic', fso, onRequest=Rewrite()),
 			))
 			for url, expected in (
 				('/fixed', b'content'),
@@ -162,23 +165,24 @@ class FileTests(TestCase):
 			self.assertEqual(output.getvalue(), b'')
 			captured = []
 
-			def replace(req, response):
-				captured.append(response.body)
-				return Response(body=b'replaced')
+			class FileResponseFilter(ResponseFilter):
+				def __init__(self, action):
+					self.action = action
+					return
 
-			def fail(req, response):
-				captured.append(response.body)
-				raise ValueError('응답 필터 실패')
-
-			def mutate(req, response):
-				captured.append(response.body)
-				response.body = b'mutated'
-				return response
+				def __call__(self, req, response):
+					captured.append(response.body)
+					if self.action == 'replace':
+						return Response(body=b'replaced')
+					if self.action == 'fail':
+						raise ValueError('응답 필터 실패')
+					response.body = b'mutated'
+					return response
 
 			app = Application(exts=(
-				File('/replace', path, onResponse=replace),
-				File('/fail', path, onResponse=fail),
-				File('/mutate', path, onResponse=mutate),
+				File('/replace', path, onResponse=FileResponseFilter('replace')),
+				File('/fail', path, onResponse=FileResponseFilter('fail')),
+				File('/mutate', path, onResponse=FileResponseFilter('mutate')),
 			))
 			replacement = app(request('/replace'))
 			assert isinstance(replacement, Response)
