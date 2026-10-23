@@ -1,9 +1,4 @@
-from ..CORS import (
-	allow_headers,
-	apply_cors,
-	check_origin,
-	origins,
-)
+from ..CrossOriginResourceSharing import CrossOriginResourceSharing
 from ..Error import ClientError
 from ..Request import Request
 from ..Response import Response
@@ -45,16 +40,14 @@ class RunOptions:
 				status=405,
 			)
 		properties = matches[method][0].object.properties
-		if request.header('Origin') is None or not origins(properties):
+		cross_origin_resource_sharing = CrossOriginResourceSharing(properties)
+		if request.header('Origin') is None or not cross_origin_resource_sharing.has_origin_policy():
 			raise ClientError(
 				'No CORS policy is configured for this preflight request',
 				status=403,
 			)
-		check_origin(
-			properties,
-			request,
-		)
-		headers = allow_headers(properties)
+		cross_origin_resource_sharing.validate_origin(request)
+		headers = cross_origin_resource_sharing.allowed_request_headers()
 		requested = request.header('Access-Control-Request-Headers')
 		if requested is not None:
 			allowed = {name.lower() for name in headers}
@@ -73,8 +66,7 @@ class RunOptions:
 			'Vary',
 			'Access-Control-Request-Method, Access-Control-Request-Headers',
 		)
-		return apply_cors(
-			properties,
+		return cross_origin_resource_sharing.apply_to_response(
 			request,
 			response,
 			preflight=True,

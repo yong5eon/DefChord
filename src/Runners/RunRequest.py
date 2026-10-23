@@ -9,10 +9,7 @@ from typing import (
 from ..RequestRunner import RequestRunner
 from ..Request import Request
 from ..Response import Response
-from ..CORS import (
-	apply_cors,
-	check_origin,
-)
+from ..CrossOriginResourceSharing import CrossOriginResourceSharing
 
 
 T = TypeVar('T')
@@ -36,6 +33,7 @@ class RunRequest:
 		obj: Type[RequestRunner],
 	):
 		self.object = obj
+		self.cross_origin_resource_sharing = CrossOriginResourceSharing(obj.properties)
 		return
 
 	def run(
@@ -43,10 +41,7 @@ class RunRequest:
 		request: Request,
 	) -> Optional[Response]:
 		properties = self.object.properties
-		check_origin(
-			properties,
-			request,
-		)
+		self.cross_origin_resource_sharing.validate_origin(request)
 		for check in (
 			properties.auth,
 			properties.parameters,
@@ -63,8 +58,7 @@ class RunRequest:
 			if response is not None:
 				if not isinstance(response, Response):
 					raise TypeError('Request filters must return a Response or None')
-				return apply_cors(
-					properties,
+				return self.cross_origin_resource_sharing.apply_to_response(
 					request,
 					response,
 				)
@@ -90,8 +84,7 @@ class RunRequest:
 				if response is not previous and response.body is not previous_body:
 					previous.close()
 			try:
-				return apply_cors(
-					properties,
+				return self.cross_origin_resource_sharing.apply_to_response(
 					request,
 					response,
 				)
