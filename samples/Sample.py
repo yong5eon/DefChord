@@ -6,15 +6,10 @@ from pathlib import Path
 
 from DefEssential import (
 	Application,
-	Origin,
-	QueryString,
 	Request,
 	RequestFilter,
-	RequestRunner,
-	Response,
 	serve,
 )
-from DefEssential.Runners.RunOptions import RunOptions
 from DefEssential.Extensions import (
 	File,
 	FileSystem,
@@ -24,50 +19,47 @@ from DefEssential.Extensions import (
 	Specifications,
 	Swagger,
 )
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import (
-	IsOptional,
-	IsString,
-)
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )
 
-if __package__:
-	from .Authentication import HANDLERS as AUTH_HANDLERS
-	from .ContentValidation import HANDLERS as CONTENT_HANDLERS
-	from .Requests import (
-		RunDelete,
-		RunGet,
-		RunPost,
-		RunPut,
-		RunUpload,
-	)
-	from .Streaming import (
-		RunChunkedStreamIn,
-		RunChunkedStreamOut,
-		RunServerSentEvent,
-		RunStreamIn,
-		RunStreamOut,
-	)
-else:
-	from Authentication import HANDLERS as AUTH_HANDLERS
-	from ContentValidation import HANDLERS as CONTENT_HANDLERS
-	from Requests import (
-		RunDelete,
-		RunGet,
-		RunPost,
-		RunPut,
-		RunUpload,
-	)
-	from Streaming import (
-		RunChunkedStreamIn,
-		RunChunkedStreamOut,
-		RunServerSentEvent,
-		RunStreamIn,
-		RunStreamOut,
-	)
+from runners.Authentication import (
+	RunAuthQuery,
+	RunAuthHeader,
+	RunAuthCookie,
+	RunAuthHTTP,
+	RunAuthOAuth2Implicit,
+	RunAuthOAuth2Password,
+	RunAuthOAuth2ClientCredentials,
+	RunAuthOAuth2AuthorizationCode,
+	ImplicitToken,
+	AuthorizationCodeToken,
+	PasswordToken,
+	ClientCredentialsToken,
+)
+from runners.ContentValidation import (
+	RunContentBool,
+	RunContentInteger,
+	RunContentNumber,
+	RunContentString,
+	RunContentArray,
+	RunContentObject,
+)
+from runners.Requests import (
+	RunDelete,
+	RunGet,
+	RunPost,
+	RunPut,
+	RunUpload,
+)
+from runners.Streaming import (
+	RunChunkedStreamIn,
+	RunChunkedStreamOut,
+	RunServerSentEvent,
+	RunStreamIn,
+	RunStreamOut,
+)
 
 
 class AddJpegExtension(RequestFilter):
@@ -76,14 +68,13 @@ class AddJpegExtension(RequestFilter):
 		return request, None
 
 
-def create_application() -> Application:
-	"""Create independent routes and filesystem connections on each call."""
-	spec = Specifications('/api/doc', title='DefEssential HTTP Sample')
+if __name__ == '__main__':
+	basicConfig(level=INFO)
 	resources = Path(__file__).resolve().parent / 'res'
 	app = Application(exts=(
 		Metrics('/metrics'),
 		Status('/status', metrics_uri='/metrics'),
-		spec,
+		Specifications('/api/doc', title='DefEssential HTTP Sample'),
 		Swagger('/swagger', spec_uri='/api/doc'),
 		Ping('/ping'),
 		File('/', resources / 'html' / 'welcome.html'),
@@ -95,80 +86,33 @@ def create_application() -> Application:
 			onRequest=AddJpegExtension(),
 		),
 	))
-	for handler in (
-		RunGet,
-		RunPost,
-		RunPut,
-		RunDelete,
-		RunUpload,
-		RunStreamIn,
-		RunStreamOut,
-		RunChunkedStreamIn,
-		RunChunkedStreamOut,
-		RunServerSentEvent,
-		*AUTH_HANDLERS,
-		*CONTENT_HANDLERS,
-	):
-		app.add(handler)
-
-	class Options(
-		RequestRunner,
-		method='GET',
-		url='/options',
-		name='Options',
-		qs=QueryString(
-			{
-				'p': IsString(),
-				'method': IsOptional(IsString()),
-				'headers': IsOptional(IsString()),
-				'origin': IsOptional(IsString()),
-			},
-			requires='p',
-		),
-	):
-		def run(
-			self,
-			request: Request,
-		) -> Response:
-			headers = {}
-			for key, header in (
-				('method', 'Access-Control-Request-Method'),
-				('headers', 'Access-Control-Request-Headers'),
-				('origin', 'Origin'),
-			):
-				if request.qs[key] is not None:
-					headers[header] = request.qs[key]
-			response = RunOptions().run(
-				Request(
-					request.address,
-					request.port,
-					'OPTIONS',
-					request.qs['p'],
-					headers=headers,
-				),
-				app.router,
-			)
-			if request.qs['method'] is not None:
-				return response
-			document = spec.document(app)
-			matches = app.router.matches(request.qs['p'])
-			urls = {
-				route.variable.sub(r'{\1}', route.url)
-				for route, parameters in matches.values()
-			}
-			return ResponseJSON(
-				{
-					path: value for path, value in document['paths'].items()
-					if path in urls
-				},
-				headers=dict(response.headers()),
-			)
-
-	app.add(Options)
-	return app
-
-
-if __name__ == '__main__':
-	basicConfig(level=INFO)
-	with serve('127.0.0.1', 8000, create_application()) as server:
+	app.add(RunGet)
+	app.add(RunPost)
+	app.add(RunPut)
+	app.add(RunDelete)
+	app.add(RunUpload)
+	app.add(RunStreamIn)
+	app.add(RunStreamOut)
+	app.add(RunChunkedStreamIn)
+	app.add(RunChunkedStreamOut)
+	app.add(RunServerSentEvent)
+	app.add(RunAuthQuery)
+	app.add(RunAuthHeader)
+	app.add(RunAuthCookie)
+	app.add(RunAuthHTTP)
+	app.add(RunAuthOAuth2Implicit)
+	app.add(RunAuthOAuth2Password)
+	app.add(RunAuthOAuth2ClientCredentials)
+	app.add(RunAuthOAuth2AuthorizationCode)
+	app.add(ImplicitToken)
+	app.add(AuthorizationCodeToken)
+	app.add(PasswordToken)
+	app.add(ClientCredentialsToken)
+	app.add(RunContentBool)
+	app.add(RunContentInteger)
+	app.add(RunContentNumber)
+	app.add(RunContentString)
+	app.add(RunContentArray)
+	app.add(RunContentObject)
+	with serve('127.0.0.1', 8000, app) as server:
 		server.serve_forever()

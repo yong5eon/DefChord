@@ -15,7 +15,7 @@ Status 확장도 `Status('/status', metrics_uri='/metrics')`처럼 동일 출처
 DefEssential를 설치했거나 개발용 import 경로가 연결된 환경에서 DefEssential 프로젝트 디렉터리를 기준으로 실행한다.
 
 ```powershell
-python -m samples.Sample
+python samples\Sample.py
 ```
 
 브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. `create_application()`을 호출할 때마다 라우터·파일 연결은 독립적으로 생성된다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
@@ -28,21 +28,21 @@ python -m samples.Sample
 
 ## 이전 대응표
 
-인증·본문 검증 샘플은 `RunFactory`를 상속한 `RunAuthFactory`와 `RunContentFactory`로 처리 클래스를 생성한다. 시작 출력에는 내부 클래스 경로 대신 `RunAuth(query)`, `RunAuth(oauth2/implicit)`, `RunContent(integer)`처럼 지정된 이름을 표시한다.
+RequestRunner 샘플은 [runners/](runners/) 디렉터리에 기능별로 모았으며, 각 엔드포인트는 `RequestRunner`를 직접 상속한 클래스로 정의한다. 팩토리나 공통 RequestRunner 기반 클래스 없이 클래스 선언만으로 경로, 메서드, 검증 설정과 실행 동작을 확인할 수 있다.
 
 | 기존 시나리오 | 현재 구현 | 경로·동작 |
 | --- | --- | --- |
-| `Request/RunGet`, `RunPost`, `RunPut`, `RunDelete` | [Requests.py](Requests.py) | `/api/run/:a/:b`, 경로·쿼리·JSON 검증과 기존 계산식 |
-| `Request/RunUpload` | [Requests.py](Requests.py) | POST `/api/run/upload`, Content-Format·Content-Charset에 맞춰 바이너리 반환 |
-| `ContentValidation/RunContent*` | [ContentValidation.py](ContentValidation.py) | POST `/api/content/bool`, `integer`, `number`, `string`, `array`, `object` |
-| `Auth/RunAuth*` | [Authentication.py](Authentication.py) | Query·Header·Cookie·HTTP와 네 OAuth2 흐름 인증 |
-| `Auth/*Token` | [Authentication.py](Authentication.py) | 기존 토큰 요청 경로·쿼리·폼 처리 |
-| `Request/RunStreamIn`, `RunStreamOut` | [Streaming.py](Streaming.py) | PUT·GET `/api/run/stream` |
-| `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [Streaming.py](Streaming.py) | PUT·GET `/api/run/stream/chunked` |
-| `Request/RunServerSentEvent` | [Streaming.py](Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
-| `RunStatus`, `RunOptions` | [Sample.py](Sample.py) | `/status`, `/options?p=/status` 및 실제 OPTIONS |
+| `Request/RunGet`, `RunPost`, `RunPut`, `RunDelete` | [runners/Requests.py](runners/Requests.py) | `/api/run/:a/:b`, 경로·쿼리·JSON 검증과 기존 계산식 |
+| `Request/RunUpload` | [runners/Requests.py](runners/Requests.py) | POST `/api/run/upload`, Content-Format·Content-Charset에 맞춰 바이너리 반환 |
+| `ContentValidation/RunContent*` | [runners/ContentValidation.py](runners/ContentValidation.py) | POST `/api/content/bool`, `integer`, `number`, `string`, `array`, `object` |
+| `Auth/RunAuth*` | [runners/Authentication.py](runners/Authentication.py) | Query·Header·Cookie·HTTP와 네 OAuth2 흐름 인증 |
+| `Auth/*Token` | [runners/Authentication.py](runners/Authentication.py) | 기존 토큰 요청 경로·쿼리·폼 처리 |
+| `Request/RunStreamIn`, `RunStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream` |
+| `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream/chunked` |
+| `Request/RunServerSentEvent` | [runners/Streaming.py](runners/Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
+| `RunStatus` | [Sample.py](Sample.py) | `/status`; 실제 OPTIONS·CORS 사전 요청은 프레임워크가 처리 |
 | `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/sample`, `/favicon.ico`, `/css/sample.css`, `/` |
-| `Model.py` | [Requests.py](Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
+| `Model.py` | [runners/Requests.py](runners/Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
 | `SampleHandler` 출력 | [Sample.py](Sample.py) | 표준 로깅과 서버 오류·연결 종료 로깅 사용 |
 | `RunGetDocument` | [Sample.py](Sample.py) | Specifications 확장의 GET `/api/doc`에서 OpenAPI 3.1 제공 |
 | `scripts/DescriptionToFile` | [DescriptionToFile.py](scripts/DescriptionToFile.py) | 같은 Application의 OpenAPI 문서를 파일로 저장 |
@@ -119,11 +119,10 @@ GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다
 
 ```powershell
 curl.exe -i -X OPTIONS -H "Origin: https://client.example" -H "Access-Control-Request-Method: GET" http://127.0.0.1:8000/status
-curl.exe -i "http://127.0.0.1:8000/options?p=/status"
 curl.exe -o sample.jpg http://127.0.0.1:8000/thumbs/sample
 ```
 
-첫 요청은 204와 허용 Origin·메서드를 반환한다. 두 번째 GET 요청은 200과 Allow 헤더 및 해당 경로의 OpenAPI 본문을 반환한다. `/options`에 `method`를 지정한 preflight 조회는 204를 유지한다. 마지막 요청은 로컬 이미지 파일을 내려받는다. 샘플 상태 경로는 CORS 예시를 위해 모든 Origin을 허용하며, 다른 경로에는 임의의 CORS 허용을 추가하지 않는다.
+첫 OPTIONS 요청은 프레임워크가 직접 처리하며, 허용 Origin·메서드를 204 응답으로 반환한다. 마지막 요청은 로컬 이미지 파일을 내려받는다. 샘플 상태 경로는 CORS 예시를 위해 모든 Origin을 허용하며, 다른 경로에는 임의의 CORS 허용을 추가하지 않는다.
 
 ## Application 확장과 문서
 

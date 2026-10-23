@@ -70,8 +70,6 @@ class SampleTests(TestCase):
 			elif route.url.startswith('/api/content/'):
 				expected = 'RunContent({})'.format(route.url.removeprefix('/api/content/'))
 				self.assertEqual(route.object.properties.name, expected)
-			elif route.url == '/options':
-				self.assertEqual(route.object.properties.name, 'Options')
 			name = route.object.properties.name
 			self.assertNotIn('<locals>', name if name is not None else route.object.__qualname__)
 		return
@@ -206,9 +204,6 @@ class SampleTests(TestCase):
 			self.assertEqual(status, 200)
 			self.assertIn(b'data-spec-url="/api/doc"', data)
 			self.assertEqual(self.call(address, 'GET', '/console')[0], 404)
-			status, headers, data = self.call(address, 'GET', '/options?p=/status')
-			self.assertEqual(status, 200)
-			self.assertNotIn('/status', loads(data))
 		return
 
 	def test_authentication_and_tokens_over_http(self):
@@ -255,7 +250,7 @@ class SampleTests(TestCase):
 		return
 
 	def test_stream_input_and_output_over_http(self):
-		with patch('defessential_http_sample.Streaming.sleep'):
+		with patch('defessential_http_sample.runners.Streaming.sleep'):
 			with running(create_application()) as address:
 				for url, chunked in (
 					('/api/run/stream', False),
@@ -284,7 +279,7 @@ class SampleTests(TestCase):
 			Request,
 			ResponseWriter,
 		)
-		RunServerSentEvent = import_module(PACKAGE_NAME + '.Streaming').RunServerSentEvent
+		RunServerSentEvent = import_module(PACKAGE_NAME + '.runners.Streaming').RunServerSentEvent
 
 		output = BytesIO()
 		req = Request(
@@ -297,8 +292,8 @@ class SampleTests(TestCase):
 				output,
 			),
 		)
-		with patch('defessential_http_sample.Streaming.randrange', return_value=5):
-			with patch('defessential_http_sample.Streaming.sleep', side_effect=ConnectionResetError):
+		with patch('defessential_http_sample.runners.Streaming.randrange', return_value=5):
+			with patch('defessential_http_sample.runners.Streaming.sleep', side_effect=ConnectionResetError):
 				with self.assertRaises(ConnectionResetError):
 					RunServerSentEvent().run(req)
 		self.assertIn(b'data: 5\n', output.getvalue())
