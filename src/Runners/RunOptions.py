@@ -1,8 +1,8 @@
-from ..CrossOriginResourceSharing import CrossOriginResourceSharing
 from ..Error import ClientError
 from ..Request import Request
 from ..Response import Response
 from ..Router import Router
+from ..CrossOriginResourceSharing import CrossOriginResourceSharing
 
 
 class RunOptions:
