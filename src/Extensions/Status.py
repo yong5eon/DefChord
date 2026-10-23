@@ -2,7 +2,7 @@ from ..Application import Application
 from ..Extension import Extension
 from ..Request import Request
 from ..Response import Response
-from .Pages import page
+from .Utils import page
 
 
 class Status(Extension):

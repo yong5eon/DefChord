@@ -3,7 +3,7 @@ from importlib.resources import files
 from re import sub
 from typing import Optional
 
-from ..Response import Response
+from ...Response import Response
 
 
 def page(
@@ -20,7 +20,7 @@ def page(
 	}
 	if parameters is not None:
 		values.update({key: escape(value) for key, value in parameters.items()})
-	text = files(__package__).joinpath(name + '.html').read_text(encoding='utf-8')
+	text = files(__name__.rpartition('.')[0]).joinpath(name + '.html').read_text(encoding='utf-8')
 	text = sub(
 		r'\{\{(' + '|'.join(values) + r')\}\}',
 		lambda match: values[match[1]],
