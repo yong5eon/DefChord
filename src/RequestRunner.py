@@ -1,5 +1,6 @@
 from abc import (
 	ABC,
+	ABCMeta,
 	abstractmethod,
 )
 from dataclasses import dataclass
@@ -18,6 +19,27 @@ from .Response import Response
 RequestCheck = Callable[[Request], None]
 RequestFilter = Callable[[Request], tuple[Request, Optional[Response]]]
 ResponseFilter = Callable[[Request, Response], Response]
+
+
+class RequestRunnerMeta(ABCMeta):
+	def __new__(
+		cls,
+		class_name,
+		bases,
+		namespace,
+		**kwargs,
+	):
+		if 'name' in kwargs:
+			if 'request_runner_name' in kwargs:
+				raise TypeError('Specify only one request runner name')
+			kwargs['request_runner_name'] = kwargs.pop('name')
+		return super().__new__(
+			cls,
+			class_name,
+			bases,
+			namespace,
+			**kwargs,
+		)
 
 
 @dataclass(frozen=True)
@@ -41,7 +63,10 @@ class RequestProperties:
 	name: Optional[str] = None
 
 
-class RequestRunner(ABC):
+class RequestRunner(
+	ABC,
+	metaclass=RequestRunnerMeta,
+):
 	"""Configure a handler through class declarations and instantiate it per request."""
 
 	properties: RequestProperties
@@ -51,7 +76,7 @@ class RequestRunner(ABC):
 		*,
 		method: Optional[str] = None,
 		url: Optional[str] = None,
-		name: Optional[str] = None,
+		request_runner_name: Optional[str] = None,
 		origin: Union[RequestCheck, Sequence[RequestCheck], None] = None,
 		auth: Optional[RequestCheck] = None,
 		parameters: Optional[RequestCheck] = None,
@@ -66,7 +91,9 @@ class RequestRunner(ABC):
 		onResponse: Union[ResponseFilter, Sequence[ResponseFilter], None] = None,
 	):
 		super().__init_subclass__()
-		if name is not None and (not isinstance(name, str) or not name.strip()):
+		if request_runner_name is not None and (
+			not isinstance(request_runner_name, str) or not request_runner_name.strip()
+		):
 			raise ValueError('name must be a non-empty string')
 		if (method is None) != (url is None):
 			raise TypeError('method and url must be specified together')
@@ -77,7 +104,7 @@ class RequestRunner(ABC):
 		cls.properties = RequestProperties(
 			method=method,
 			url=url,
-			name=name,
+			name=request_runner_name,
 			origin=origin,
 			auth=auth,
 			parameters=parameters,
