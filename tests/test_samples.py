@@ -409,24 +409,31 @@ class SampleTests(TestCase):
 					self.assertEqual(data, b'0123456789')
 					if chunked:
 						self.assertEqual(headers['Transfer-Encoding'], 'chunked')
+				# 헤더만으로 거부되는 요청은 바디를 보내지 않아 조기 응답과 전송이 경합하지 않게 한다.
 				status, headers, data = self.call(
 					address,
 					'PUT',
 					'/api/run/stream/chunked',
-					body=b'firstsecond',
-					headers={'Content-Type': 'application/octet-stream'},
+					headers={
+						'Content-Type': 'application/octet-stream',
+						'Content-Length': '11',
+					},
 				)
 				self.assertEqual(status, 400, data)
 				self.assertEqual(data, b'Chunked transfer encoding is required')
+				self.assertEqual(headers['Connection'], 'close')
 				status, headers, data = self.call(
 					address,
 					'PUT',
 					'/api/run/stream',
-					body=iter((b'first', b'second')),
-					headers={'Content-Type': 'application/octet-stream'},
-					chunked=True,
+					headers={
+						'Content-Type': 'application/octet-stream',
+						'Transfer-Encoding': 'chunked',
+					},
 				)
 				self.assertEqual(status, 411, data)
+				self.assertEqual(data, b'Content-Length is required')
+				self.assertEqual(headers['Connection'], 'close')
 		return
 
 	def test_sse_writer_sample_contract(self):
