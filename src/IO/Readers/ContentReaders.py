@@ -7,13 +7,13 @@ from typing import (
 )
 from urllib.parse import parse_qs
 
-from ..Error import (
+from ...Error import (
 	ClientError,
 	Error,
 )
-from ..Request import Request
+from ...Request import Request
 from ..RequestReader import RequestReader
-from ..Validator import (
+from ...Validator import (
 	Pattern,
 	Validator,
 )

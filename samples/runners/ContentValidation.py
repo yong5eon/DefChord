@@ -3,7 +3,7 @@ from DefEssential import (
 	Request,
 	RequestRunner,
 )
-from DefEssential.Readers import JavaScriptObjectNotationContentReader
+from DefEssential.IO.Readers import JavaScriptObjectNotationContentReader
 from DefEssential.Responses import ResponseJSON
 from DefEssential.Validator.Patterns import (
 	IsArray,

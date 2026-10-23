@@ -8,12 +8,12 @@ from typing import Optional
 from .Application import Application
 from .Error import Error
 from .Request import Request
-from .RequestReader import (
+from .IO.RequestReader import (
 	ClientDisconnected,
 	RequestReader,
 )
 from .Response import Response
-from .ResponseWriter import ResponseWriter
+from .IO.ResponseWriter import ResponseWriter
 from .Startup import startup
 
 
@@ -134,6 +134,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 					raise
 				response = Response(
 					status=error.status,
+					headers=error.headers,
 					body=error.reason.encode('utf-8'),
 					format='text/plain',
 					charset='utf-8',
@@ -206,12 +207,17 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 			)
 			or response.status < 200
 		)
+		upgrade = response.status == 101
+		excluded = (
+			'content-length',
+			'transfer-encoding',
+		) if upgrade else (
+			'connection',
+			'content-length',
+			'transfer-encoding',
+		)
 		for key, value in response.headers():
-			if key.lower() not in (
-				'connection',
-				'content-length',
-				'transfer-encoding',
-			):
+			if key.lower() not in excluded:
 				self.send_header(
 					key,
 					value,
@@ -235,10 +241,11 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 				'Content-Length',
 				'0',
 			)
-		self.send_header(
-			'Connection',
-			'close',
-		)
+		if not upgrade:
+			self.send_header(
+				'Connection',
+				'close',
+			)
 		self.end_headers()
 		return
 

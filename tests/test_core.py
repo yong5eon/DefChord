@@ -16,11 +16,11 @@ from DefEssential import (
 	ResponseFilter,
 	ServerError,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ChunkedStream,
 	TextContentReader,
 )
-from DefEssential.RequestReader import ClientDisconnected
+from DefEssential.IO.RequestReader import ClientDisconnected
 
 
 def request(

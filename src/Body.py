@@ -1,4 +1,4 @@
-from .Readers import ContentReader
+from .IO.Readers import ContentReader
 from .Error import ClientError
 from .Request import Request
 from .Content import Content

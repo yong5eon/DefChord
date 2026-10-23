@@ -4,7 +4,7 @@ from abc import (
 )
 from typing import Any
 
-from ..Request import Request
+from ...Request import Request
 from ..RequestReader import RequestReader
 
 

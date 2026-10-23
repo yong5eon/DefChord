@@ -242,6 +242,19 @@
 			</blockquote>
 		</div>
 		<div class="container">
+			<h2>WebSocket - Echo</h2>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestWebSocketStart">연결</button>
+			<button class="btn btn-primary btn-sm btn-block" type="button" id="btnTestWebSocketStop" style="display: none;">연결 종료</button>
+			<form id="frmTestWebSocketSend" class="form-inline mt-2">
+				<input type="text" class="form-control mr-2" id="txtTestWebSocketMessage" value="안녕" disabled>
+				<button type="submit" class="btn btn-secondary" id="btnTestWebSocketSend" disabled>보내기</button>
+			</form>
+			<blockquote class="blockquote" id="frmTestWebSocket">
+				<p class="mb-0"></p>
+				<pre class="mb-0"></pre>
+			</blockquote>
+		</div>
+		<div class="container">
 			<h2>RequestFilter Test</h2>
 			<img src="/thumbs/request/sample" class="img-fluid">
 		</div>
@@ -396,6 +409,42 @@
 					$('#frmTestServerSentEvent p').text('stopped');
 					es.close();
 				});
+			});
+			let ws = null;
+			function setWebSocketOpen(open) {
+				$('#btnTestWebSocketStart').toggle(!open);
+				$('#btnTestWebSocketStop').toggle(open);
+				$('#txtTestWebSocketMessage, #btnTestWebSocketSend').prop('disabled', !open);
+			}
+			$('#btnTestWebSocketStart').click(function(e) {
+				const scheme = location.protocol === 'https:' ? 'wss://' : 'ws://';
+				ws = new WebSocket(scheme + location.host + '/api/run/ws', 'echo');
+				$('#frmTestWebSocket p').text('connecting');
+				$('#frmTestWebSocket pre').text('');
+				ws.onopen = function(event) {
+					$('#frmTestWebSocket p').text('open (protocol: ' + ws.protocol + ')');
+					setWebSocketOpen(true);
+				};
+				ws.onmessage = function(event) {
+					$('#frmTestWebSocket pre').append(document.createTextNode('< ' + event.data + '\n'));
+				};
+				ws.onerror = function(event) {
+					$('#frmTestWebSocket p').text('error');
+				};
+				ws.onclose = function(event) {
+					$('#frmTestWebSocket p').text('closed (code: ' + event.code + ')');
+					setWebSocketOpen(false);
+					ws = null;
+				};
+			});
+			$('#frmTestWebSocketSend').submit(function(e) {
+				e.preventDefault();
+				const message = $('#txtTestWebSocketMessage').val();
+				ws.send(message);
+				$('#frmTestWebSocket pre').append(document.createTextNode('> ' + message + '\n'));
+			});
+			$('#btnTestWebSocketStop').click(function(e) {
+				ws.close(1000);
 			});
 		});
 	</script>

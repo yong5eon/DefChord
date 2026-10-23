@@ -3,7 +3,7 @@ from typing import (
 	Optional,
 )
 
-from ..Response import Response
+from ...Response import Response
 from ..ResponseWriter import ResponseWriter
 
 

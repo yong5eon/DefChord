@@ -30,14 +30,14 @@ from DefEssential.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ByteStringContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,
 	TextContentReader,
 	TypeReader,
 )
-from DefEssential.Writers import StreamWriter
+from DefEssential.IO.Writers import StreamWriter
 from DefEssential.Validator.Patterns import (
 	IsString,
 	SetDefault,

@@ -18,7 +18,7 @@ from ..Descriptor import (
 )
 from ..Extension import Extension
 from ..Request import Request
-from ..Readers import (
+from ..IO.Readers import (
 	ByteStringContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,

@@ -3,7 +3,7 @@ from typing import (
 	Protocol,
 )
 
-from .Error import ClientError
+from ..Error import ClientError
 
 
 class BinaryReader(Protocol):

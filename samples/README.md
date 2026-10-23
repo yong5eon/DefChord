@@ -4,7 +4,7 @@ Liquirizia.WSGI의 HTTP 시나리오를 단일 `RequestRunner`, `run(request)`, 
 
 ## 실행
 
-첫 화면의 `welcome.html`과 `sample.css`는 Liquirizia.WSGI 원본을 기반으로 한다. CDN 주소는 HTTPS로 명시하고, 지원하지 않는 WebSocket UI는 제거했다. 대신 Stream In·Chunked Stream In을 실제 서버 주소로 실행하는 curl 명령과 예상 응답을 제공한다. 브라우저에서 Transfer-Encoding을 직접 설정할 수 없으며 Chromium의 요청 스트리밍은 HTTP/2·3이 필요하므로, HTTP/1.1 chunked 업로드는 curl로 테스트한다. Windows PowerShell에서는 `curl.exe`를 사용한다. RequestRunner 계산 테스트는 GET·POST·PUT·DELETE별 독립 폼으로 제공한다. 본문 검증 폼, 스트림 출력·SSE 버튼과 이미지 필터 테스트는 유지한다. Bootstrap과 jQuery는 CDN에서 로드하므로 인터넷 연결이 필요하다.
+첫 화면의 `welcome.html`과 `sample.css`는 Liquirizia.WSGI 원본을 기반으로 한다. CDN 주소는 HTTPS로 명시했다. Stream In·Chunked Stream In을 실제 서버 주소로 실행하는 curl 명령과 예상 응답을 제공한다. 브라우저에서 Transfer-Encoding을 직접 설정할 수 없으며 Chromium의 요청 스트리밍은 HTTP/2·3이 필요하므로, HTTP/1.1 chunked 업로드는 curl로 테스트한다. Windows PowerShell에서는 `curl.exe`를 사용한다. RequestRunner 계산 테스트는 GET·POST·PUT·DELETE별 독립 폼으로 제공한다. 본문 검증 폼, 스트림 출력·SSE 버튼과 이미지 필터 테스트는 유지한다. Bootstrap과 jQuery는 CDN에서 로드하므로 인터넷 연결이 필요하다.
 
 네 계산 폼은 유효한 경로 `101/102`와 쿼리 `a=6&b=10`을 기본값으로 제공한다. GET은 본문을 전송하지 않으며 POST·PUT·DELETE는 JSON `{"a":2,"b":3}`을 전송한다. 기본값의 `ret`은 각각 `12432`, `12995`, `15972`, `11881`이다. 경로·쿼리·본문을 변경해 검증 실패도 확인할 수 있으며, 실제 요청 주소와 HTTP 상태·응답 본문 또는 통신 오류는 각 폼의 결과 영역에 표시된다.
 
@@ -42,6 +42,7 @@ RequestRunner 샘플은 [runners/](runners/) 디렉터리에 기능별로 모았
 | `Request/RunStreamIn`, `RunStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream` |
 | `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream/chunked`; PUT은 `ChunkedStreamContentReader`로 받은 청크를 하나씩 응답 청크로 반환 |
 | `Request/RunServerSentEvent` | [runners/Streaming.py](runners/Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
+| WebSocket echo | [runners/Streaming.py](runners/Streaming.py) | GET `/api/run/ws`, 101 전환 뒤 text·binary 메시지를 그대로 반환; `echo` 서브프로토콜 선택 |
 | `RunStatus` | [Sample.py](Sample.py) | `/status`; 실제 OPTIONS·CORS 사전 요청은 프레임워크가 처리 |
 | `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/request/sample`은 JPG, `/thumbs/response/sample`은 응답 필터로 PNG 교체; `/favicon.ico`, `/css/sample.css`, `/` |
 | `Model.py` | [runners/Requests.py](runners/Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
@@ -52,7 +53,6 @@ RequestRunner 샘플은 [runners/](runners/) 디렉터리에 기능별로 모았
 다음 항목은 이번 실행 샘플에 포함하지 않는다.
 
 - ReDoc 뷰어와 WSGI 전용 `DocumentHandler`: 이전하지 않았다. API 문서·실행 UI는 같은 Application의 Swagger 확장을 사용한다. OpenAPI JSON은 외부 문서 도구에서도 사용할 수 있다.
-- WebSocket: 이전 범위에서 제외했다.
 
 기존 구현의 버그를 복제하지 않은 부분은 다음과 같다.
 
@@ -116,6 +116,25 @@ curl.exe -N -X PUT -H "Content-Type: application/octet-stream" -H "Transfer-Enco
 ```
 
 GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다. PUT은 `hello`를 반환한다. 일반 PUT은 `StreamContentReader`로 Content-Length만큼 읽으며 chunked 요청은 411로 거부한다. Chunked PUT은 `ChunkedStreamContentReader`가 chunked 프로토콜(청크 크기·구분자·트레일러)을 직접 해석하며 `Transfer-Encoding: chunked`가 아닌 요청을 400으로 거부한다. `ByteStringContentReader`·`StreamContentReader`·`ChunkedStreamContentReader`는 본문을 해석하지 않으므로 Content-Type을 제한하지 않는다. 허용 형식은 `Body(..., content=Content('image/png'))`처럼 Body에서 지정한다. SSE는 무한히 임의 숫자와 ID를 보내고 5의 배수일 때 `retry: 1000`을 보낸다. 클라이언트를 종료해 연결을 닫는다.
+
+### WebSocket
+
+환영 페이지의 `WebSocket - Echo`에서 연결·보내기·연결 종료를 실행한다. 브라우저 개발자 도구 콘솔에서도 확인할 수 있다.
+
+```javascript
+const ws = new WebSocket('ws://127.0.0.1:8000/api/run/ws', 'echo');
+ws.onmessage = (event) => console.log(event.data);
+ws.onopen = () => ws.send('안녕');
+```
+
+런너는 `WebSocket(request, limit=65536)`으로 세션을 만들고 `accept()`로 101 응답을 보낸 뒤 `receive()`·`send()`로 메시지를 주고받는다.
+
+- `limit`은 필수 인자다. 조각난 메시지를 합친 크기가 이 값을 넘으면 1009로 닫는다.
+- `receive()`는 text를 `str`, binary를 `bytes`로 반환한다. ping에는 자동으로 pong을 보낸다. 닫기 프레임을 받거나 프로토콜 위반(1002·1007·1009)으로 닫으면 `None`을 반환한다.
+- `send()`·`ping()`·`close()`는 다른 스레드에서도 호출할 수 있다. `receive()`는 한 스레드에서만 호출한다.
+- 핸드셰이크 검증에 실패하면 101 전이므로 일반 오류 응답을 반환한다. 버전이 13이 아니면 `Sec-WebSocket-Version: 13`과 함께 426을 반환한다.
+- 응답 필터는 101 응답 헤더에 한 번 적용되며 본문이나 상태를 바꿀 수 없다. Origin 검사는 라우트의 `origin` 설정을 따른다.
+- 연결 하나가 서버 스레드 하나를 세션 종료까지 점유한다. 확장(permessage-deflate)은 지원하지 않는다.
 
 ### CORS·OPTIONS·파일
 

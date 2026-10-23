@@ -46,14 +46,14 @@ from DefEssential.Extensions import (
 	Specifications,
 	Swagger,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	JavaScriptObjectNotationContentReader,
 	StreamContentReader,
 )
 from DefEssential.Runners.RunFactory import RunFactory
 from DefEssential.Runners.RunExtension import RunExtensionFactory
 from DefEssential.Validator.Patterns import ToInteger
-from DefEssential.Writers import ChunkedStreamWriter
+from DefEssential.IO.Writers import ChunkedStreamWriter
 
 from test_features import (
 	SessionAuthorization,

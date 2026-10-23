@@ -6,11 +6,12 @@ from DefEssential import (
 	Request,
 	RequestRunner,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.Writers import (
+from DefEssential.IO.WebSocket import WebSocket
+from DefEssential.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEventsWriter,
 	StreamWriter,
@@ -127,3 +128,28 @@ class RunServerSentEvent(
 			if value % 5 == 0:
 				writer.retry(1000)
 			sleep(1)
+
+
+class RunWebSocketEcho(
+	RequestRunner,
+	method='GET',
+	url='/api/run/ws',
+	tags='Streaming',
+):
+	"""받은 text·binary 메시지를 그대로 돌려보낸다."""
+
+	def run(
+		self,
+		request: Request,
+	) -> None:
+		socket = WebSocket(
+			request,
+			limit=65536,
+		)
+		socket.accept('echo' if 'echo' in socket.protocols else None)
+		while True:
+			message = socket.receive()
+			if message is None:
+				break
+			socket.send(message)
+		return

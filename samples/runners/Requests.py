@@ -13,7 +13,7 @@ from DefEssential.Descriptor import (
 	Binary,
 	Schema,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ByteStringContentReader,
 	JavaScriptObjectNotationContentReader,
 )

@@ -16,7 +16,7 @@ from DefEssential import (
 	Response,
 	serve,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )

@@ -24,12 +24,12 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.RequestReader import ClientDisconnected
-from DefEssential.Writers import (
+from DefEssential.IO.RequestReader import ClientDisconnected
+from DefEssential.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEvents,
 	ServerSentEventsWriter,

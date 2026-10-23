@@ -18,7 +18,7 @@ from DefEssential.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefEssential.Readers import FormUrlEncodedContentReader
+from DefEssential.IO.Readers import FormUrlEncodedContentReader
 from DefEssential.Responses import ResponseJSON
 from DefEssential.Validator.Patterns import (
 	IsIn,

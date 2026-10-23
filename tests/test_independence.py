@@ -27,8 +27,8 @@ module = module_from_spec(spec)
 sys.modules['DefEssential'] = module
 spec.loader.exec_module(module)
 from DefEssential import Application, Request, RequestRunner, Response, serve
-from DefEssential.Readers import StreamContentReader
-from DefEssential.Writers import ChunkedStreamWriter, ServerSentEventsWriter
+from DefEssential.IO.Readers import StreamContentReader
+from DefEssential.IO.Writers import ChunkedStreamWriter, ServerSentEventsWriter
 from DefEssential.Credentials import OAuth2AuthorizationCode
 from DefEssential.Responses import ResponseFile, ResponseJSON, ResponseText
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection

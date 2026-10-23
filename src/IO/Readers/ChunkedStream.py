@@ -1,4 +1,4 @@
-from ..Error import ClientError
+from ...Error import ClientError
 from ..RequestReader import RequestReader
 
 

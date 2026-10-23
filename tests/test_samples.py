@@ -7,6 +7,7 @@ from json import (
 )
 from pathlib import Path
 from runpy import run_path
+from struct import pack
 from sys import path
 from unittest import TestCase
 from unittest.mock import patch
@@ -78,6 +79,8 @@ class SampleTests(TestCase):
 				'id="btnTestStreamOut"',
 				'id="btnTestChunkedStreamOut"',
 				'id="btnTestServerSentEventStart"',
+				'id="btnTestWebSocketStart"',
+				"'/api/run/ws', 'echo'",
 				'id="stream-in-command"',
 				'id="chunked-stream-in-command"',
 				'Transfer-Encoding: chunked',
@@ -87,7 +90,6 @@ class SampleTests(TestCase):
 				'jquery-3.6.1.js',
 			):
 				self.assertIn(marker, text)
-			self.assertNotIn('WebSocket', text)
 			self.assertEqual(text.count(".text('curl --http1.1"), 2)
 			self.assertNotIn(".text('curl.exe ", text)
 		return
@@ -454,4 +456,29 @@ class SampleTests(TestCase):
 		self.assertIn(b'data: 5\n', output.getvalue())
 		self.assertIn(b'id: 5\n', output.getvalue())
 		self.assertIn(b'retry: 1000\n', output.getvalue())
+		return
+
+	def test_websocket_echo_sample_over_http(self):
+		from test_websocket import (
+			Client,
+			client_frame,
+		)
+		from DefEssential.IO.WebSocket import WebSocketFrame
+		with running(create_application()) as address:
+			client = Client(
+				address,
+				{'Sec-WebSocket-Protocol': 'echo'},
+				'/api/run/ws',
+			)
+			try:
+				self.assertEqual(client.status, 101)
+				self.assertEqual(client.headers['sec-websocket-protocol'], 'echo')
+				client.send(client_frame(WebSocketFrame.TEXT, '안녕'.encode('utf-8')))
+				self.assertEqual(client.receive(), (WebSocketFrame.TEXT, True, '안녕'.encode('utf-8')))
+				client.send(client_frame(WebSocketFrame.BINARY, b'\x00\x01'))
+				self.assertEqual(client.receive(), (WebSocketFrame.BINARY, True, b'\x00\x01'))
+				client.send(client_frame(WebSocketFrame.CLOSE, pack('!H', 1000)))
+				self.assertEqual(client.receive(), (WebSocketFrame.CLOSE, True, pack('!H', 1000)))
+			finally:
+				client.close()
 		return

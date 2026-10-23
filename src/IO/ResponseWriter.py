@@ -4,8 +4,8 @@ from typing import (
 	Protocol,
 )
 
-from .Response import Response
-from .Error import ClientError
+from ..Response import Response
+from ..Error import ClientError
 
 
 class BinaryWriter(Protocol):
@@ -70,14 +70,11 @@ class ResponseWriter:
 			raise
 		return
 
-	def begin(
+	def filter(
 		self,
 		response: Response,
-		chunked: bool = False,
-	) -> None:
-		"""Filter direct-output headers and send them exactly once."""
-		if self.started:
-			raise RuntimeError('Cannot start a response that has already started')
+	) -> Response:
+		"""Apply response filters to direct-output headers that carry no body."""
 		if self.on_response is not None:
 			response = self.on_response(response)
 		if not isinstance(response, Response):
@@ -86,10 +83,48 @@ class ResponseWriter:
 			raise ValueError('Response filters must not set a body for direct output')
 		if response.header('Content-Length') is not None:
 			raise ValueError('Content-Length must not be set for direct output')
+		return response
+
+	def begin(
+		self,
+		response: Response,
+		chunked: bool = False,
+	) -> None:
+		"""Filter direct-output headers and send them exactly once."""
+		if self.started:
+			raise RuntimeError('Cannot start a response that has already started')
 		self.start(
-			response,
+			self.filter(response),
 			chunked,
 		)
+		return
+
+	def upgrade(
+		self,
+		response: Response,
+	) -> None:
+		"""101 Switching Protocols 헤더를 응답 필터를 거쳐 한 번만 보낸다.
+
+		이후 write()는 HTTP 프레이밍 없이 바이트를 그대로 쓰며, 전환된 프로토콜의 프레이밍은 호출자가 맡는다.
+		"""
+		if self.started:
+			raise RuntimeError('Cannot start a response that has already started')
+		if response.status != 101:
+			raise ValueError('Protocol upgrades require status 101')
+		response = self.filter(response)
+		if response.status != 101:
+			raise ValueError('Response filters must keep status 101 for protocol upgrades')
+		self.chunked = False
+		self.suppress_body = False
+		self.started = True
+		try:
+			self.sender(
+				response,
+				False,
+			)
+		except Exception:
+			self.failed = True
+			raise
 		return
 
 	def require_open(self) -> None:

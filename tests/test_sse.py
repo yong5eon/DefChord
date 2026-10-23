@@ -7,7 +7,7 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.Writers import ServerSentEvents
+from DefEssential.IO.Writers import ServerSentEvents
 from test_server import running
 
 

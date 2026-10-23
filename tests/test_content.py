@@ -11,7 +11,7 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.Readers import (
+from DefEssential.IO.Readers import (
 	ByteStringContentReader,
 	ChunkedStream,
 	ChunkedStreamContentReader,

@@ -12,8 +12,8 @@ from urllib.parse import (
 )
 from uuid import uuid4
 
-from .RequestReader import RequestReader
-from .ResponseWriter import ResponseWriter
+from .IO.RequestReader import RequestReader
+from .IO.ResponseWriter import ResponseWriter
 from .Error import ClientError
 
 
