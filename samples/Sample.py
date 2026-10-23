@@ -8,6 +8,8 @@ from DefEssential import (
 	Application,
 	Request,
 	RequestFilter,
+	Response,
+	ResponseFilter,
 	serve,
 )
 from DefEssential.Extensions import (
@@ -19,6 +21,7 @@ from DefEssential.Extensions import (
 	Specifications,
 	Swagger,
 )
+from DefEssential.Responses import ResponseFile
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
@@ -68,6 +71,24 @@ class AddJpegExtension(RequestFilter):
 		return request, None
 
 
+class ReplaceWithPng(ResponseFilter):
+	"""JPG 파일 응답을 샘플 PNG 파일 응답으로 교체한다."""
+
+	def __init__(
+		self,
+		file: Path,
+	):
+		self.file = file
+		return
+
+	def __call__(
+		self,
+		request: Request,
+		response: Response,
+	) -> Response:
+		return ResponseFile(self.file)
+
+
 if __name__ == '__main__':
 	basicConfig(level=INFO)
 	resources = Path(__file__).resolve().parent / 'res'
@@ -81,9 +102,15 @@ if __name__ == '__main__':
 		File('/favicon.ico', resources / 'favicon.ico'),
 		FileSystem('/css', Connection(Configuration(str(resources / 'css')))),
 		FileSystem(
-			'/thumbs',
+			'/thumbs/request',
 			Connection(Configuration(str(resources / 'images'))),
 			onRequest=AddJpegExtension(),
+		),
+		FileSystem(
+			'/thumbs/response',
+			Connection(Configuration(str(resources / 'images'))),
+			onRequest=AddJpegExtension(),
+			onResponse=ReplaceWithPng(resources / 'images' / 'sample.png'),
 		),
 	))
 	app.add(RunGet)

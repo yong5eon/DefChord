@@ -43,7 +43,7 @@ RequestRunner 샘플은 [runners/](runners/) 디렉터리에 기능별로 모았
 | `Request/RunChunkedStreamIn`, `RunChunkedStreamOut` | [runners/Streaming.py](runners/Streaming.py) | PUT·GET `/api/run/stream/chunked` |
 | `Request/RunServerSentEvent` | [runners/Streaming.py](runners/Streaming.py) | GET `/api/run/stream/sse`, 무한 이벤트·ID·retry |
 | `RunStatus` | [Sample.py](Sample.py) | `/status`; 실제 OPTIONS·CORS 사전 요청은 프레임워크가 처리 |
-| `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/sample`, `/favicon.ico`, `/css/sample.css`, `/` |
+| `Filters/ToJPEG`, 파일 등록 | [Sample.py](Sample.py) | `/thumbs/request/sample`은 JPG, `/thumbs/response/sample`은 응답 필터로 PNG 교체; `/favicon.ico`, `/css/sample.css`, `/` |
 | `Model.py` | [runners/Requests.py](runners/Requests.py) | 기존 JSON 결과 구조를 딕셔너리로 생성; 추가 스키마는 Content·ResponseSpecification으로 선언 |
 | `SampleHandler` 출력 | [Sample.py](Sample.py) | 표준 로깅과 서버 오류·연결 종료 로깅 사용 |
 | `RunGetDocument` | [Sample.py](Sample.py) | Specifications 확장의 GET `/api/doc`에서 OpenAPI 3.1 제공 |
@@ -121,7 +121,8 @@ GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다
 
 ```powershell
 curl.exe -i -X OPTIONS -H "Origin: https://client.example" -H "Access-Control-Request-Method: GET" http://127.0.0.1:8000/status
-curl.exe -o sample.jpg http://127.0.0.1:8000/thumbs/sample
+curl.exe -o sample.jpg http://127.0.0.1:8000/thumbs/request/sample
+curl.exe -o sample.png http://127.0.0.1:8000/thumbs/response/sample
 ```
 
 첫 OPTIONS 요청은 프레임워크가 직접 처리하며, 허용 Origin·메서드를 204 응답으로 반환한다. 마지막 요청은 로컬 이미지 파일을 내려받는다. 샘플 상태 경로는 CORS 예시를 위해 모든 Origin을 허용하며, 다른 경로에는 임의의 CORS 허용을 추가하지 않는다.

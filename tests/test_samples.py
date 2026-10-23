@@ -81,7 +81,8 @@ class SampleTests(TestCase):
 				'id="stream-in-command"',
 				'id="chunked-stream-in-command"',
 				'Transfer-Encoding: chunked',
-				'/thumbs/sample',
+				'/thumbs/request/sample',
+				'/thumbs/response/sample',
 				'bootstrap@4.6.2',
 				'jquery-3.6.1.js',
 			):
@@ -276,7 +277,8 @@ class SampleTests(TestCase):
 				('/', 'text/html'),
 				('/favicon.ico', None),
 				('/css/sample.css', 'text/css'),
-				('/thumbs/sample', 'image/jpeg'),
+				('/thumbs/request/sample', 'image/jpeg'),
+				('/thumbs/response/sample', 'image/png'),
 				('/status', None),
 			):
 				status, headers, data = self.call(address, 'GET', url)
@@ -290,6 +292,46 @@ class SampleTests(TestCase):
 			self.assertEqual(status, 200)
 			self.assertIn(b'data-spec-url="/api/doc"', data)
 			self.assertEqual(self.call(address, 'GET', '/console')[0], 404)
+		return
+
+	def test_image_response_filter_replaces_jpeg_and_closes_files(self):
+		app = create_application()
+		response_filter = app.exts['/thumbs/response'].on_response
+		original_filter = type(response_filter).__call__
+		bodies = []
+		requested_paths = []
+
+		def capture(
+			self,
+			request,
+			response,
+		):
+			requested_paths.append(request.params['path'])
+			bodies.append(response.body)
+			replacement = original_filter(self, request, response)
+			bodies.append(replacement.body)
+			return replacement
+
+		with patch.object(type(response_filter), '__call__', capture):
+			with running(app) as address:
+				status, headers, data = self.call(address, 'GET', '/thumbs/request/sample')
+				self.assertEqual(status, 200)
+				self.assertEqual(headers['Content-Type'], 'image/jpeg')
+				self.assertEqual(data, (SAMPLE / 'res' / 'images' / 'sample.jpg').read_bytes())
+				status, headers, data = self.call(address, 'GET', '/thumbs/response/sample')
+				self.assertEqual(status, 200)
+				self.assertEqual(headers['Content-Type'], 'image/png')
+				self.assertEqual(data, (SAMPLE / 'res' / 'images' / 'sample.png').read_bytes())
+				status, headers, data = self.call(address, 'HEAD', '/thumbs/response/sample')
+				self.assertEqual(status, 200)
+				self.assertEqual(headers['Content-Type'], 'image/png')
+				self.assertEqual(data, b'')
+		self.assertEqual(requested_paths, [
+			'sample.jpg',
+			'sample.jpg',
+		])
+		self.assertEqual(len(bodies), 4)
+		self.assertTrue(all(body.closed for body in bodies))
 		return
 
 	def test_authentication_and_tokens_over_http(self):
