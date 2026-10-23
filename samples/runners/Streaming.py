@@ -130,7 +130,7 @@ class RunServerSentEvent(
 			sleep(1)
 
 
-class RunWebSocketEcho(
+class RunWebSocket(
 	RequestRunner,
 	method='GET',
 	url='/api/run/ws',

@@ -62,7 +62,7 @@ from runners.Streaming import (
 	RunServerSentEvent,
 	RunStreamIn,
 	RunStreamOut,
-	RunWebSocketEcho,
+	RunWebSocket,
 )
 
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 	app.add(RunChunkedStreamIn)
 	app.add(RunChunkedStreamOut)
 	app.add(RunServerSentEvent)
-	app.add(RunWebSocketEcho)
+	app.add(RunWebSocket)
 	app.add(RunAuthQuery)
 	app.add(RunAuthHeader)
 	app.add(RunAuthCookie)
