@@ -193,7 +193,7 @@ class Specifications(Extension):
 						(JavaScriptObjectNotationContentReader, 'application/json'),
 						(FormUrlEncodedContentReader, 'application/x-www-form-urlencoded'),
 						(TextContentReader, 'text/*'),
-						(ByteStringContentReader, 'application/octet-stream'),
+						(ByteStringContentReader, '*/*'),
 					):
 						if isinstance(properties.body.reader, reader):
 							body_content = (Content(media),)

@@ -153,6 +153,50 @@ class ContentTests(TestCase):
 		self.assertEqual(caught.exception.status, 411)
 		return
 
+	def test_binary_readers_accept_any_content_type(self):
+		for format in (
+			'application/octet-stream',
+			'image/png',
+			'application/json',
+		):
+			with self.subTest(format=format):
+				self.assertEqual(
+					Body(ByteStringContentReader())(self.request(
+						b'\x89PNG',
+						format,
+					)),
+					b'\x89PNG',
+				)
+				self.assertEqual(
+					Body(StreamContentReader())(self.request(
+						b'body',
+						format,
+					)).read(),
+					b'body',
+				)
+				req = self.request(
+					b'',
+					format,
+				)
+				req.reader = RequestReader(
+					BytesIO(b'4\r\nbody\r\n0\r\n\r\n'),
+					chunked=True,
+				)
+				self.assertEqual(
+					Body(ChunkedStreamContentReader())(req).read(),
+					b'body',
+				)
+		with self.assertRaises(ClientError) as caught:
+			Body(
+				StreamContentReader(),
+				content=Content('image/png'),
+			)(self.request(
+				b'body',
+				'image/jpeg',
+			))
+		self.assertEqual(caught.exception.status, 415)
+		return
+
 	def test_invalid_content(self):
 		for reader, body, format in (
 			(JavaScriptObjectNotationContentReader(), b'{', 'application/json'),

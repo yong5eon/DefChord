@@ -115,7 +115,7 @@ curl.exe -N -X PUT -H "Content-Type: application/octet-stream" --data-binary "he
 curl.exe -N -X PUT -H "Content-Type: application/octet-stream" -H "Transfer-Encoding: chunked" --data-binary "hello" http://127.0.0.1:8000/api/run/stream/chunked
 ```
 
-GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다. PUT은 `hello`를 반환한다. 일반 PUT은 `StreamContentReader`로 Content-Length만큼 읽으며 chunked 요청은 411로 거부한다. Chunked PUT은 `ChunkedStreamContentReader`가 chunked 프로토콜(청크 크기·구분자·트레일러)을 직접 해석하며 `Transfer-Encoding: chunked`가 아닌 요청을 400으로 거부한다. SSE는 무한히 임의 숫자와 ID를 보내고 5의 배수일 때 `retry: 1000`을 보낸다. 클라이언트를 종료해 연결을 닫는다.
+GET 스트림은 1초 간격으로 `0`부터 `9`까지 출력하고 종료한다. PUT은 `hello`를 반환한다. 일반 PUT은 `StreamContentReader`로 Content-Length만큼 읽으며 chunked 요청은 411로 거부한다. Chunked PUT은 `ChunkedStreamContentReader`가 chunked 프로토콜(청크 크기·구분자·트레일러)을 직접 해석하며 `Transfer-Encoding: chunked`가 아닌 요청을 400으로 거부한다. `ByteStringContentReader`·`StreamContentReader`·`ChunkedStreamContentReader`는 본문을 해석하지 않으므로 Content-Type을 제한하지 않는다. 허용 형식은 `Body(..., content=Content('image/png'))`처럼 Body에서 지정한다. SSE는 무한히 임의 숫자와 ID를 보내고 5의 배수일 때 `retry: 1000`을 보낸다. 클라이언트를 종료해 연결을 닫는다.
 
 ### CORS·OPTIONS·파일
 

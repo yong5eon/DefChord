@@ -46,7 +46,10 @@ from DefEssential.Extensions import (
 	Specifications,
 	Swagger,
 )
-from DefEssential.Readers import JavaScriptObjectNotationContentReader
+from DefEssential.Readers import (
+	JavaScriptObjectNotationContentReader,
+	StreamContentReader,
+)
 from DefEssential.Runners.RunFactory import RunFactory
 from DefEssential.Runners.RunExtension import RunExtensionFactory
 from DefEssential.Validator.Patterns import ToInteger
@@ -308,6 +311,7 @@ class ExtensionTests(TestCase):
 		policy = response.header('Content-Security-Policy')
 		assert isinstance(policy, str)
 		self.assertIn("connect-src 'self'", policy)
+		self.assertIn("img-src 'self' data: blob:", policy)
 		self.assertIn('https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/', policy)
 		self.assertNotIn('/swagger', spec.document(app)['paths'])
 		response = app(request('/swagger', headers={'Accept': 'application/json'}))
@@ -576,11 +580,25 @@ class SpecTests(TestCase):
 			def run(self, req):
 				return Response()
 
+		class Upload(
+			RequestRunner,
+			method='PUT',
+			url='/upload',
+			body=Body(StreamContentReader()),
+		):
+			def run(self, req):
+				return Response()
+
 		spec = Specifications('/spec')
 		app = Application(exts=(spec,))
 		app.add(Documented)
 		app.add(Custom)
+		app.add(Upload)
 		document = spec.document(app)
+		self.assertEqual(
+			list(document['paths']['/upload']['put']['requestBody']['content']),
+			['*/*'],
+		)
 		operation = document['paths']['/items/{id}']['post']
 		self.assertEqual(operation['summary'], '항목 생성')
 		self.assertEqual(operation['description'], '본문을 검증한다')

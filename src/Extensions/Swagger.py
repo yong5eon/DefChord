@@ -45,7 +45,7 @@ class Swagger(Extension):
 				"default-src 'none'; "
 				"script-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/; "
 				"style-src 'unsafe-inline' https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/; "
-				"img-src 'self' data:; font-src 'self' data:; "
+				"img-src 'self' data: blob:; font-src 'self' data:; "
 				"connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 			),
 		)

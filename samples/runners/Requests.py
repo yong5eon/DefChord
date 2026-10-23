@@ -9,7 +9,10 @@ from DefEssential import (
 	Response,
 	ResponseSpecification,
 )
-from DefEssential.Descriptor import Schema
+from DefEssential.Descriptor import (
+	Binary,
+	Schema,
+)
 from DefEssential.Readers import (
 	ByteStringContentReader,
 	JavaScriptObjectNotationContentReader,
@@ -293,7 +296,13 @@ class RunUpload(
 		},
 		requires='Content-Format',
 	),
-	body=Body(ByteStringContentReader()),
+	body=Body(
+		ByteStringContentReader(),
+		content=Content(
+			'application/octet-stream',
+			Binary(),
+		),
+	),
 	summary='Return a binary upload in the specified format',
 	tags='RequestRunner',
 ):

@@ -258,6 +258,8 @@ class FeatureTests(TestCase):
 					headers={'Content-Type': mime},
 				))
 			self.assertIs(caught.exception, validation_error)
+			if reader is ByteStringContentReader:
+				continue
 			type_error = ClientError('본문 형식 오류', status=415)
 			parser = reader(typeerror=type_error)
 			with self.assertRaises(ClientError) as caught:

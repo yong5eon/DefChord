@@ -190,6 +190,13 @@ class SampleTests(TestCase):
 			schemas['CalculationResult']['properties']['data']['properties']['ret']['type'],
 			'number',
 		)
+		self.assertEqual(
+			document['paths']['/api/run/upload']['post']['requestBody']['content'],
+			{'application/octet-stream': {'schema': {
+				'type': 'string',
+				'format': 'binary',
+			}}},
+		)
 		return
 
 	def call(
