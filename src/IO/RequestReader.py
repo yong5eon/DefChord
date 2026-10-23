@@ -27,13 +27,17 @@ class ClientDisconnected(ConnectionError):
 
 
 class RequestReader:
-	"""Read a Content-Length body and expose raw input primitives for chunked readers."""
+	"""길이 기반 본문과 chunked 입력을 읽는다.
+
+	decoded=True이면 전송 계층이 청크 프레이밍을 이미 제거한 입력으로 취급한다.
+	"""
 
 	def __init__(
 		self,
 		reader: BinaryReader,
 		size: Optional[int] = None,
 		chunked: bool = False,
+		decoded: bool = False,
 	):
 		if size is not None and size < 0:
 			raise ValueError('Body length must not be negative')
@@ -42,6 +46,7 @@ class RequestReader:
 		self.reader = reader
 		self.remaining = size if size is not None else 0
 		self.chunked = chunked
+		self.decoded = decoded
 		self.finished = not chunked and self.remaining == 0
 		return
 
@@ -78,13 +83,21 @@ class RequestReader:
 	) -> bytes:
 		if size < -1:
 			raise ValueError('Read size must be at least -1')
-		if self.chunked:
+		if self.chunked and not self.decoded:
 			raise ClientError(
 				'Content-Length is required',
 				status=411,
 			)
 		if size == 0 or self.finished:
 			return b''
+		if self.chunked:
+			try:
+				data = self.reader.read(size)
+			except ConnectionError as error:
+				raise ClientDisconnected(*error.args) from error
+			if not data or size == -1:
+				self.finished = True
+			return data
 		count = self.remaining if size == -1 else min(size, self.remaining)
 		data = self.exact(count)
 		self.remaining -= len(data)

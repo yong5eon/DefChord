@@ -16,7 +16,7 @@ import sys
 
 class RejectExternal(MetaPathFinder):
 	def find_spec(self, fullname, path=None, target=None):
-		if fullname.split('.')[0] in ('DefStream', 'Liquirizia', 'swagger_ui', 'gunicorn', 'gevent'):
+		if fullname.split('.')[0] in ('DefStream', 'Liquirizia', 'swagger_ui', 'gunicorn', 'gevent', 'uvicorn', 'a2wsgi'):
 			raise AssertionError('external dependency: ' + fullname)
 		return None
 
@@ -26,7 +26,10 @@ spec = spec_from_file_location('DefEssential', source / '__init__.py')
 module = module_from_spec(spec)
 sys.modules['DefEssential'] = module
 spec.loader.exec_module(module)
-from DefEssential import Application, Request, RequestRunner, Response, serve
+from DefEssential import Application, Request, RequestRunner, Response
+from DefEssential.Adapter.Implements.Python import Server as PythonServer
+from DefEssential.Adapter.Implements.Gunicorn import Server as GunicornServer
+from DefEssential.Adapter.Implements.Uvicorn import Server as UvicornServer
 from DefEssential.IO.Readers import StreamContentReader
 from DefEssential.IO.Writers import ChunkedStreamWriter, ServerSentEventsWriter
 from DefEssential.Credentials import OAuth2AuthorizationCode
@@ -47,7 +50,7 @@ try:
 	assert extended(Request('127.0.0.1', 1, 'GET', '/swagger')).status == 200
 finally:
 	extended.stop()
-with serve('127.0.0.1', 0, app) as server:
+with PythonServer('127.0.0.1', 0, app) as server:
 	assert server.server_address[1] > 0
 '''
 		result = run(
@@ -79,6 +82,8 @@ with serve('127.0.0.1', 0, app) as server:
 			'Writers',
 			'Responses',
 			'Extensions',
+			'Adapter',
+			'IO',
 		):
 			files.extend((root / directory).rglob('*.py'))
 		files.append(root / 'Utils' / 'Loader.py')

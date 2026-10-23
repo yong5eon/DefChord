@@ -54,6 +54,10 @@ class ChunkedStream:
 	) -> bytes:
 		if size < -1:
 			raise ValueError('Read size must be at least -1')
+		if self.reader.decoded:
+			data = self.reader.read(size)
+			self.finished = self.reader.finished
+			return data
 		parts = []
 		while not self.finished and (size == -1 or size > 0):
 			if self.remaining == 0:
@@ -73,6 +77,8 @@ class ChunkedStream:
 		"""Read up to size bytes without crossing the current chunk boundary."""
 		if size < -1:
 			raise ValueError('Read size must be at least -1')
+		if self.reader.decoded:
+			return self.read(size)
 		if size == 0 or self.finished:
 			return b''
 		if self.remaining == 0:

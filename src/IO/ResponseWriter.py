@@ -35,6 +35,7 @@ class ResponseWriter:
 		self.method = method
 		self.version = version
 		self.started = False
+		self.status = 500
 		self.ended = False
 		self.failed = False
 		self.chunked = False
@@ -60,6 +61,7 @@ class ResponseWriter:
 		if chunked and not self.suppress_body and self.version != 'HTTP/1.1':
 			raise ClientError('Chunked output requires an HTTP/1.1 request')
 		self.started = True
+		self.status = response.status
 		try:
 			self.sender(
 				response,
@@ -117,6 +119,7 @@ class ResponseWriter:
 		self.chunked = False
 		self.suppress_body = False
 		self.started = True
+		self.status = response.status
 		try:
 			self.sender(
 				response,

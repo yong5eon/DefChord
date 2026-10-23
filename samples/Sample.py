@@ -10,8 +10,8 @@ from DefEssential import (
 	RequestFilter,
 	Response,
 	ResponseFilter,
-	serve,
 )
+from DefEssential.Adapter.Implements.Python import Server
 from DefEssential.Extensions import (
 	File,
 	FileSystem,
@@ -143,5 +143,10 @@ if __name__ == '__main__':
 	app.add(RunContentString)
 	app.add(RunContentArray)
 	app.add(RunContentObject)
-	with serve('127.0.0.1', 8000, app) as server:
-		server.serve_forever()
+
+	with Server(
+		'127.0.0.1',
+		8000,
+		app,
+	) as server:
+		server.run()

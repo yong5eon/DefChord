@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from http.client import HTTPConnection
+from importlib import import_module
 from socket import create_connection
 from threading import (
 	Event,
@@ -14,8 +15,8 @@ from DefEssential import (
 	Extension,
 	RequestRunner,
 	Response,
-	serve,
 )
+from DefEssential.Adapter.Implements.Python import Server
 from DefEssential.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
@@ -24,14 +25,14 @@ from DefEssential.IO.Readers import (
 
 @contextmanager
 def running(app):
-	with serve(
+	with Server(
 		'127.0.0.1',
 		0,
 		app,
+		poll_interval=0.01,
 	) as server:
 		thread = Thread(
-			target=server.serve_forever,
-			kwargs={'poll_interval': 0.01},
+			target=server.run,
 		)
 		thread.start()
 		try:
@@ -63,11 +64,11 @@ class ServerTests(TestCase):
 				return Response()
 
 		app = Application(exts=(Lifecycle('/lifecycle'),))
-		with serve('127.0.0.1', 0, app) as server:
-			with patch('DefEssential.Server.startup'):
+		with Server('127.0.0.1', 0, app) as server:
+			with patch.object(import_module(Server.__module__), 'startup'):
 				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
 					with self.assertLogs('DefEssential.Server', level='INFO') as logs:
-						server.serve_forever()
+						server.run()
 			self.assertFalse(app.running)
 			self.assertEqual(events, ['start', 'stop'])
 			self.assertIn('Shutdown requested', logs.output[0])
@@ -76,12 +77,12 @@ class ServerTests(TestCase):
 
 	def test_keyboard_interrupt_does_not_hide_shutdown_errors(self):
 		app = Application()
-		with serve('127.0.0.1', 0, app) as server:
-			with patch('DefEssential.Server.startup'):
+		with Server('127.0.0.1', 0, app) as server:
+			with patch.object(import_module(Server.__module__), 'startup'):
 				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
 					with patch.object(app, 'stop', side_effect=RuntimeError('shutdown failed')):
 						with self.assertRaisesRegex(RuntimeError, 'shutdown failed'):
-							server.serve_forever()
+							server.run()
 		return
 
 	def test_real_http_and_custom_method(self):

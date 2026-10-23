@@ -1,12 +1,6 @@
-from os import (
-	environ,
-	getpid,
-)
+from os import environ
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-	from .Server import Server
+from .Application import Application
 
 
 LOGO = r"""
@@ -52,9 +46,13 @@ def colorize_logo(logo: str) -> str:
 	return ''.join(lines)
 
 
-def startup(server: 'Server') -> None:
-	"""Print the bound server address and actual Application registrations."""
-	host, port = server.server_address[:2]
+def startup(
+	application: Application,
+	server: str,
+	host: str,
+	port: int,
+) -> None:
+	"""애플리케이션의 등록 정보와 어댑터 이름, 수신 주소를 출력한다."""
 	if not isinstance(host, str):
 		raise TypeError('HTTP listen address must be a string')
 	address = f'[{host}]' if ':' in host else host
@@ -64,15 +62,15 @@ def startup(server: 'Server') -> None:
 		logo = colorize_logo(logo)
 		starting = f'\033[1;38;5;51m{starting}\033[0m'
 	routes = [
-		route for route in server.app.router.routes
-		if route.url not in server.app.exts
-		or route.method not in server.app.exts[route.url].methods
+		route for route in application.router.routes
+		if route.url not in application.exts
+		or route.method not in application.exts[route.url].methods
 	]
 	lines = [
 		logo,
 		'',
 		starting,
-		f'  PID: {getpid()}',
+		f'  Server: {server}',
 		f'  Listen: http://{address}:{port}',
 		f'  Applications: {len(routes)} applications',
 	]
@@ -81,9 +79,9 @@ def startup(server: 'Server') -> None:
 			f'    - {route.object.properties.name if route.object.properties.name is not None else route.object.__qualname__}',
 			f'      {route.method} {route.url}',
 		))
-	if server.app.exts:
-		lines.append(f'  Extensions: {len(server.app.exts)} extensions')
-		for extension in server.app.exts.values():
+	if application.exts:
+		lines.append(f'  Extensions: {len(application.exts)} extensions')
+		for extension in application.exts.values():
 			lines.append(
 				f'    - {type(extension).__name__}: {extension.path}',
 			)
@@ -91,7 +89,7 @@ def startup(server: 'Server') -> None:
 	text = '\n'.join(lines)
 	encoding = getattr(sys.stdout, 'encoding', None)
 	if encoding is not None:
-		# Escape only unencodable characters to preserve startup information.
+		# 출력할 수 없는 문자만 이스케이프해 시작 정보를 보존한다.
 		text = text.encode(encoding, errors='backslashreplace').decode(encoding)
 	print(
 		text,

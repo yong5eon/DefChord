@@ -21,13 +21,13 @@ SAMPLE = Path(__file__).resolve().parent.parent / 'samples'
 def create_application():
 	"""직접 실행하는 샘플에서 서버를 열지 않고 등록된 앱을 가져온다."""
 	with patch('sys.path', [str(SAMPLE), *path]):
-		with patch('DefEssential.serve') as serve:
+		with patch('DefEssential.Adapter.Implements.Python.Server') as server:
 			with patch('logging.basicConfig'):
 				run_path(
 					str(SAMPLE / 'Sample.py'),
 					run_name='__main__',
 				)
-			return serve.call_args.args[2]
+			return server.call_args.args[2]
 
 
 class RequestRunnerForms(HTMLParser):

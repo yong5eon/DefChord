@@ -26,7 +26,6 @@ from .IO.RequestReader import RequestReader
 from .Response import Response
 from .ResponseSpecification import ResponseSpecification
 from .IO.ResponseWriter import ResponseWriter
-from .Server import serve
 
 __all__ = (
 	'Application',
@@ -51,5 +50,4 @@ __all__ = (
 	'Response',
 	'ResponseSpecification',
 	'ResponseWriter',
-	'serve',
 )

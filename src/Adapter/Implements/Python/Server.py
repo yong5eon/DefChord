@@ -5,23 +5,57 @@ from http.server import (
 from logging import getLogger
 from typing import Optional
 
-from .Application import Application
-from .Error import Error
-from .Request import Request
-from .IO.RequestReader import (
-	ClientDisconnected,
-	RequestReader,
-)
-from .Response import Response
-from .IO.ResponseWriter import ResponseWriter
-from .Startup import startup
+from ....Application import Application
+from ....Error import Error
+from ....Request import Request
+from ....IO.RequestReader import RequestReader
+from ....Response import Response
+from ....IO.ResponseWriter import ResponseWriter
+from ....Startup import startup
+from ...Server import Server as ServerAdapter
+from ...RequestHandler import handle_request
 
 
-class Server(ThreadingHTTPServer):
-	"""Provide a threaded development HTTP server without WSGI."""
+class Server(
+	ThreadingHTTPServer,
+	ServerAdapter,
+):
+	"""외부 의존성 없이 자체 HTTP 전송 계층으로 실행하는 기본 서버."""
 
 	daemon_threads = True
 	app: Application
+
+	def __init__(
+		self,
+		host: str,
+		port: int,
+		application: Application,
+		*,
+		poll_interval: float = 0.5,
+	):
+		ServerAdapter.__init__(
+			self,
+			host,
+			port,
+			application,
+		)
+		self.app = application
+		self.poll_interval = poll_interval
+		ThreadingHTTPServer.__init__(
+			self,
+			(
+				host,
+				port,
+			),
+			ServerRequestHandler,
+		)
+		return
+
+	def run(self) -> None:
+		"""종료 시 수신 소켓까지 닫고 확장 기능의 종료를 보장한다."""
+		with self:
+			self.serve_forever(self.poll_interval)
+		return
 
 	def serve_forever(
 		self,
@@ -29,7 +63,15 @@ class Server(ThreadingHTTPServer):
 	) -> None:
 		self.app.start()
 		try:
-			startup(self)
+			host = self.server_address[0]
+			if not isinstance(host, str):
+				raise TypeError('HTTP listen address must be a string')
+			startup(
+				self.application,
+				'Python',
+				host,
+				self.server_port,
+			)
 			try:
 				super().serve_forever(poll_interval=poll_interval)
 			except KeyboardInterrupt:
@@ -95,96 +137,33 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 			self.logger.warning('Client disconnected: %s', error)
 			return
 		self.close_connection = True
-		response = None
-		request = None
-		observations = []
-		status = 500
-		failure = None
 		writer = ResponseWriter(
 			self.begin_response,
 			self.wfile,
 			method=self.command,
 			version=self.request_version,
 		)
+
+		def create_request() -> Request:
+			return Request(
+				address=self.client_address[0],
+				port=self.client_address[1],
+				method=self.command,
+				uri=self.path,
+				headers=dict(self.headers.items()),
+				reader=self.request_reader(),
+				writer=writer,
+			)
+
 		try:
-			try:
-				reader = self.request_reader()
-				request = Request(
-					address=self.client_address[0],
-					port=self.client_address[1],
-					method=self.command,
-					uri=self.path,
-					headers=dict(self.headers.items()),
-					reader=reader,
-					writer=writer,
-				)
-				for extension in self.server.app.exts.values():
-					context = extension.begin(request)
-					observations.append((
-						extension,
-						context,
-					))
-				response = self.server.app(request)
-			except ClientDisconnected:
-				raise
-			except Error as error:
-				status = error.status
-				failure = error
-				if writer.started:
-					raise
-				response = Response(
-					status=error.status,
-					headers=error.headers,
-					body=error.reason.encode('utf-8'),
-					format='text/plain',
-					charset='utf-8',
-				)
-			except Exception as error:
-				failure = error
-				if writer.started:
-					raise
-				self.logger.exception('Unexpected error while handling request')
-				response = Response(
-					status=500,
-					body=b'Internal Server Error',
-				)
-			if response is not None:
-				status = response.status
-				writer.response(
-					response,
-					filtered=True,
-				)
-			elif not writer.ended:
-				raise RuntimeError('Response was neither returned nor completed successfully')
-			else:
-				status = self.response_status
-		except ConnectionError as error:
-			failure = error
-			self.logger.warning('Client disconnected: %s', error)
-		except OSError as error:
-			failure = error
-			self.logger.warning('Connection closed while sending response', exc_info=True)
-		except Exception as error:
-			failure = error
-			self.logger.exception('Response transmission failed: closing connection without another error response')
-		finally:
-			if response is not None:
-				try:
-					response.close()
-				except Exception as error:
-					failure = error
-					self.logger.exception('Response body cleanup failed')
-			if request is not None:
-				for extension, context in reversed(observations):
-					try:
-						extension.end(
-							request,
-							context,
-							status,
-							failure,
-						)
-					except Exception:
-						self.logger.exception('Extension request observation cleanup failed')
+			handle_request(
+				self.server.app,
+				create_request,
+				writer,
+			)
+		except Exception:
+			# 공통 처리기가 기록한 전송 오류는 연결 종료로 마무리한다.
+			self.close_connection = True
 		return
 
 	def begin_response(
@@ -260,20 +239,3 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 			format % args,
 		)
 		return
-
-
-def serve(
-	host: str,
-	port: int,
-	app: Application,
-) -> Server:
-	"""Create and return a server; the caller manages serving and shutdown."""
-	server = Server(
-		(
-			host,
-			port,
-		),
-		ServerRequestHandler,
-	)
-	server.app = app
-	return server

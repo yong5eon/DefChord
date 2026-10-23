@@ -5,10 +5,7 @@ from io import (
 	StringIO,
 	TextIOWrapper,
 )
-from os import (
-	environ,
-	getpid,
-)
+from os import environ
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -18,8 +15,8 @@ from DefEssential import (
 	Application,
 	RequestRunner,
 	Response,
-	serve,
 )
+from DefEssential.Adapter.Implements.Python import Server
 from DefEssential.Startup import (
 	LOGO,
 	colorize_logo,
@@ -58,8 +55,12 @@ class StartupTests(TestCase):
 		app = Application(exts=(Ping('/ping'),))
 		app.add(Submit)
 		with redirect_stdout(StringIO()) as output:
-			with serve('127.0.0.1', 0, app) as server:
-				startup(server)
+			startup(
+				app,
+				'Python',
+				'127.0.0.1',
+				8000,
+			)
 		text = output.getvalue()
 		self.assertIn('Applications: 1 applications', text)
 		self.assertIn('    - Submit\n      POST /ping', text)
@@ -97,8 +98,12 @@ class StartupTests(TestCase):
 			app.add(Named)
 			app.add(Unnamed)
 			with redirect_stdout(StringIO()) as output:
-				with serve('127.0.0.1', 0, app) as server:
-					startup(server)
+				startup(
+					app,
+					'Python',
+					'127.0.0.1',
+					8000,
+				)
 			text = output.getvalue()
 			self.assertIn('    - Example handler\n      GET /named', text)
 			self.assertIn(f'    - {Unnamed.__qualname__}\n      GET /unnamed', text)
@@ -152,7 +157,7 @@ class StartupTests(TestCase):
 		app = self.application()
 		output = StringIO()
 		with redirect_stdout(output):
-			with serve('127.0.0.1', 0, app):
+			with Server('127.0.0.1', 0, app):
 				self.assertEqual(output.getvalue(), '')
 			with running(app) as address:
 				connection = HTTPConnection(
@@ -168,7 +173,8 @@ class StartupTests(TestCase):
 					connection.close()
 		text = output.getvalue()
 		self.assertEqual(text.count('\nStarting\n'), 1)
-		self.assertIn(f'PID: {getpid()}', text)
+		self.assertIn('  Server: Python\n  Listen:', text)
+		self.assertNotIn('PID:', text)
 		self.assertIn(f'Listen: http://127.0.0.1:{address[1]}', text)
 		self.assertIn('Applications: 1 applications', text)
 		self.assertIn('Health', text)
@@ -178,8 +184,12 @@ class StartupTests(TestCase):
 
 	def test_application_isolation_and_empty_routes(self):
 		with redirect_stdout(StringIO()) as output:
-			with serve('127.0.0.1', 0, Application()) as server:
-				startup(server)
+			startup(
+				Application(),
+				'Python',
+				'127.0.0.1',
+				8000,
+			)
 		self.assertIn('Applications: 0 applications', output.getvalue())
 		self.assertNotIn('/health', output.getvalue())
 		return
@@ -215,10 +225,10 @@ class StartupTests(TestCase):
 		return
 
 	def test_failed_bind_does_not_print_startup(self):
-		with patch('DefEssential.Server.Server.server_bind', side_effect=OSError('바인딩 실패')):
+		with patch.object(Server, 'server_bind', side_effect=OSError('바인딩 실패')):
 			with redirect_stdout(StringIO()) as output:
 				with self.assertRaises(OSError):
-					serve('127.0.0.1', 0, Application())
+					Server('127.0.0.1', 0, Application())
 		self.assertEqual(output.getvalue(), '')
 		return
 
@@ -236,10 +246,35 @@ class StartupTests(TestCase):
 					environ['NO_COLOR'] = no_color
 				with redirect_stdout(output):
 					self.assertEqual(supports_color(), colored)
-					with serve('127.0.0.1', 0, Application()) as server:
-						startup(server)
+					startup(
+						Application(),
+						'Python',
+						'127.0.0.1',
+						8000,
+					)
 			self.assertEqual('\033[' in output.getvalue(), colored)
 		colored_logo = colorize_logo(LOGO)
 		self.assertEqual(colored_logo.count('\033[0m'), 5)
 		self.assertIn("You don't need to await this.", colored_logo)
+		return
+
+	def test_application_and_adapter_metadata_without_a_server_instance(self):
+		for server in (
+			'Python',
+			'Gunicorn',
+			'Uvicorn',
+		):
+			with self.subTest(server=server):
+				with redirect_stdout(StringIO()) as output:
+					startup(
+						self.application(),
+						server=server,
+						host='::1',
+						port=8123,
+					)
+				text = output.getvalue()
+				self.assertIn(f'  Server: {server}\n  Listen:', text)
+				self.assertNotIn('PID:', text)
+				self.assertIn('Listen: http://[::1]:8123', text)
+				self.assertIn('GET /health', text)
 		return
