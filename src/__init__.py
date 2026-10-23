@@ -25,7 +25,7 @@ from .RequestReader import RequestReader
 from .Response import Response
 from .ResponseSpecification import ResponseSpecification
 from .ResponseWriter import ResponseWriter
-from .Server import serve
+from .Adapter.Implements.Thread import serve
 
 __all__ = (
 	'Application',

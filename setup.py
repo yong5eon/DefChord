@@ -55,6 +55,12 @@ setup(
 		'Programming Language :: Python :: 3.14',
 	],
 	extras_require={
+		'Gunicorn': [
+			'gunicorn>=23,<27',
+		],
+		'Uvicorn': [
+			'uvicorn>=0.34,<1',
+		],
 	},
 	python_requires='>=3.9',
 )
