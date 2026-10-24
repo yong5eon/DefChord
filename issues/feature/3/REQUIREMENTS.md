@@ -7,7 +7,7 @@
 1. `DefEssential`을 최상위 로거 이름으로 사용하여 프레임워크 로그를 계층별로 선택할 수 있게 한다.
 2. 애플리케이션 시작·종료, 요청 실행, 응답 전송, 확장 및 연결 실패를 추적하는 데 부족한 로그를 추가한다.
 
-이 문서는 현재 소스와 DefStream의 로깅 방식을 분석한 **구현 전 요구사항 초안**이다. 아래 로거 배치와 기록 정책은 이번 이슈의 제안이며, 구현 완료나 사용자 승인 사실을 뜻하지 않는다. 이번 작업에서는 명세만 작성하고 소스 동작을 변경하지 않는다.
+이 문서는 현재 소스와 DefStream의 로깅 방식을 분석하고 사용자 확인을 반영한 **구현 기준**이다. 로거 배치, 출력 설정과 레벨별 기록 정책을 소스·샘플·테스트에 반영한다. 실제 검증 결과와 환경 제약은 아래 검증 기록에 구분하여 남긴다.
 
 사용자 후속 의견에 따라 샘플의 출력 설정 위치는 Application 시작 훅으로 정한다. 출력 대상은 `Sample`·`DefEssential` 계층만이며, 포맷은 DefStream의 예제와 맞춘다.
 
@@ -175,7 +175,7 @@ RequestRunner와 Extension의 추상 훅 인터페이스에는 로깅을 위해 
 - 정상 close와 서버 종료에 따른 취소는 내부 장애로 승격하지 않는다. 예상하지 못한 연결 단절은 서버 경계에서 WARNING으로 기록한다.
 - close code와 프레임워크가 정의한 안전한 사유 코드는 기록할 수 있지만, 상대가 보낸 close reason·메시지·ping payload는 기록하지 않는다.
 - 프로토콜 위반을 경고로 기록한 뒤 오류 close 전송도 실패했다면 서로 다른 사건으로 구분한다.
-- Gunicorn·WSGI의 업그레이드 미지원 계약을 유지하며, 로깅을 위해 우회 지원하지 않는다.
+- 일반 WSGI writer의 업그레이드 미지원 계약과 Gunicorn 전용 writer의 기존 업그레이드 지원을 각각 유지한다. 로깅을 위해 전송 기능을 추가하거나 제거하지 않는다.
 
 ## 6. 오류 기록과 기존 동작 보존
 
@@ -245,6 +245,7 @@ class LoggingSetup(ApplicationStartup):
   def __init__(self) -> None:
     sources = (Filter('Sample'), Filter('DefEssential'))
     self.handler = StreamHandler()
+    self.handler.set_name('Sample.Console')
     self.handler.setFormatter(Formatter(
       '%(asctime)s %(processName)s %(name)s %(levelname)s %(message)s'
     ))
@@ -255,7 +256,7 @@ class LoggingSetup(ApplicationStartup):
   def __call__(self) -> None:
     root = getLogger()
     root.setLevel(DEBUG)
-    if self.handler not in root.handlers:
+    if not any(handler.name == self.handler.name for handler in root.handlers):
       root.addHandler(self.handler)
 
 
@@ -304,3 +305,15 @@ app = Application(on_startup=LoggingSetup())
 | AC-23 | 같은 시나리오를 DEBUG·INFO·WARNING·ERROR 임계값으로 수집 | 각 사건의 지정 레벨을 LogRecord에서 검증. INFO에서는 상세 단계 없이 생명주기·전송 요약 수신, WARNING·ERROR 사건은 해당 임계값에서 누락되지 않음. 라이브러리의 레벨 강제 변경 없음 |
 
 검증은 [기존 테스트](../../../tests)의 실행 방식과 테스트 더블을 재사용한다. 요청·훅·writer·전송 적합성 테스트를 우선 실행하고 관련 회귀 테스트로 확대한다. Gunicorn 실제 실행은 POSIX/Linux 또는 WSL에서 확인하며, Windows의 미지원 또는 선택 의존성 부재를 성공으로 처리하지 않고 검증 제약으로 기록한다.
+
+### 9.1. 구현과 검증 기록
+
+- Application·RunRequest·확장 실행·내장 확장·세 서버 어댑터·WebSocket에 명시적 로거와 단계별 기록을 연결했다.
+- HTTP 전송 결과는 공통 서버 경계에서 한 번 기록한다. 405·자동 OPTIONS도 매칭된 라우트 템플릿을 사용하며, 중첩 Application 호출과 요청 교체가 바깥 요청의 전송 문맥을 덮어쓰지 않도록 했다.
+- 샘플의 첫 Application 시작 훅에서 `Sample.Console` 핸들러를 설정한다. 같은 이름의 샘플 핸들러를 중복 추가하지 않으며, 기존 사용자 핸들러는 유지한다.
+- 샘플의 Application·RequestRunner·스트리밍 관찰 훅은 DEBUG로 기록하며 원시 URI·예외 메시지·중복 traceback을 출력하지 않는다.
+- [로깅 테스트](../../../tests/test_logging.py) 21개를 추가했다. 기존 훅·샘플·어댑터·writer 테스트도 새로운 레벨과 안전한 메시지 정책을 검증하도록 갱신했다.
+- Windows의 Python 3.12 환경에서 현재 작업 트리의 패키지를 `importlib.util.spec_from_file_location()`으로 직접 로드한 뒤 `unittest` 전체 발견 테스트를 실행했다. 설치된 별도 패키지가 아니라 이번 소스를 대상으로 검증했다.
+- 전체 테스트 243개 중 **238개 통과, 5개 건너뜀**. 건너뛴 항목은 POSIX가 필요한 Gunicorn 실행·전송 적합성 테스트이며, Gunicorn 실제 실행 검증은 Linux/WSL 또는 CI에서 추가로 필요하다.
+- Python·Uvicorn의 실제 HTTP 전송, 포트 0의 준비 완료 로그, Uvicorn의 실제 바인딩 실패·정리, 스트리밍·SSE·WebSocket 관련 회귀 테스트를 포함했다. Python 바인딩 실패 로그는 Windows의 주소 재사용 차이에 의존하지 않는 테스트 더블로 별도 검증했다.
+- 소스·샘플·테스트의 Python 3.9 구문 분석, 주요 변경 파일의 Pylance 타입 오류 확인, `git diff --check`와 변경 문서의 상대 링크·들여쓰기 검증을 수행했다. Python 3.9 구문 검사는 해당 버전의 실제 런타임 테스트를 대신하지 않는다.
