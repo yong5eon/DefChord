@@ -1,6 +1,7 @@
 from http.client import HTTPConnection
 from html.parser import HTMLParser
 from importlib import import_module
+from io import BytesIO
 from json import (
 	dumps,
 	loads,
@@ -11,6 +12,11 @@ from struct import pack
 from sys import path
 from unittest import TestCase
 from unittest.mock import patch
+from DefEssential import (
+	Request,
+	RequestReader,
+	ResponseWriter,
+)
 from DefEssential.Extensions import Specifications
 
 from test_server import running
@@ -396,7 +402,7 @@ class SampleTests(TestCase):
 
 	def test_stream_input_and_output_over_http(self):
 		app = create_application()
-		with patch('runners.Streaming.sleep'):
+		with patch('samples.runners.Streaming.sleep'):
 			with running(app) as address:
 				for url, chunked in (
 					('/api/run/stream', False),
@@ -442,6 +448,187 @@ class SampleTests(TestCase):
 				self.assertEqual(status, 411, data)
 				self.assertEqual(data, b'Content-Length is required')
 				self.assertEqual(headers['Connection'], 'close')
+		return
+
+	def test_streaming_request_and_response_hook_logs_before_headers(self):
+		app = create_application()
+		streaming = import_module('samples.runners.Streaming')
+		for method, uri, mode in (
+			('PUT', '/api/run/stream', 'input'),
+			('PUT', '/api/run/stream/chunked', 'chunked-input'),
+			('GET', '/api/run/stream', 'output'),
+			('GET', '/api/run/stream/chunked', 'chunked-output'),
+			('GET', '/api/run/stream/sse', 'sse'),
+			('GET', '/api/run/ws', 'websocket'),
+		):
+			with self.subTest(mode=mode):
+				output = BytesIO()
+				sent = []
+				headers = {}
+				if method == 'PUT':
+					headers['Content-Type'] = 'application/octet-stream'
+				if mode == 'websocket':
+					headers.update({
+						'Upgrade': 'websocket',
+						'Connection': 'Upgrade',
+						'Sec-WebSocket-Version': '13',
+						'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+					})
+				reader = RequestReader(
+					BytesIO(b'3\r\nabc\r\n0\r\n\r\n' if mode == 'chunked-input' else b'abc'),
+					size=None if mode == 'chunked-input' else (3 if method == 'PUT' else 0),
+					chunked=mode == 'chunked-input',
+				)
+				with self.assertLogs('Sample.Streaming', level='INFO') as logs:
+					def send(
+						response,
+						chunked,
+					):
+						self.assertEqual(len(logs.records), 2)
+						self.assertEqual(output.getvalue(), b'')
+						self.assertEqual(response.header('X-Request-ID'), req.id)
+						sent.append(response.status)
+						return
+
+					writer = ResponseWriter(
+						send,
+						output,
+					)
+					req = Request(
+						'127.0.0.1',
+						1,
+						method,
+						uri,
+						headers=headers,
+						reader=reader,
+						writer=writer,
+					)
+					with patch.object(streaming, 'sleep', side_effect=ConnectionResetError if mode == 'sse' else None):
+						with patch.object(streaming, 'randrange', return_value=5):
+							with patch.object(streaming.WebSocket, 'receive', return_value=None):
+								if mode == 'sse':
+									with self.assertRaises(ConnectionResetError):
+										app(req)
+								else:
+									self.assertIsNone(app(req))
+				self.assertEqual(len(logs.records), 3 if mode == 'sse' else 2)
+				self.assertEqual(logs.records[0].getMessage(), (
+					'요청 훅: id={} method={} uri={}'.format(req.id, method, uri)
+				))
+				status = 101 if mode == 'websocket' else 200
+				self.assertEqual(logs.records[1].getMessage(), (
+					'응답 훅: id={} method={} uri={} status={} (헤더 전송 전)'.format(
+						req.id,
+						method,
+						uri,
+						status,
+					)
+				))
+				self.assertEqual(sent, [status])
+				if mode == 'sse':
+					self.assertEqual(logs.records[2].levelname, 'ERROR')
+					self.assertIn('오류 훅: id=' + req.id, logs.records[2].getMessage())
+					self.assertIsInstance(logs.records[2].exc_info[1], ConnectionResetError)
+				self.assertIsNone(writer.on_request_response)
+				if mode == 'sse':
+					self.assertIn(b'data: 5\n', output.getvalue())
+				elif method == 'PUT':
+					self.assertIn(b'abc', output.getvalue())
+				elif mode != 'websocket':
+					self.assertIn(b'0', output.getvalue())
+		return
+
+	def test_request_sample_hooks_log_normal_and_error_paths(self):
+		app = create_application()
+		requests = import_module('samples.runners.Requests')
+		for runner in (
+			requests.RunGet,
+			requests.RunPost,
+			requests.RunPut,
+			requests.RunDelete,
+			requests.RunUpload,
+		):
+			with self.subTest(runner=runner.__name__):
+				method = runner.properties.method
+				upload = runner is requests.RunUpload
+				uri = '/api/run/upload' if upload else '/api/run/101/102?a=6&b=10'
+				body = b'abc' if upload else (b'' if method == 'GET' else b'{"a":2,"b":3}')
+				headers = {
+					'Content-Type': 'application/octet-stream' if upload else 'application/json',
+				}
+				if upload:
+					headers['Content-Format'] = 'application/octet-stream'
+
+				def make_request():
+					return Request(
+						'127.0.0.1',
+						1,
+						method,
+						uri,
+						headers=headers,
+						reader=RequestReader(
+							BytesIO(body),
+							size=len(body),
+						),
+					)
+
+				req = make_request()
+				with self.assertLogs('Sample.Requests', level='INFO') as logs:
+					response = app(req)
+				self.assertEqual(response.status, 200)
+				self.assertEqual(len(logs.records), 2)
+				self.assertTrue(logs.records[0].getMessage().startswith('요청 훅: id=' + req.id))
+				self.assertTrue(logs.records[1].getMessage().startswith('응답 훅: id=' + req.id))
+				response.close()
+
+				req = make_request()
+				error = ValueError('샘플 오류 훅 검증')
+				with patch.object(runner, 'run', side_effect=error):
+					with self.assertLogs('Sample.Requests', level='INFO') as logs:
+						with self.assertRaises(ValueError) as caught:
+							app(req)
+				self.assertIs(caught.exception, error)
+				self.assertEqual(len(logs.records), 2)
+				self.assertTrue(logs.records[0].getMessage().startswith('요청 훅: id=' + req.id))
+				self.assertTrue(logs.records[1].getMessage().startswith('오류 훅: id=' + req.id))
+				self.assertIs(logs.records[1].exc_info[1], error)
+		return
+
+	def test_streaming_error_hooks_are_connected_for_all_handlers(self):
+		app = create_application()
+		streaming = import_module('samples.runners.Streaming')
+		for runner in (
+			streaming.RunStreamIn,
+			streaming.RunChunkedStreamIn,
+			streaming.RunStreamOut,
+			streaming.RunChunkedStreamOut,
+			streaming.RunServerSentEvent,
+			streaming.RunWebSocket,
+		):
+			with self.subTest(runner=runner.__name__):
+				chunked = runner is streaming.RunChunkedStreamIn
+				error = ValueError('스트리밍 오류 훅 검증')
+				req = Request(
+					'127.0.0.1',
+					1,
+					runner.properties.method,
+					runner.properties.url,
+					headers={'Content-Type': 'application/octet-stream'},
+					reader=RequestReader(
+						BytesIO(b'0\r\n\r\n' if chunked else b'abc'),
+						size=None if chunked else (3 if runner is streaming.RunStreamIn else 0),
+						chunked=chunked,
+					),
+				)
+				with patch.object(runner, 'run', side_effect=error):
+					with self.assertLogs('Sample.Streaming', level='INFO') as logs:
+						with self.assertRaises(ValueError) as caught:
+							app(req)
+				self.assertIs(caught.exception, error)
+				self.assertEqual(len(logs.records), 2)
+				self.assertTrue(logs.records[0].getMessage().startswith('요청 훅: id=' + req.id))
+				self.assertTrue(logs.records[1].getMessage().startswith('오류 훅: id=' + req.id))
+				self.assertIs(logs.records[1].exc_info[1], error)
 		return
 
 	def test_sse_writer_sample_contract(self):
