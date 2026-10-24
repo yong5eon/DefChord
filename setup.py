@@ -22,7 +22,7 @@ for package in find_packages(SOURCE):
 setup(
 	name='DefEssential',
 	description='The Modern Synchronous Python Web Application Framework',
-	long_description=Path('README.md').read_text(encoding='utf-8'),
+	long_description=Path('README.setup.md').read_text(encoding='utf-8'),
 	long_description_content_type='text/markdown',
 	author='Heo Yongseon',
 	url='https://github.com/yong5eon/DefEssential',
