@@ -16,6 +16,8 @@ Extension 자체의 생명 주기·요청 관찰 훅과 RequestRunner의 개별 
 
 ## 2. 근거 문서
 
+후속 [feature/6 명세](../6/REQUIREMENTS.md)는 RequestRunner 응답 훅을 일반 Response 반환 시 또는 직접 출력 헤더 전송 전에 실행하도록 정한다. 일반 반환은 하위 경계의 응답 훅 완료 뒤 Application 응답 훅을 실행한다. Extension 직접 출력은 내부 RequestRunner 응답 훅 → Extension 응답 훅 → Application 응답 훅 순서이며, 아래 일반 응답 순서 설명과 구분한다. RequestRunner 응답 훅 뒤 출력 실패가 발생하면 각 참여 경계의 오류 훅을 실행할 수 있다.
+
 - [상위 이슈](../2/ISSUE.md)
 - [상위 공통 요구사항 명세서](../2/REQUIREMENTS.md)
 - [Application 구현](../../../src/Application.py)
