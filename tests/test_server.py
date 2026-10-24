@@ -6,13 +6,20 @@ from threading import (
 	Event,
 	Thread,
 )
+from time import (
+	monotonic,
+	sleep,
+)
 from unittest import TestCase
 from unittest.mock import patch
 
 from DefEssential import (
 	Application,
+	ApplicationStartup,
 	Body,
 	Extension,
+	ExtensionCleanup,
+	ExtensionStartup,
 	RequestRunner,
 	Response,
 )
@@ -36,41 +43,76 @@ def running(app):
 		)
 		thread.start()
 		try:
+			deadline = monotonic() + 5
+			while not app.running and thread.is_alive() and monotonic() < deadline:
+				sleep(0.001)
+			if not app.running:
+				raise RuntimeError('테스트 서버가 시작되지 않았습니다')
 			yield (
 				'127.0.0.1',
 				server.server_port,
 			)
 		finally:
-			server.shutdown()
-			thread.join(timeout=5)
 			if thread.is_alive():
-				raise RuntimeError('테스트 서버가 종료되지 않았습니다')
+				server.shutdown()
+				thread.join(timeout=5)
+				if thread.is_alive():
+					raise RuntimeError('테스트 서버가 종료되지 않았습니다')
 
 
 class ServerTests(TestCase):
 	def test_keyboard_interrupt_stops_application_and_closes_socket(self):
 		events = []
 
-		class Lifecycle(Extension):
-			def start(self, app):
+		class Startup(ApplicationStartup):
+			def __call__(self):
+				events.append('application-startup')
+				return
+
+		class ExtensionStart(ExtensionStartup):
+			def __call__(self):
 				events.append('start')
 				return
 
-			def stop(self, app):
+		class ExtensionStop(ExtensionCleanup):
+			def __call__(self):
 				events.append('stop')
 				return
 
-			def __call__(self, app, request):
+		class Lifecycle(Extension):
+			def __call__(
+				self,
+				request,
+			):
 				return Response()
 
-		app = Application(exts=(Lifecycle('/lifecycle'),))
+		app = Application(
+			exts=(Lifecycle(
+				on_startup=ExtensionStart(),
+				on_cleanup=ExtensionStop(),
+			),),
+			on_startup=Startup(),
+		)
 		with Server('127.0.0.1', 0, app) as server:
-			with patch.object(import_module(Server.__module__), 'startup'):
+			def server_startup(*args):
+				events.append('server-startup')
+				return
+
+			with patch.object(
+				import_module(Server.__module__),
+				'startup',
+				side_effect=server_startup,
+			):
 				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
 					with self.assertLogs('DefEssential.Server', level='INFO') as logs:
 						server.run()
 			self.assertFalse(app.running)
-			self.assertEqual(events, ['start', 'stop'])
+			self.assertEqual(events, [
+				'server-startup',
+				'application-startup',
+				'start',
+				'stop',
+			])
 			self.assertIn('Shutdown requested', logs.output[0])
 		self.assertEqual(server.socket.fileno(), -1)
 		return

@@ -2,22 +2,48 @@ from dataclasses import (
 	dataclass,
 	field,
 )
+from logging import getLogger
 from math import floor
 from threading import Lock
 from time import monotonic
-from typing import Optional
+from typing import (
+	Callable,
+	Optional,
+	Sequence,
+	Union,
+)
 from uuid import uuid4
+from weakref import WeakKeyDictionary
 
-from ..Application import Application
-from ..Extension import Extension
+from ..Application import (
+	Application,
+	ApplicationRequest,
+	ApplicationRequestError,
+	ApplicationRequestResponse,
+	RequestHookRegistration,
+)
+from ..Extension import (
+	Extension,
+	ExtensionCleanup,
+	ExtensionRequest,
+	ExtensionRequestError,
+	ExtensionRequestResponse,
+	ExtensionStartup,
+)
 from ..Request import Request
 from ..Response import Response
 from ..Responses import ResponseJSON
+from ..Router import Router
+from .Utils.Routes import (
+	http_routes,
+	validate_path,
+)
 
 __all__ = (
 	'RequestMetrics',
 	'Observation',
 	'Metrics',
+	'MetricsCollector',
 )
 
 
@@ -70,44 +96,77 @@ def label(value: str) -> str:
 	return value.replace('\\', '\\\\').replace('\n', '\\n').replace('"', '\\"')
 
 
-class Metrics(Extension):
-	"""Collect thread-safe Prometheus metrics through HTTP transmission completion."""
+class MetricsCollector:
+	"""Application 처리 경계의 통계를 집계한다.
+
+	시작한 Metrics가 Application 요청 훅에 수집기를 연결한다. 응답 반환 이후의
+	전송 시간과 스트림 소비 오류는 집계하지 않는다.
+	"""
 
 	def __init__(
 		self,
-		path: str,
 	):
-		super().__init__(path)
 		self.lock = Lock()
 		self.requests: dict[str, RequestMetrics] = {}
 		self.started_at: Optional[float] = None
 		self.instance = ''
+		self.router: Optional[Router] = None
+		self.running: Optional[Callable[[], bool]] = None
+		self.request_scope: Optional[Callable[[], Optional[Request]]] = None
+		self.observations: dict[str, Observation] = {}
+		self.completed: WeakKeyDictionary[Request, tuple[Observation, float, int, bool]] = WeakKeyDictionary()
+		self.on_request = ObserveRequest(self)
+		self.on_request_response = ObserveResponse(self)
+		self.on_request_error = ObserveError(self)
 		return
 
-	def start(
+	def bind(
 		self,
-		app: Application,
+		router: Router,
+		running: Callable[[], bool],
+		request_scope: Callable[[], Optional[Request]],
 	) -> None:
+		if self.router is not None and self.router is not router:
+			raise ValueError('Use a separate MetricsCollector for each Application')
+		self.router = router
+		self.running = running
+		self.request_scope = request_scope
+		return
+
+	def observation_request(
+		self,
+		request: Request,
+	) -> Request:
+		"""교체된 Request도 현재 Application 호출의 최초 요청과 연결한다."""
+		if self.request_scope is None:
+			raise RuntimeError('MetricsCollector is not bound to an Application request scope')
+		current = self.request_scope()
+		return request if current is None else current
+
+	def reset(self) -> None:
 		with self.lock:
+			if self.router is None:
+				raise RuntimeError('MetricsCollector is not bound to a router')
 			if any(stats.active for stats in self.requests.values()):
 				raise RuntimeError('Cannot restart Metrics while requests are still active')
 			self.requests = {
 				route.method + ' ' + route.url: RequestMetrics()
-				for route in app.router.routes
+				for route in self.router.routes
 			}
 			self.requests['<unmatched>'] = RequestMetrics()
 			self.started_at = monotonic()
 			self.instance = uuid4().hex
+			self.observations.clear()
+			self.completed.clear()
 		return
 
 	def begin(
 		self,
 		request: Request,
 	) -> Observation:
-		app = self.application
-		if app is None:
-			raise RuntimeError('Metrics is not bound to an Application')
-		matches = app.router.matches(request.path)
+		if self.router is None:
+			raise RuntimeError('MetricsCollector is not bound to a router')
+		matches = self.router.matches(request.path)
 		match = matches.get(request.method)
 		key = request.method + ' ' + match[0].url if match is not None else '<unmatched>'
 		with self.lock:
@@ -115,10 +174,13 @@ class Metrics(Extension):
 				raise RuntimeError('Metrics has not been started')
 			context = Observation(
 				key,
-				request.id,
+				self.observation_request(request).id,
 				monotonic(),
 			)
-			stats = self.requests[key]
+			if context.id in self.observations:
+				raise RuntimeError('Request is already being observed')
+			self.observations[context.id] = context
+			stats = self.requests.setdefault(key, RequestMetrics())
 			stats.active += 1
 			stats.starts[context.id] = context.started
 		return context
@@ -126,13 +188,29 @@ class Metrics(Extension):
 	def end(
 		self,
 		request: Request,
-		context: object,
 		status: int,
-		error: Optional[BaseException],
+		error: Optional[Exception],
 	) -> None:
-		if not isinstance(context, Observation):
-			raise TypeError('An Observation created by Metrics is required')
+		request = self.observation_request(request)
 		with self.lock:
+			context = self.observations.pop(request.id, None)
+			if context is None:
+				completed = self.completed.get(request)
+				if error is not None and completed is not None and completed[3]:
+					observation, duration, second, _ = completed
+					stats = self.requests[observation.key]
+					stats.success -= 1
+					stats.failure += 1
+					if second in stats.buckets:
+						stats.buckets[second]['success'] -= 1
+						stats.buckets[second]['failure'] += 1
+					self.completed[request] = (
+						observation,
+						duration,
+						second,
+						False,
+					)
+				return
 			stats = self.requests[context.key]
 			del stats.starts[context.id]
 			stats.active -= 1
@@ -156,23 +234,30 @@ class Metrics(Extension):
 			bucket['failure'] += int(not success)
 			bucket['duration'] += duration
 			bucket['max_duration'] = max(bucket['max_duration'], duration)
+			self.completed[request] = (
+				context,
+				duration,
+				floor(now),
+				success,
+			)
 		return
 
 	def snapshot(
 		self,
-		app: Application,
 	) -> dict:
 		with self.lock:
-			if self.started_at is None:
+			if self.started_at is None or self.running is None or self.router is None:
 				raise RuntimeError('Metrics has not been started')
 			now = monotonic()
 			for stats in self.requests.values():
 				stats.prune(now)
+			for route in self.router.routes:
+				self.requests.setdefault(route.method + ' ' + route.url, RequestMetrics())
 			return {
 				'instance': self.instance,
 				'sampled_at': now,
 				'uptime': now - self.started_at,
-				'running': app.running,
+				'running': self.running(),
 				'window_end': floor(now),
 				'requests': {
 					key: {
@@ -198,9 +283,8 @@ class Metrics(Extension):
 
 	def render(
 		self,
-		app: Application,
 	) -> str:
-		snapshot = self.snapshot(app)
+		snapshot = self.snapshot()
 		lines = [
 			'# HELP defessential_application_running Application lifecycle is running; not an external heartbeat.',
 			'# TYPE defessential_application_running gauge',
@@ -208,11 +292,11 @@ class Metrics(Extension):
 			'# HELP defessential_application_uptime_seconds Seconds since application startup.',
 			'# TYPE defessential_application_uptime_seconds gauge',
 			f'defessential_application_uptime_seconds {snapshot["uptime"]}',
-			'# HELP defessential_requests_active Requests whose response transfer has not completed.',
+			'# HELP defessential_requests_active Requests being processed by the Application.',
 			'# TYPE defessential_requests_active gauge',
-			'# HELP defessential_requests_total Completed HTTP requests by outcome.',
+			'# HELP defessential_requests_total Completed Application requests by outcome.',
 			'# TYPE defessential_requests_total counter',
-			'# HELP defessential_request_duration_seconds Duration through response transfer.',
+			'# HELP defessential_request_duration_seconds Application processing duration; excludes response transfer.',
 			'# TYPE defessential_request_duration_seconds summary',
 			'# TYPE defessential_request_oldest_active_seconds gauge',
 			'# TYPE defessential_requests_window gauge',
@@ -239,18 +323,178 @@ class Metrics(Extension):
 				))
 		return '\n'.join(lines) + '\n'
 
+
+
+class ObserveRequest(ApplicationRequest):
+	"""Application 요청 진입을 공유 수집기에 전달한다."""
+
+	def __init__(
+		self,
+		collector: MetricsCollector,
+	):
+		self.collector = collector
+		return
+
 	def __call__(
 		self,
-		app: Application,
+		request: Request,
+	) -> Request:
+		self.collector.begin(request)
+		return request
+
+
+class ObserveResponse(ApplicationRequestResponse):
+	"""반환 응답 또는 직접 출력 writer의 상태를 집계한다."""
+
+	def __init__(
+		self,
+		collector: MetricsCollector,
+	):
+		self.collector = collector
+		return
+
+	def __call__(
+		self,
+		request: Request,
+		response: Optional[Response],
+	) -> Optional[Response]:
+		status = response.status if response is not None else request.writer.status
+		self.collector.end(
+			request,
+			status,
+			None,
+		)
+		return response
+
+
+class ObserveError(ApplicationRequestError):
+	"""실패를 집계하며 응답 훅 이후의 오류도 중복 완료 없이 반영한다."""
+
+	def __init__(
+		self,
+		collector: MetricsCollector,
+	):
+		self.collector = collector
+		return
+
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> None:
+		self.collector.end(
+			request,
+			500,
+			error,
+		)
+		return
+
+
+class Metrics(Extension):
+	"""전체 Application 요청을 관찰하고 JSON 또는 Prometheus로 응답한다."""
+
+	def __init__(
+		self,
+		path: str,
+		*,
+		collector: Optional[MetricsCollector] = None,
+		on_startup: Optional[Union[
+			ExtensionStartup,
+			Sequence[ExtensionStartup],
+		]] = None,
+		on_cleanup: Optional[Union[
+			ExtensionCleanup,
+			Sequence[ExtensionCleanup],
+		]] = None,
+		on_request: Optional[Union[
+			ExtensionRequest,
+			Sequence[ExtensionRequest],
+		]] = None,
+		on_request_response: Optional[Union[
+			ExtensionRequestResponse,
+			Sequence[ExtensionRequestResponse],
+		]] = None,
+		on_request_error: Optional[Union[
+			ExtensionRequestError,
+			Sequence[ExtensionRequestError],
+		]] = None,
+	):
+		super().__init__(
+			on_startup=on_startup,
+			on_cleanup=on_cleanup,
+			on_request=on_request,
+			on_request_response=on_request_response,
+			on_request_error=on_request_error,
+		)
+		validate_path(path)
+		self.path = path
+		self.collector = MetricsCollector() if collector is None else collector
+		self.hook_token: Optional[RequestHookRegistration] = None
+		return
+
+	def __str__(self) -> str:
+		return '{}({})'.format(type(self).__name__, self.path)
+
+	def startup(
+		self,
+		application: Application,
+	) -> None:
+		self.application = application
+		self.collector.bind(
+			application.router,
+			lambda: application.running,
+			lambda: getattr(application.hook_context, 'request', None),
+		)
+		self.collector.reset()
+		for route in http_routes(self, self.path):
+			application.add_extension_route(self, route)
+		self.hook_token = application.add_request_hooks(
+			on_request=self.collector.on_request,
+			on_request_response=self.collector.on_request_response,
+			on_request_error=self.collector.on_request_error,
+		)
+		try:
+			super().startup(application)
+		except Exception:
+			try:
+				application.remove_request_hooks(self.hook_token)
+			except Exception:
+				getLogger('DefEssential.Extensions.Metrics').exception('시작 실패 후 요청 훅 해제에 실패했습니다')
+			finally:
+				self.hook_token = None
+			raise
+		return
+
+	def cleanup(self) -> None:
+		error = None
+		try:
+			if self.hook_token is not None:
+				self.application.remove_request_hooks(self.hook_token)
+		except Exception as caught:
+			error = caught
+		finally:
+			self.hook_token = None
+		try:
+			super().cleanup()
+		except Exception:
+			if error is None:
+				raise
+			getLogger('DefEssential.Extensions.Metrics').exception('요청 훅 해제 실패 후 사용자 정리에 실패했습니다')
+		if error is not None:
+			raise error
+		return
+
+	def __call__(
+		self,
 		request: Request,
 	) -> Response:
 		if request.header('Accept') == 'application/json':
 			return ResponseJSON(
-				self.snapshot(app),
+				self.collector.snapshot(),
 				headers={'Cache-Control': 'no-store'},
 			)
 		return Response(
-			body=self.render(app).encode('utf-8'),
+			body=self.collector.render().encode('utf-8'),
 			format='text/plain; version=0.0.4',
 			charset='utf-8',
 		)

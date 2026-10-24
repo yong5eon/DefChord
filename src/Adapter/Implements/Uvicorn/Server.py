@@ -86,14 +86,14 @@ class Server(ServerAdapter):
 				ws=NativeWebSocketProtocol,
 				**options,
 			))
+			startup(
+				self.application,
+				'Uvicorn',
+				self.host,
+				self.port,
+			)
 			self.application.start()
 			try:
-				startup(
-					self.application,
-					'Uvicorn',
-					self.host,
-					self.port,
-				)
 				server.run()
 			finally:
 				self.application.stop()

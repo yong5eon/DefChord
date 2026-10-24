@@ -10,11 +10,12 @@ from unittest import TestCase
 
 from DefEssential import (
 	Application,
-	Extension,
+	ApplicationRequestError,
+	ApplicationRequestResponse,
 	Request,
 	RequestRunner,
 	Response,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 	ResponseWriter,
 )
 from DefEssential.IO.RequestReader import (
@@ -166,29 +167,19 @@ def echo_application(
 				socket.send(message)
 			return
 
-	class Completion(Extension):
-		def end(
-			self,
-			request,
-			context,
-			status,
-			error,
-		):
-			if completed is not None:
-				completed.append((
-					status,
-					error,
-				))
-			return
+	class RequestResponse(ApplicationRequestResponse):
+		"""전송 완료가 아니라 WebSocket 핸들러 반환을 관찰한다."""
 
 		def __call__(
 			self,
-			app,
 			request,
+			response,
 		):
-			return Response()
+			if completed is not None:
+				completed.append(response)
+			return response
 
-	app = Application(exts=(Completion('/completion'),))
+	app = Application(on_request_response=RequestResponse())
 	app.add(Echo)
 	return app
 
@@ -343,7 +334,7 @@ class WebSocketUnitTests(TestCase):
 		)
 		with self.assertRaises(ValueError):
 			writer.upgrade(Response(status=200))
-		writer.on_response = lambda response: Response(status=200)
+		writer.on_request_response = lambda response: Response(status=200)
 		with self.assertRaises(ValueError):
 			writer.upgrade(Response(status=101))
 		self.assertFalse(writer.started)
@@ -379,7 +370,7 @@ class WebSocketServerTests(TestCase):
 				self.assertEqual(client.file.read(), b'')
 			finally:
 				client.close()
-		self.assertEqual(completed, [(101, None)])
+		self.assertEqual(completed, [None])
 		return
 
 	def test_protocol_errors_send_close_codes(self):
@@ -426,8 +417,8 @@ class WebSocketServerTests(TestCase):
 				client.close()
 		return
 
-	def test_response_filters_apply_to_upgrade_headers(self):
-		class Tag(ResponseFilter):
+	def test_response_hooks_apply_to_upgrade_headers(self):
+		class Tag(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -440,7 +431,7 @@ class WebSocketServerTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/ws',
-			onResponse=Tag(),
+			on_request_response=Tag(),
 		):
 			def run(
 				self,
@@ -476,24 +467,15 @@ class WebSocketServerTests(TestCase):
 		completed = []
 		observed = Event()
 
-		class Completion(Extension):
-			def end(
+		class RequestError(ApplicationRequestError):
+			def __call__(
 				self,
 				request,
-				context,
-				status,
 				error,
 			):
 				completed.append(error)
 				observed.set()
 				return
-
-			def __call__(
-				self,
-				app,
-				request,
-			):
-				return Response()
 
 		class Echo(
 			RequestRunner,
@@ -512,7 +494,7 @@ class WebSocketServerTests(TestCase):
 				socket.receive()
 				return
 
-		app = Application(exts=(Completion('/completion'),))
+		app = Application(on_request_error=RequestError())
 		app.add(Echo)
 		with self.assertLogs(
 			'DefEssential.Server',

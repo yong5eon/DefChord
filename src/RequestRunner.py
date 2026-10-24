@@ -10,6 +10,7 @@ from typing import (
 	Optional,
 	Sequence,
 	Type,
+	TypeVar,
 	Union,
 )
 
@@ -26,26 +27,27 @@ from .Validators import (
 )
 
 __all__ = (
-	'RequestFilter',
-	'ResponseFilter',
+	'RequestRunnerRequest',
+	'RequestRunnerRequestResponse',
+	'RequestRunnerRequestError',
 	'RequestProperties',
 	'RequestRunner',
 )
 
 
-class RequestFilter(ABC):
-	"""조기 응답을 반환할 수 있는 요청 필터의 인터페이스를 정의한다."""
+class RequestRunnerRequest(ABC):
+	"""핸들러 실행 직전에 준비된 요청을 변환한다."""
 
 	@abstractmethod
 	def __call__(
 		self,
 		request: Request,
-	) -> tuple[Request, Optional[Response]]:
+	) -> Request:
 		raise NotImplementedError
 
 
-class ResponseFilter(ABC):
-	"""요청에 대한 응답 필터의 인터페이스를 정의한다."""
+class RequestRunnerRequestResponse(ABC):
+	"""반환 응답 또는 직접 출력의 전송 전 응답을 변환한다."""
 
 	@abstractmethod
 	def __call__(
@@ -54,6 +56,37 @@ class ResponseFilter(ABC):
 		response: Response,
 	) -> Response:
 		raise NotImplementedError
+
+
+class RequestRunnerRequestError(ABC):
+	"""검증부터 응답 후처리까지의 실행 오류를 관찰한다."""
+
+	@abstractmethod
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> None:
+		raise NotImplementedError
+
+
+Hook = TypeVar('Hook')
+
+
+def request_runner_hooks(
+	value: Union[Hook, Sequence[Hook], None],
+	contract: Type[Hook],
+	name: str,
+) -> tuple[Hook, ...]:
+	if value is None:
+		return ()
+	if isinstance(value, contract):
+		return (value,)
+	if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+		result = tuple(value)
+		if all(isinstance(hook, contract) for hook in result):
+			return result
+	raise TypeError(name + ' must be a ' + contract.__name__ + ' instance or a sequence of them')
 
 
 def require_contract(
@@ -119,8 +152,9 @@ class RequestProperties:
 	summary: Optional[str]
 	description: Optional[str]
 	tags: Union[str, Sequence[str], None]
-	on_request: Union[RequestFilter, Sequence[RequestFilter], None]
-	on_response: Union[ResponseFilter, Sequence[ResponseFilter], None]
+	on_request: tuple[RequestRunnerRequest, ...]
+	on_request_response: tuple[RequestRunnerRequestResponse, ...]
+	on_request_error: tuple[RequestRunnerRequestError, ...]
 	name: Optional[str] = None
 
 
@@ -153,8 +187,21 @@ class RequestRunner(
 		summary: Optional[str] = None,
 		description: Optional[str] = None,
 		tags: Union[str, Sequence[str], None] = None,
-		onRequest: Union[RequestFilter, Sequence[RequestFilter], None] = None,
-		onResponse: Union[ResponseFilter, Sequence[ResponseFilter], None] = None,
+		on_request: Union[
+			RequestRunnerRequest,
+			Sequence[RequestRunnerRequest],
+			None,
+		] = None,
+		on_request_response: Union[
+			RequestRunnerRequestResponse,
+			Sequence[RequestRunnerRequestResponse],
+			None,
+		] = None,
+		on_request_error: Union[
+			RequestRunnerRequestError,
+			Sequence[RequestRunnerRequestError],
+			None,
+		] = None,
 	):
 		super().__init_subclass__()
 		if request_runner_name is not None and (
@@ -173,8 +220,6 @@ class RequestRunner(
 		require_contract(qs, QueryString, 'qs')
 		require_contract(headers, Headers, 'headers')
 		require_contract(body, Body, 'body')
-		require_contract(onRequest, RequestFilter, 'onRequest', multiple=True)
-		require_contract(onResponse, ResponseFilter, 'onResponse', multiple=True)
 		cls.properties = RequestProperties(
 			method=method,
 			url=url,
@@ -189,8 +234,21 @@ class RequestRunner(
 			summary=summary,
 			description=description,
 			tags=tags,
-			on_request=onRequest,
-			on_response=onResponse,
+			on_request=request_runner_hooks(
+				on_request,
+				RequestRunnerRequest,
+				'on_request',
+			),
+			on_request_response=request_runner_hooks(
+				on_request_response,
+				RequestRunnerRequestResponse,
+				'on_request_response',
+			),
+			on_request_error=request_runner_hooks(
+				on_request_error,
+				RequestRunnerRequestError,
+				'on_request_error',
+			),
 		)
 		return
 

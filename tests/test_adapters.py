@@ -37,6 +37,8 @@ from DefEssential import (
 	Application,
 	Body,
 	Extension,
+	ExtensionCleanup,
+	ExtensionStartup,
 	RequestRunner,
 	Response,
 )
@@ -53,27 +55,27 @@ from DefEssential.IO.Readers import (
 
 class Lifecycle(Extension):
 	def __init__(self):
-		super().__init__('/lifecycle')
 		self.events = []
-		return
+		events = self.events
 
-	def start(
-		self,
-		application,
-	):
-		self.events.append('start')
-		return
+		class Startup(ExtensionStartup):
+			def __call__(self):
+				events.append('start')
+				return
 
-	def stop(
-		self,
-		application,
-	):
-		self.events.append('stop')
+		class Cleanup(ExtensionCleanup):
+			def __call__(self):
+				events.append('stop')
+				return
+
+		super().__init__(
+			on_startup=Startup(),
+			on_cleanup=Cleanup(),
+		)
 		return
 
 	def __call__(
 		self,
-		application,
 		request,
 	):
 		return Response()
@@ -89,6 +91,7 @@ class AdapterTests(TestCase):
 			with self.subTest(style=style):
 				lifecycle = Lifecycle()
 				application = Application(exts=(lifecycle,))
+				self.assertEqual(application.exts, (lifecycle,))
 				with redirect_stdout(StringIO()):
 					with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
 						if style == 'assigned':
@@ -105,6 +108,7 @@ class AdapterTests(TestCase):
 					'start',
 					'stop',
 				])
+				self.assertIs(application.exts[0], lifecycle)
 				self.assertFalse(application.running)
 		return
 
@@ -130,6 +134,7 @@ class AdapterTests(TestCase):
 							if failed:
 								raise RuntimeError('body failed')
 					self.assertEqual(lifecycle.events, [])
+					self.assertIs(application.exts[0], lifecycle)
 					self.assertFalse(application.running)
 					if isinstance(server, PythonServer):
 						self.assertEqual(server.socket.fileno(), -1)
@@ -577,7 +582,7 @@ class UvicornTests(TestCase):
 					self.assertIn('  Server: Uvicorn\n  Listen:', text)
 					self.assertNotIn('PID:', text)
 					self.assertIn('Listen: http://127.0.0.1:0', text)
-					self.assertIn('Lifecycle: /lifecycle', text)
+					self.assertIn('  Extensions: 1 extensions\n    - Lifecycle\n', text)
 					self.assertEqual(lifecycle.events, [
 						'start',
 						'stop',
@@ -585,7 +590,7 @@ class UvicornTests(TestCase):
 					self.assertFalse(application.running)
 		return
 
-	def test_startup_output_failure_stops_application(self):
+	def test_startup_output_failure_does_not_start_application(self):
 		lifecycle = Lifecycle()
 		application = Application(exts=(lifecycle,))
 		with patch('DefEssential.Adapter.Implements.Uvicorn.Server.startup', side_effect=OSError('output failed')):
@@ -593,10 +598,9 @@ class UvicornTests(TestCase):
 				with self.assertRaisesRegex(OSError, 'output failed'):
 					UvicornServer('127.0.0.1', 8000, application).run()
 				run.assert_not_called()
-		self.assertEqual(lifecycle.events, [
-			'start',
-			'stop',
-		])
+		self.assertEqual(lifecycle.events, [])
+		self.assertIs(application.exts[0], lifecycle)
+		self.assertFalse(application.running)
 		return
 
 
@@ -655,6 +659,8 @@ from DefEssential import (
 	Application,
 	Body,
 	Extension,
+	ExtensionCleanup,
+	ExtensionStartup,
 	RequestRunner,
 	Response,
 )
@@ -665,20 +671,19 @@ def record(event):
 	with Path(events).open('a') as output:
 		output.write(f'{getpid()}:{event}\\n')
 
-class Lifecycle(Extension):
-	def start(
-		self,
-		app,
-	):
+class Startup(ExtensionStartup):
+	def __call__(self):
 		record('start')
-	def stop(
-		self,
-		app,
-	):
+		return
+
+class Cleanup(ExtensionCleanup):
+	def __call__(self):
 		record('stop')
+		return
+
+class Lifecycle(Extension):
 	def __call__(
 		self,
-		app,
 		request,
 	):
 		return Response()
@@ -710,7 +715,10 @@ if worker_class == 'class':
 	from gunicorn.workers.gthread import ThreadWorker
 	worker_class = ThreadWorker
 
-app = Application(exts=(Lifecycle('/lifecycle'),))
+app = Application(exts=(Lifecycle(
+	on_startup=Startup(),
+	on_cleanup=Cleanup(),
+),))
 app.add(Sample)
 app.add(Upload)
 options = {
@@ -748,7 +756,7 @@ else:
 '''
 		for worker_class, style in cases:
 			with self.subTest(worker_class=worker_class, style=style):
-				with TemporaryDirectory() as directory:
+				with TemporaryDirectory(dir='.') as directory:
 					events = Path(directory) / 'events'
 					with socket() as listener:
 						listener.bind((

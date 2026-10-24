@@ -15,11 +15,13 @@ from unittest import TestCase
 
 from DefEssential import (
 	Application,
+	ApplicationRequest,
+	ApplicationRequestError,
+	ApplicationRequestResponse,
 	Body,
 	ClientError,
-	Extension,
 	Request,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 	RequestRunner,
 	Response,
 	ResponseWriter,
@@ -220,10 +222,10 @@ class WriterTests(TestCase):
 			app(req)
 		return
 
-	def test_filter_applies_once_before_direct_headers(self):
+	def test_response_hook_applies_once_before_direct_headers(self):
 		calls = []
 
-		class After(ResponseFilter):
+		class After(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -240,7 +242,7 @@ class WriterTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=After(),
+			on_request_response=After(),
 		):
 			def run(
 				self,
@@ -372,8 +374,8 @@ class DirectServerTests(TestCase):
 				)
 		return
 
-	def test_filters_cannot_replace_direct_output_body(self):
-		class After(ResponseFilter):
+	def test_response_hooks_cannot_replace_direct_output_body(self):
+		class After(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -386,7 +388,7 @@ class DirectServerTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=After(),
+			on_request_response=After(),
 		):
 			def run(
 				self,
@@ -431,24 +433,15 @@ class DirectServerTests(TestCase):
 		observed = Event()
 		failures = []
 
-		class Completion(Extension):
-			def end(
+		class RequestError(ApplicationRequestError):
+			def __call__(
 				self,
 				request,
-				context,
-				status,
 				error,
 			):
 				failures.append(error)
 				observed.set()
 				return
-
-			def __call__(
-				self,
-				app,
-				request,
-			):
-				return Response()
 
 		class Events(
 			RequestRunner,
@@ -474,7 +467,7 @@ class DirectServerTests(TestCase):
 					finished.set()
 				return None
 
-		app = Application(exts=(Completion('/completion'),))
+		app = Application(on_request_error=RequestError())
 		app.add(Events)
 		with self.assertLogs(
 			'DefEssential.Server',
@@ -519,24 +512,15 @@ class DirectServerTests(TestCase):
 		observed = Event()
 		failures = []
 
-		class Completion(Extension):
-			def end(
+		class RequestError(ApplicationRequestError):
+			def __call__(
 				self,
 				request,
-				context,
-				status,
 				error,
 			):
 				failures.append(error)
 				observed.set()
 				return
-
-			def __call__(
-				self,
-				app,
-				request,
-			):
-				return Response()
 
 		class Upload(
 			RequestRunner,
@@ -552,7 +536,7 @@ class DirectServerTests(TestCase):
 				request.reader.read()
 				return Response()
 
-		app = Application(exts=(Completion('/completion'),))
+		app = Application(on_request_error=RequestError())
 		app.add(Upload)
 		with self.assertLogs(
 			'DefEssential.Server',
@@ -740,6 +724,89 @@ class DirectServerTests(TestCase):
 				)
 			finally:
 				connection.close()
+		return
+
+	def test_response_hooks_finish_before_body_transmission_failure(self):
+		"""반환 이후 전송 실패와 본문 정리는 Application 훅의 관찰 대상이 아니다."""
+		events = []
+		errors = []
+
+		class RequestHook(ApplicationRequest):
+			def __call__(
+				self,
+				request,
+			):
+				events.append('request')
+				return request
+
+		class RequestResponse(ApplicationRequestResponse):
+			def __call__(
+				self,
+				request,
+				response,
+			):
+				self_test.assertFalse(request.writer.started)
+				events.append('response')
+				return response
+
+		class RequestError(ApplicationRequestError):
+			def __call__(
+				self,
+				request,
+				error,
+			):
+				errors.append(error)
+				return
+
+		def body():
+			try:
+				events.append('transmission')
+				yield b'first'
+				raise ConnectionError('body transmission failed')
+			finally:
+				events.append('closed')
+			return
+
+		class Output(
+			RequestRunner,
+			method='GET',
+			url='/',
+		):
+			def run(
+				self,
+				request,
+			):
+				return Response(body=body())
+
+		self_test = self
+		app = Application(
+			on_request=RequestHook(),
+			on_request_response=RequestResponse(),
+			on_request_error=RequestError(),
+		)
+		app.add(Output)
+		with self.assertLogs(
+			'DefEssential.Server',
+			level='WARNING',
+		) as logged:
+			with running(app) as address:
+				with create_connection(
+					address,
+					timeout=3,
+				) as client:
+					client.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+					with client.makefile('rb') as output:
+						headers, received = output.read().split(b'\r\n\r\n', 1)
+					self.assertIn(b'200', headers)
+					self.assertIn(b'first', received)
+		self.assertEqual(events, [
+			'request',
+			'response',
+			'transmission',
+			'closed',
+		])
+		self.assertEqual(errors, [])
+		self.assertTrue(any('body transmission failed' in message for message in logged.output))
 		return
 
 	def test_error_after_begin_never_sends_second_response_or_final_chunk(self):

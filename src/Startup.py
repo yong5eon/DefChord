@@ -70,8 +70,7 @@ def startup(
 		starting = f'\033[1;38;5;51m{starting}\033[0m'
 	routes = [
 		route for route in application.router.routes
-		if route.url not in application.exts
-		or route.method not in application.exts[route.url].methods
+		if route not in application.extension_routes
 	]
 	lines = [
 		logo,
@@ -88,9 +87,9 @@ def startup(
 		))
 	if application.exts:
 		lines.append(f'  Extensions: {len(application.exts)} extensions')
-		for extension in application.exts.values():
+		for extension in application.exts:
 			lines.append(
-				f'    - {type(extension).__name__}: {extension.path}',
+				f'    - {extension}',
 			)
 	lines.append('\n')
 	text = '\n'.join(lines)

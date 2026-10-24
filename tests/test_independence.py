@@ -35,7 +35,13 @@ from DefEssential.IO.Writers import ChunkedStreamWriter, ServerSentEventsWriter
 from DefEssential.Credentials import OAuth2AuthorizationCode
 from DefEssential.Responses import ResponseFile, ResponseJSON, ResponseText
 from DefEssential.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection
-from DefEssential.Extensions import Metrics, Status, Specifications, Swagger, Ping
+from DefEssential.Extensions import (
+	Metrics,
+	Status,
+	Specifications,
+	Swagger,
+	Ping,
+)
 
 class Sample(RequestRunner, method='GET', url='/'):
 	def run(self, request):
@@ -44,7 +50,13 @@ class Sample(RequestRunner, method='GET', url='/'):
 app = Application()
 app.add(Sample)
 assert app(Request('127.0.0.1', 1, 'GET', '/')).body == b'OK'
-extended = Application(exts=(Metrics('/metrics'), Status('/status', metrics_uri='/metrics'), Specifications('/spec'), Swagger('/swagger', spec_uri='/spec'), Ping('/ping')))
+extended = Application(exts=(
+	Metrics('/metrics'),
+	Status('/status', metrics_uri='/metrics'),
+	Specifications('/spec'),
+	Swagger('/swagger', spec_uri='/spec'),
+	Ping('/ping'),
+))
 extended.start()
 try:
 	assert extended(Request('127.0.0.1', 1, 'GET', '/swagger')).status == 200
