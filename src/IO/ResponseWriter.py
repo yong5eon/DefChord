@@ -4,7 +4,10 @@ from typing import (
 	Protocol,
 )
 
-from ..Response import Response
+from ..Response import (
+	Response,
+	close_bodies,
+)
 from ..Error import ClientError
 
 __all__ = (
@@ -45,7 +48,7 @@ class ResponseWriter:
 		self.failed = False
 		self.chunked = False
 		self.suppress_body = False
-		self.on_response: Optional[Callable[[Response], Response]] = None
+		self.on_request_response: Optional[Callable[[Response], Response]] = None
 		return
 
 	def start(
@@ -81,15 +84,22 @@ class ResponseWriter:
 		self,
 		response: Response,
 	) -> Response:
-		"""Apply response filters to direct-output headers that carry no body."""
-		if self.on_response is not None:
-			response = self.on_response(response)
+		"""주입된 응답 후처리를 호출하고 직접 출력용 헤더 응답을 검증한다."""
+		if self.on_request_response is not None:
+			response = self.on_request_response(response)
 		if not isinstance(response, Response):
-			raise TypeError('Response filters must return a Response')
-		if not isinstance(response.body, bytes) or response.body:
-			raise ValueError('Response filters must not set a body for direct output')
-		if response.header('Content-Length') is not None:
-			raise ValueError('Content-Length must not be set for direct output')
+			raise TypeError('Response hooks must return a Response')
+		try:
+			if not isinstance(response.body, bytes) or response.body:
+				raise ValueError('Response hooks must not set a body for direct output')
+			if response.header('Content-Length') is not None:
+				raise ValueError('Content-Length must not be set for direct output')
+		except Exception:
+			close_bodies(
+				response.body,
+				preserve_error=True,
+			)
+			raise
 		return response
 
 	def begin(
@@ -97,7 +107,7 @@ class ResponseWriter:
 		response: Response,
 		chunked: bool = False,
 	) -> None:
-		"""Filter direct-output headers and send them exactly once."""
+		"""응답 훅과 검증 후 직접 출력 헤더를 한 번 전송한다."""
 		if self.started:
 			raise RuntimeError('Cannot start a response that has already started')
 		self.start(
@@ -110,7 +120,7 @@ class ResponseWriter:
 		self,
 		response: Response,
 	) -> None:
-		"""101 Switching Protocols 헤더를 응답 필터를 거쳐 한 번만 보낸다.
+		"""101 Switching Protocols 헤더를 응답 훅을 거쳐 한 번만 보낸다.
 
 		이후 write()는 HTTP 프레이밍 없이 바이트를 그대로 쓰며, 전환된 프로토콜의 프레이밍은 호출자가 맡는다.
 		"""
@@ -120,7 +130,7 @@ class ResponseWriter:
 			raise ValueError('Protocol upgrades require status 101')
 		response = self.filter(response)
 		if response.status != 101:
-			raise ValueError('Response filters must keep status 101 for protocol upgrades')
+			raise ValueError('Response hooks must keep status 101 for protocol upgrades')
 		self.chunked = False
 		self.suppress_body = False
 		self.started = True
@@ -201,10 +211,10 @@ class ResponseWriter:
 		"""Send returned bytes or iterable responses through the same transport boundary."""
 		if self.started:
 			raise RuntimeError('Cannot send a response that has already started')
-		if not filtered and self.on_response is not None:
-			response = self.on_response(response)
+		if not filtered and self.on_request_response is not None:
+			response = self.on_request_response(response)
 		if not isinstance(response, Response):
-			raise TypeError('Response filters must return a Response')
+			raise TypeError('Response hooks must return a Response')
 		if isinstance(response.body, bytes) and response.status not in (
 			204,
 			205,
