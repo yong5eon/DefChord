@@ -1,11 +1,19 @@
 from logging import (
 	INFO,
 	basicConfig,
+	getLogger,
 )
 from pathlib import Path
+from sys import stdout
+from typing import Optional
 
 from DefEssential import (
 	Application,
+	ApplicationCleanup,
+	ApplicationRequest,
+	ApplicationRequestError,
+	ApplicationRequestResponse,
+	ApplicationStartup,
 	Request,
 	RequestFilter,
 	Response,
@@ -66,6 +74,61 @@ from runners.Streaming import (
 )
 
 
+class LogApplicationStartup(ApplicationStartup):
+	def __call__(self) -> None:
+		getLogger('Sample').info('Application started')
+		return
+
+
+class LogApplicationCleanup(ApplicationCleanup):
+	def __call__(self) -> None:
+		getLogger('Sample').info('Application stopped')
+		return
+
+
+class LogApplicationRequest(ApplicationRequest):
+	def __call__(
+		self,
+		request: Request,
+	) -> Request:
+		getLogger('Sample').info(
+			'Request %s: %s %s',
+			request.id,
+			request.method,
+			request.uri,
+		)
+		return request
+
+
+class LogApplicationResponse(ApplicationRequestResponse):
+	def __call__(
+		self,
+		request: Request,
+		response: Optional[Response],
+	) -> Optional[Response]:
+		status = response.status if response is not None else 'direct output'
+		getLogger('Sample').info(
+			'Request %s completed: %s',
+			request.id,
+			status,
+		)
+		return response
+
+
+class LogApplicationError(ApplicationRequestError):
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> None:
+		getLogger('Sample').error(
+			'Request %s failed: %s',
+			request.id,
+			error,
+		)
+		return
+
+
 class AddJpegExtension(RequestFilter):
 	def __call__(self, request: Request):
 		request.params['path'] += '.jpg'
@@ -91,29 +154,40 @@ class ReplaceWithPng(ResponseFilter):
 
 
 if __name__ == '__main__':
-	basicConfig(level=INFO)
+	basicConfig(
+		level=INFO,
+		stream=stdout,
+		force=True,
+	)
 	resources = Path(__file__).resolve().parent / 'res'
-	app = Application(exts=(
-		Metrics('/metrics'),
-		Status('/status', metrics_uri='/metrics'),
-		Specifications('/api/doc', title='DefEssential HTTP Sample'),
-		Swagger('/swagger', spec_uri='/api/doc'),
-		Ping('/ping'),
-		File('/', resources / 'html' / 'welcome.html'),
-		File('/favicon.ico', resources / 'favicon.ico'),
-		FileSystem('/css', Connection(Configuration(str(resources / 'css')))),
-		FileSystem(
-			'/thumbs/request',
-			Connection(Configuration(str(resources / 'images'))),
-			onRequest=AddJpegExtension(),
+	app = Application(
+		exts=(
+			Metrics('/metrics'),
+			Status('/status', metrics_uri='/metrics'),
+			Specifications('/api/doc', title='DefEssential HTTP Sample'),
+			Swagger('/swagger', spec_uri='/api/doc'),
+			Ping('/ping'),
+			File('/', resources / 'html' / 'welcome.html'),
+			File('/favicon.ico', resources / 'favicon.ico'),
+			FileSystem('/css', Connection(Configuration(str(resources / 'css')))),
+			FileSystem(
+				'/thumbs/request',
+				Connection(Configuration(str(resources / 'images'))),
+				onRequest=AddJpegExtension(),
+			),
+			FileSystem(
+				'/thumbs/response',
+				Connection(Configuration(str(resources / 'images'))),
+				onRequest=AddJpegExtension(),
+				onResponse=ReplaceWithPng(resources / 'images' / 'sample.png'),
+			),
 		),
-		FileSystem(
-			'/thumbs/response',
-			Connection(Configuration(str(resources / 'images'))),
-			onRequest=AddJpegExtension(),
-			onResponse=ReplaceWithPng(resources / 'images' / 'sample.png'),
-		),
-	))
+		on_startup=LogApplicationStartup(),
+		on_cleanup=LogApplicationCleanup(),
+		on_request=LogApplicationRequest(),
+		on_request_response=LogApplicationResponse(),
+		on_request_error=LogApplicationError(),
+	)
 	app.add(RunGet)
 	app.add(RunPost)
 	app.add(RunPut)
