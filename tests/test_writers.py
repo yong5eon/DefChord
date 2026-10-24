@@ -563,7 +563,10 @@ class DirectServerTests(TestCase):
 			'Client disconnected',
 			'\n'.join(logged.output),
 		)
-		self.assertTrue(all(record.levelname == 'WARNING' and record.exc_info is None for record in logged.records))
+		problems = [record for record in logged.records if record.levelno >= 30]
+		self.assertEqual(len(problems), 1)
+		self.assertEqual(problems[0].levelname, 'WARNING')
+		self.assertIsNone(problems[0].exc_info)
 		return
 
 	def test_direct_output_before_handler_returns_and_other_requests_progress(self):
@@ -806,7 +809,8 @@ class DirectServerTests(TestCase):
 			'closed',
 		])
 		self.assertEqual(errors, [])
-		self.assertTrue(any('body transmission failed' in message for message in logged.output))
+		self.assertTrue(any('Client disconnected' in message for message in logged.output))
+		self.assertTrue(all(record.exc_info is None for record in logged.records))
 		return
 
 	def test_error_after_begin_never_sends_second_response_or_final_chunk(self):

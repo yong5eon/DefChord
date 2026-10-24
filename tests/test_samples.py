@@ -6,6 +6,7 @@ from json import (
 	dumps,
 	loads,
 )
+from logging import getLogger
 from pathlib import Path
 from runpy import run_path
 from struct import pack
@@ -29,11 +30,10 @@ def create_application():
 	"""직접 실행하는 샘플에서 서버를 열지 않고 등록된 앱을 가져온다."""
 	with patch('sys.path', [str(SAMPLE), *path]):
 		with patch('DefEssential.Adapter.Implements.Python.Server') as server:
-			with patch('logging.basicConfig'):
-				run_path(
-					str(SAMPLE / 'Sample.py'),
-					run_name='__main__',
-				)
+			run_path(
+				str(SAMPLE / 'Sample.py'),
+				run_name='__main__',
+			)
 			return server.call_args.args[2]
 
 
@@ -67,6 +67,22 @@ class RequestRunnerForms(HTMLParser):
 
 
 class SampleTests(TestCase):
+	def setUp(self):
+		root = getLogger()
+		self.logging_handlers = root.handlers[:]
+		self.logging_level = root.level
+		self.addCleanup(self.restore_logging)
+		return
+
+	def restore_logging(self):
+		root = getLogger()
+		for handler in root.handlers[:]:
+			if handler not in self.logging_handlers:
+				root.removeHandler(handler)
+				handler.close()
+		root.setLevel(self.logging_level)
+		return
+
 	def test_welcome_page_and_styles_are_served(self):
 		with running(create_application()) as address:
 			for url, file in (
@@ -479,7 +495,7 @@ class SampleTests(TestCase):
 					size=None if mode == 'chunked-input' else (3 if method == 'PUT' else 0),
 					chunked=mode == 'chunked-input',
 				)
-				with self.assertLogs('Sample.Streaming', level='INFO') as logs:
+				with self.assertLogs('Sample.Streaming', level='DEBUG') as logs:
 					def send(
 						response,
 						chunked,
@@ -513,22 +529,21 @@ class SampleTests(TestCase):
 									self.assertIsNone(app(req))
 				self.assertEqual(len(logs.records), 3 if mode == 'sse' else 2)
 				self.assertEqual(logs.records[0].getMessage(), (
-					'요청 훅: id={} method={} uri={}'.format(req.id, method, uri)
+					'요청 훅: id={} (핸들러 실행 전)'.format(req.id)
 				))
 				status = 101 if mode == 'websocket' else 200
 				self.assertEqual(logs.records[1].getMessage(), (
-					'응답 훅: id={} method={} uri={} status={} (헤더 전송 전)'.format(
+					'응답 훅: id={} status={} (헤더 전송 전)'.format(
 						req.id,
-						method,
-						uri,
 						status,
 					)
 				))
 				self.assertEqual(sent, [status])
 				if mode == 'sse':
-					self.assertEqual(logs.records[2].levelname, 'ERROR')
+					self.assertEqual(logs.records[2].levelname, 'DEBUG')
 					self.assertIn('오류 훅: id=' + req.id, logs.records[2].getMessage())
-					self.assertIsInstance(logs.records[2].exc_info[1], ConnectionResetError)
+					self.assertIsNone(logs.records[2].exc_info)
+					self.assertIn('error_type=ConnectionResetError', logs.records[2].getMessage())
 				self.assertIsNone(writer.on_request_response)
 				if mode == 'sse':
 					self.assertIn(b'data: 5\n', output.getvalue())
@@ -573,7 +588,7 @@ class SampleTests(TestCase):
 					)
 
 				req = make_request()
-				with self.assertLogs('Sample.Requests', level='INFO') as logs:
+				with self.assertLogs('Sample.Requests', level='DEBUG') as logs:
 					response = app(req)
 				self.assertEqual(response.status, 200)
 				self.assertEqual(len(logs.records), 2)
@@ -584,14 +599,15 @@ class SampleTests(TestCase):
 				req = make_request()
 				error = ValueError('샘플 오류 훅 검증')
 				with patch.object(runner, 'run', side_effect=error):
-					with self.assertLogs('Sample.Requests', level='INFO') as logs:
+					with self.assertLogs('Sample.Requests', level='DEBUG') as logs:
 						with self.assertRaises(ValueError) as caught:
 							app(req)
 				self.assertIs(caught.exception, error)
 				self.assertEqual(len(logs.records), 2)
 				self.assertTrue(logs.records[0].getMessage().startswith('요청 훅: id=' + req.id))
 				self.assertTrue(logs.records[1].getMessage().startswith('오류 훅: id=' + req.id))
-				self.assertIs(logs.records[1].exc_info[1], error)
+				self.assertIsNone(logs.records[1].exc_info)
+				self.assertIn('error_type=ValueError', logs.records[1].getMessage())
 		return
 
 	def test_streaming_error_hooks_are_connected_for_all_handlers(self):
@@ -621,14 +637,15 @@ class SampleTests(TestCase):
 					),
 				)
 				with patch.object(runner, 'run', side_effect=error):
-					with self.assertLogs('Sample.Streaming', level='INFO') as logs:
+					with self.assertLogs('Sample.Streaming', level='DEBUG') as logs:
 						with self.assertRaises(ValueError) as caught:
 							app(req)
 				self.assertIs(caught.exception, error)
 				self.assertEqual(len(logs.records), 2)
 				self.assertTrue(logs.records[0].getMessage().startswith('요청 훅: id=' + req.id))
 				self.assertTrue(logs.records[1].getMessage().startswith('오류 훅: id=' + req.id))
-				self.assertIs(logs.records[1].exc_info[1], error)
+				self.assertIsNone(logs.records[1].exc_info)
+				self.assertIn('error_type=ValueError', logs.records[1].getMessage())
 		return
 
 	def test_sse_writer_sample_contract(self):

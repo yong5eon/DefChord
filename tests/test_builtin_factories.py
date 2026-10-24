@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from importlib import import_module
 from json import loads
+from logging import getLogger
 from pathlib import Path
 from sys import path
 from threading import Barrier
@@ -603,6 +604,19 @@ class BuiltinExtensionTests(TestCase):
 		return
 
 	def test_sample_application_and_document_script(self):
+		root = getLogger()
+		handlers = root.handlers[:]
+		level = root.level
+
+		def restore_logging():
+			for handler in root.handlers[:]:
+				if handler not in handlers:
+					root.removeHandler(handler)
+					handler.close()
+			root.setLevel(level)
+			return
+
+		self.addCleanup(restore_logging)
 		with patch('sys.path', [str(RESOURCES.parents[1]), *path]):
 			sample = import_module('samples.Sample')
 			script = import_module('samples.scripts.DescriptionToFile')
