@@ -248,9 +248,9 @@ class LoggingSetup(ApplicationStartup):
   def __init__(self) -> None:
     sources = (Filter('Sample'), Filter('DefEssential'))
     self.handler = StreamHandler()
-    self.handler.set_name('Sample.Console')
+    self.handler.set_name('Sample')
     self.handler.setFormatter(Formatter(
-      '%(asctime)s %(processName)s %(name)s %(levelname)s %(message)s'
+      '%(asctime)s %(levelname)-8s %(name)s %(message)s'
     ))
     self.handler.addFilter(
       lambda record: any(source.filter(record) for source in sources)
@@ -267,7 +267,7 @@ app = Application(on_startup=LoggingSetup())
 ```
 
 - 필터는 루트 로거가 아니라 핸들러에 적용한다. `Sample`·`Sample.*`와 `DefEssential`·`DefEssential.*`만 선택하고 `SampleExtra`, `DefEssentialExtra`, 외부 라이브러리 로거는 제외한다.
-- 기본 포맷은 DefStream과 같은 `%(asctime)s %(processName)s %(name)s %(levelname)s %(message)s`로 한다. 스레드 구분이 필요하면 사용자가 `%(threadName)s`를 추가할 수 있다.
+- 출력 포맷은 DefStream을 참고하되 최종 샘플 설정인 `%(asctime)s %(levelname)-8s %(name)s %(message)s`를 사용한다. 실제 샘플의 `LoggingFormatter`는 밀리초와 레벨별 색상을 표시한다. 위 예제는 출처 필터와 시작 훅 설정에 집중한 기본 형태다.
 - 위 예제는 독립 실행 애플리케이션용이다. 기존 핸들러를 강제로 제거하거나 `force=True`로 덮어쓰지 않는다. 출처 제한은 샘플이 추가한 핸들러에 대한 보장이며, 다른 기존 핸들러의 출력까지 차단하지 않는다.
 - 동일 Application의 중지 후 재시작에도 같은 설정 훅이 핸들러를 중복 등록하지 않아야 한다. 기존 시작 관찰 훅 등 다른 시작 훅은 출력 설정 훅 뒤에 실행한다.
 - 시작 훅 이전의 Application 구성·라우트 등록·시작 시도 로그는 이 설정으로 소급 출력할 수 없다. 해당 로그 수집을 위해 라이브러리의 시작 순서를 바꾸거나 버퍼를 추가하지 않는다. 시작 배너는 기존처럼 로깅과 별도로 출력된다.
@@ -315,10 +315,12 @@ app = Application(on_startup=LoggingSetup())
 - 후속 검토에 따라 로깅용 `stage()` context manager를 제거하고 각 처리 지점의 직접 logger 호출로 단순화했다. 모든 단계의 자동 타이머·예외 포착 대신 기존 실행·정리 경계와 필요한 요청·문서 생성 시간 측정만 유지한다.
 - 추가 검토에서 남은 클래스명·문자열 유틸도 호출 지점의 표준 Python 표현으로 바꾸고 로깅 유틸 파일을 삭제했다. 사용자 원시 요청 경로는 기록하지 않는다.
 - HTTP 전송 결과는 공통 서버 경계의 지역 변수만으로 한 번 기록한다. 후속 검토에 따라 라우트·어댑터 전달용 ContextVar와 설정·해제 코드를 제거했다. 라우트는 Application에서, 어댑터 이름은 각 서버에서 직접 기록하며, 전송 요약은 최초 요청 ID·메서드·상태·결과·소요 시간만 사용한다.
-- 샘플의 첫 Application 시작 훅에서 `Sample.Console` 핸들러를 설정한다. 같은 이름의 샘플 핸들러를 중복 추가하지 않으며, 기존 사용자 핸들러는 유지한다.
+- 샘플의 첫 Application 시작 훅에서 `Sample` 핸들러를 설정한다. 같은 이름의 샘플 핸들러를 중복 추가하지 않으며, 기존 사용자 핸들러는 유지한다.
 - 샘플의 Application·RequestRunner·스트리밍 관찰 훅은 DEBUG로 기록하며 원시 URI·예외 메시지·중복 traceback을 출력하지 않는다.
 - [로깅 테스트](../../../tests/test_logging.py) 21개를 추가했다. 기존 훅·샘플·어댑터·writer 테스트도 새로운 레벨과 안전한 메시지 정책을 검증하도록 갱신했다.
 - Windows의 Python 3.12 환경에서 현재 작업 트리의 패키지를 `importlib.util.spec_from_file_location()`으로 직접 로드한 뒤 `unittest` 전체 발견 테스트를 실행했다. 설치된 별도 패키지가 아니라 이번 소스를 대상으로 검증했다.
 - 전체 테스트 243개 중 **238개 통과, 5개 건너뜀**. 건너뛴 항목은 POSIX가 필요한 Gunicorn 실행·전송 적합성 테스트이며, Gunicorn 실제 실행 검증은 Linux/WSL 또는 CI에서 추가로 필요하다.
 - Python·Uvicorn의 실제 HTTP 전송, 포트 0의 준비 완료 로그, Uvicorn의 실제 바인딩 실패·정리, 스트리밍·SSE·WebSocket 관련 회귀 테스트를 포함했다. Python 바인딩 실패 로그는 Windows의 주소 재사용 차이에 의존하지 않는 테스트 더블로 별도 검증했다.
 - 소스·샘플·테스트의 Python 3.9 구문 분석, 주요 변경 파일의 Pylance 타입 오류 확인, `git diff --check`와 변경 문서의 상대 링크·들여쓰기 검증을 수행했다. Python 3.9 구문 검사는 해당 버전의 실제 런타임 테스트를 대신하지 않는다.
+
+상세 변경 내용은 [구현 기록](./IMPLEMENTS.md), 사용자 관점의 요약은 [변경 로그](./README.md)에 기록한다.
