@@ -30,11 +30,9 @@ class StreamingRequestLog(RequestRunnerRequest):
 		self,
 		request: Request,
 	) -> Request:
-		getLogger('Sample.Streaming').info(
-			'요청 훅: id=%s method=%s uri=%s',
+		getLogger('Sample.Streaming').debug(
+			'요청 훅: id=%s (핸들러 실행 전)',
 			request.id,
-			request.method,
-			request.uri,
 		)
 		return request
 
@@ -51,35 +49,26 @@ class StreamingResponseHeaders(RequestRunnerRequestResponse):
 			'X-Request-ID',
 			request.id,
 		)
-		getLogger('Sample.Streaming').info(
-			'응답 훅: id=%s method=%s uri=%s status=%s (헤더 전송 전)',
+		getLogger('Sample.Streaming').debug(
+			'응답 훅: id=%s status=%s (헤더 전송 전)',
 			request.id,
-			request.method,
-			request.uri,
 			response.status,
 		)
 		return response
 
 
 class StreamingErrorLog(RequestRunnerRequestError):
-	"""스트리밍 실행 오류를 요청 식별자와 예외 정보로 기록한다."""
+	"""스트리밍 실행 오류를 요청 식별자와 예외 타입으로 관찰한다."""
 
 	def __call__(
 		self,
 		request: Request,
 		error: Exception,
 	) -> None:
-		getLogger('Sample.Streaming').error(
-			'오류 훅: id=%s method=%s uri=%s error=%s',
+		getLogger('Sample.Streaming').debug(
+			'오류 훅: id=%s error_type=%s',
 			request.id,
-			request.method,
-			request.uri,
-			error,
-			exc_info=(
-				type(error),
-				error,
-				error.__traceback__,
-			),
+			type(error).__name__,
 		)
 		return
 

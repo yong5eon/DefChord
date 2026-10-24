@@ -1,13 +1,17 @@
 from logging import (
+	DEBUG,
+	ERROR,
+	WARNING,
 	INFO,
-	basicConfig,
+	Filter,
+	Formatter,
+	StreamHandler,
 	getLogger,
+	LogRecord,
 )
+from copy import copy
 from pathlib import Path
-from sys import (
-	path,
-	stdout,
-)
+from sys import path
 from typing import Optional
 
 from DefEssential import (
@@ -83,15 +87,63 @@ from samples.runners.Streaming import (
 )
 
 
+
+class LoggingFormatter(Formatter):
+	default_msec_format = '%s.%03d'
+
+	def __init__(self) -> None:
+		super().__init__(
+			'%(asctime)s %(levelname)-8s %(name)s %(message)s',
+		)
+		return
+
+	def format(
+		self,
+		record: LogRecord,
+	) -> str:
+		text = super().format(copy(record))
+		if record.levelno >= ERROR:
+			color = '\x1b[31m'
+		elif record.levelno >= WARNING:
+			color = '\x1b[33m'
+		elif record.levelno >= INFO:
+			color = '\x1b[37m'
+		else:
+			color = '\x1b[90m'
+		return '\n'.join(f'{color}{line}\x1b[0m' for line in text.split('\n'))
+
+
+class LoggingSetup(ApplicationStartup):
+	"""첫 시작 훅에서 샘플 전용 출력 정책을 설정한다."""
+
+	def __init__(self) -> None:
+		sources = (
+			Filter('Sample'),
+			Filter('DefEssential'),
+		)
+		self.handler = StreamHandler()
+		self.handler.set_name('Sample')
+		self.handler.setFormatter(LoggingFormatter())
+		self.handler.addFilter(lambda record: any(source.filter(record) for source in sources))
+		return
+
+	def __call__(self) -> None:
+		root = getLogger()
+		root.setLevel(DEBUG)
+		if not any(handler.name == self.handler.name for handler in root.handlers):
+			root.addHandler(self.handler)
+		return
+
+
 class LogApplicationStartup(ApplicationStartup):
 	def __call__(self) -> None:
-		getLogger('Sample').info('Application started')
+		getLogger('Sample').debug('Application startup hook completed')
 		return
 
 
 class LogApplicationCleanup(ApplicationCleanup):
 	def __call__(self) -> None:
-		getLogger('Sample').info('Application stopped')
+		getLogger('Sample').debug('Application cleanup hook completed')
 		return
 
 
@@ -100,11 +152,9 @@ class LogApplicationRequest(ApplicationRequest):
 		self,
 		request: Request,
 	) -> Request:
-		getLogger('Sample').info(
-			'Request %s: %s %s',
+		getLogger('Sample').debug(
+			'Application request hook completed: request_id=%s',
 			request.id,
-			request.method,
-			request.uri,
 		)
 		return request
 
@@ -116,8 +166,8 @@ class LogApplicationResponse(ApplicationRequestResponse):
 		response: Optional[Response],
 	) -> Optional[Response]:
 		status = response.status if response is not None else 'direct output'
-		getLogger('Sample').info(
-			'Request %s completed: %s',
+		getLogger('Sample').debug(
+			'Application response hook completed: request_id=%s status=%s',
 			request.id,
 			status,
 		)
@@ -130,10 +180,10 @@ class LogApplicationError(ApplicationRequestError):
 		request: Request,
 		error: Exception,
 	) -> None:
-		getLogger('Sample').error(
-			'Request %s failed: %s',
+		getLogger('Sample').debug(
+			'Application error hook completed: request_id=%s error_type=%s',
 			request.id,
-			error,
+			type(error).__name__,
 		)
 		return
 
@@ -210,7 +260,10 @@ def create_application() -> Application:
 				on_request_response=ReplaceWithPng(resources / 'images' / 'sample.png'),
 			),
 		),
-		on_startup=LogApplicationStartup(),
+		on_startup=(
+			LoggingSetup(),
+			LogApplicationStartup(),
+		),
 		on_cleanup=LogApplicationCleanup(),
 		on_request=LogApplicationRequest(),
 		on_request_response=LogApplicationResponse(),
@@ -249,11 +302,6 @@ def create_application() -> Application:
 
 
 if __name__ == '__main__':
-	basicConfig(
-		level=INFO,
-		stream=stdout,
-		force=True,
-	)
 	app = create_application()
 	with Server(
 		'127.0.0.1',
