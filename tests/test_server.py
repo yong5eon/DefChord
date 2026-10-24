@@ -18,6 +18,8 @@ from DefEssential import (
 	ApplicationStartup,
 	Body,
 	Extension,
+	ExtensionCleanup,
+	ExtensionStartup,
 	RequestRunner,
 	Response,
 )
@@ -67,20 +69,28 @@ class ServerTests(TestCase):
 				events.append('application-startup')
 				return
 
-		class Lifecycle(Extension):
-			def start(self, app):
+		class ExtensionStart(ExtensionStartup):
+			def __call__(self):
 				events.append('start')
 				return
 
-			def stop(self, app):
+		class ExtensionStop(ExtensionCleanup):
+			def __call__(self):
 				events.append('stop')
 				return
 
-			def __call__(self, app, request):
+		class Lifecycle(Extension):
+			def __call__(
+				self,
+				request,
+			):
 				return Response()
 
 		app = Application(
-			exts=(Lifecycle('/lifecycle'),),
+			exts=(Lifecycle(
+				on_startup=ExtensionStart(),
+				on_cleanup=ExtensionStop(),
+			),),
 			on_startup=Startup(),
 		)
 		with Server('127.0.0.1', 0, app) as server:

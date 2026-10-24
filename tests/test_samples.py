@@ -11,6 +11,7 @@ from struct import pack
 from sys import path
 from unittest import TestCase
 from unittest.mock import patch
+from DefEssential.Extensions import Specifications
 
 from test_server import running
 
@@ -165,7 +166,10 @@ class SampleTests(TestCase):
 
 	def test_calculation_contract_has_inputs_examples_and_response_schema(self):
 		app = create_application()
-		document = app.exts['/api/doc'].document(app)
+		app.start()
+		self.addCleanup(app.stop)
+		specifications = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		document = specifications.document()
 		operation = document['paths']['/api/run/{a}/{b}']['post']
 		parameters = {
 			(item['in'], item['name']): item for item in operation['parameters']
@@ -305,7 +309,11 @@ class SampleTests(TestCase):
 
 	def test_image_response_filter_replaces_jpeg_and_closes_files(self):
 		app = create_application()
-		response_filter = app.exts['/thumbs/response'].on_response
+		extension = next(
+			extension for extension in app.exts
+			if getattr(extension, 'path', None) == '/thumbs/response'
+		)
+		response_filter, = extension.request_response_hooks
 		original_filter = type(response_filter).__call__
 		bodies = []
 		requested_paths = []

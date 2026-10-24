@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 from DefEssential import (
 	Application,
+	ApplicationRequestResponse,
 	Auth,
 	Body,
 	ClientError,
@@ -75,20 +76,25 @@ class Echo(
 
 
 class ExtensionTests(TestCase):
+	def started(self, app):
+		app.start()
+		self.addCleanup(app.stop)
+		return app
+
 	def test_status_metrics_uri_and_independent_use(self):
 		status = Status('/status', metrics_uri='/custom-metrics?x=1&y=2')
-		app = Application(exts=(status,))
+		app = self.started(Application(exts=(status,)))
 		response = app(request('/status', headers={'Accept': 'application/json'}))
 		assert isinstance(response, Response)
 		assert isinstance(response.body, bytes)
 		self.assertIn(b'data-metrics-uri="/custom-metrics?x=1&amp;y=2"', response.body)
 		self.assertIn(b'fetch(document.body.dataset.metricsUri', response.body)
 		self.assertEqual(response.header('Content-Type'), 'text/html; charset=utf-8')
-		app = Application(exts=(
+		app = self.started(Application(exts=(
 			Metrics('/a'),
 			Metrics('/b'),
 			Status('/status', metrics_uri='/b'),
-		))
+		)))
 		response = app(request('/status'))
 		assert isinstance(response, Response)
 		assert isinstance(response.body, bytes)
@@ -114,12 +120,14 @@ class ExtensionTests(TestCase):
 	def test_extension_handler_factory_contract(self):
 		with self.assertRaises(TypeError):
 			RunFactory()
-		app = Application()
 		extension = Ping('/ping')
+		app = Application(exts=(extension,))
+		app.start()
+		app.stop()
 		factory = RunExtensionFactory(
-			app,
 			extension,
 			'HEAD',
+			'/ping',
 		)
 		self.assertIsInstance(factory, RunFactory)
 		first = factory()
@@ -137,9 +145,10 @@ class ExtensionTests(TestCase):
 				return Response()
 
 		with self.assertRaises(TypeError):
-			Legacy('/legacy')
-		self.assertTrue(callable(Ping('/ping')))
-		self.assertFalse(hasattr(Ping('/ping'), 'handle'))
+			Legacy()
+		extension = Ping('/ping')
+		self.assertTrue(callable(extension))
+		self.assertFalse(hasattr(extension, 'handle'))
 		return
 
 	def get(
@@ -165,14 +174,17 @@ class ExtensionTests(TestCase):
 
 	def test_real_http_extensions_startup_and_application_isolation(self):
 		metrics = Metrics('/metrics')
+		collector = metrics.collector
 		spec = Specifications('/spec')
-		app = Application(exts=(
-			Status('/status', metrics_uri='/metrics', title='<DefEssential>'),
-			Swagger('/swagger', spec_uri='/spec'),
-			metrics,
-			spec,
-			Ping('/ping'),
-		))
+		app = Application(
+			exts=(
+				Status('/status', metrics_uri='/metrics', title='<DefEssential>'),
+				Swagger('/swagger', spec_uri='/spec'),
+				metrics,
+				spec,
+				Ping('/ping'),
+			),
+		)
 		app.add(Echo)
 		other = Application(exts=(Specifications('/spec'),))
 		with redirect_stdout(StringIO()) as output:
@@ -208,12 +220,19 @@ class ExtensionTests(TestCase):
 				self.assertEqual(loads(body), {'status': 'running'})
 		self.assertFalse(app.running)
 		self.assertIn('Extensions: 5 extensions', output.getvalue())
-		self.assertIn('    - Swagger: /swagger', output.getvalue())
+		self.assertIn('    - Swagger(/swagger)', output.getvalue())
 		self.assertNotIn(f'Swagger: http://127.0.0.1:{address[1]}', output.getvalue())
-		self.assertEqual(spec.document(other)['paths'], {})
-		self.assertNotIn('/spec', spec.document(app)['paths'])
-		self.assertNotIn('/status', spec.document(app)['paths'])
-		ping = Ping('/state')(app, request())
+		self.started(other)
+		other_spec = next(extension for extension in other.exts if isinstance(extension, Specifications))
+		self.assertEqual(other_spec.document()['paths'], {})
+		specification = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		self.assertNotIn('/spec', specification.document()['paths'])
+		self.assertNotIn('/status', specification.document()['paths'])
+		ping_extension = Ping('/state')
+		state = Application(exts=(ping_extension,))
+		state.start()
+		state.stop()
+		ping = ping_extension(request())
 		assert isinstance(ping.body, bytes)
 		self.assertEqual(ping.status, 503)
 		self.assertEqual(loads(ping.body)['status'], 'stopped')
@@ -221,14 +240,16 @@ class ExtensionTests(TestCase):
 
 	def test_dependency_collision_and_instance_ownership(self):
 		for extensions in (
-			(Metrics('/same'), Specifications('/same')),
+			(Specifications('/same'), Specifications('/same')),
 		):
 			with self.assertRaises(ValueError):
-				Application(exts=extensions)
-		extension = Metrics('/metrics')
-		Application(exts=(extension,))
+				Application(exts=extensions).start()
+		extension = Ping('/ping')
+		app = Application(exts=(extension,))
+		self.assertEqual(app.exts, (extension,))
 		with self.assertRaises(ValueError):
 			Application(exts=(extension,))
+		self.started(app)
 
 		class Conflict(
 			RequestRunner,
@@ -238,30 +259,38 @@ class ExtensionTests(TestCase):
 			def run(self, req):
 				return Response()
 
-		app = extension.application
-		assert app is not None
+		app = Application(exts=(Specifications('/metrics'),))
+		app.add(Conflict)
 		with self.assertRaises(ValueError):
-			app.add(Conflict)
+			app.start()
 		with self.assertRaises(ValueError):
-			Metrics('/:variable')
+			Specifications('/:variable')
 		return
 
 	def test_lifecycle_order_rollback_and_failures_are_explicit(self):
 		events = []
 
 		class Lifecycle(Extension):
-			def start(self, app):
+			def __init__(self, path, fail=False):
+				super().__init__()
+				self.path = path
+				self.fail = fail
+				return
+
+			def startup(self, app):
+				if self.fail:
+					raise ValueError('시작 실패')
 				events.append('start:' + self.path)
+				super().startup(app)
+				return
 
-			def stop(self, app):
+			def cleanup(self):
 				events.append('stop:' + self.path)
+				super().cleanup()
+				return
 
-			def __call__(self, app, req):
+			def __call__(self, req):
 				return Response()
-
-		class Failing(Lifecycle):
-			def start(self, app):
-				raise ValueError('시작 실패')
 
 		app = Application(exts=(
 			Lifecycle('/first'),
@@ -278,7 +307,7 @@ class ExtensionTests(TestCase):
 		events.clear()
 		app = Application(exts=(
 			Lifecycle('/first'),
-			Failing('/fail'),
+			Lifecycle('/fail', fail=True),
 		))
 		with self.assertRaises(ValueError):
 			app.start()
@@ -289,10 +318,10 @@ class ExtensionTests(TestCase):
 	def test_swagger_spec_uri_escaping_headers_and_head(self):
 		swagger = Swagger('/swagger', spec_uri='/custom-spec', title='<DefEssential>', description='</script>')
 		spec = Specifications('/custom-spec')
-		app = Application(exts=(
+		app = self.started(Application(exts=(
 			swagger,
 			spec,
-		))
+		)))
 		response = app(request('/swagger'))
 		assert isinstance(response, Response)
 		assert isinstance(response.body, bytes)
@@ -313,12 +342,14 @@ class ExtensionTests(TestCase):
 		self.assertIn("connect-src 'self'", policy)
 		self.assertIn("img-src 'self' data: blob:", policy)
 		self.assertIn('https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.0/', policy)
-		self.assertNotIn('/swagger', spec.document(app)['paths'])
+		specification = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		self.assertNotIn('/swagger', specification.document()['paths'])
 		response = app(request('/swagger', headers={'Accept': 'application/json'}))
 		assert isinstance(response, Response)
 		content_type = response.header('Content-Type')
 		assert isinstance(content_type, str)
 		self.assertTrue(content_type.startswith('text/html'))
+		app.stop()
 		with redirect_stdout(StringIO()):
 			with running(app) as address:
 				connection = HTTPConnection(*address, timeout=3)
@@ -354,14 +385,14 @@ class ExtensionTests(TestCase):
 				with self.assertRaises(ValueError):
 					Swagger('/swagger', spec_uri=uri)
 		swagger = Swagger('/swagger', spec_uri='/external-spec?format=json&version=1')
-		response = swagger(Application(), request('/swagger'))
+		response = swagger(request('/swagger'))
 		assert isinstance(response.body, bytes)
 		self.assertIn(b'data-spec-url="/external-spec?format=json&amp;version=1"', response.body)
-		app = Application(exts=(
+		app = self.started(Application(exts=(
 			Specifications('/a'),
 			Specifications('/b'),
 			Swagger('/swagger', spec_uri='/b'),
-		))
+		)))
 		response = app(request('/swagger'))
 		assert isinstance(response, Response)
 		assert isinstance(response.body, bytes)
@@ -370,18 +401,19 @@ class ExtensionTests(TestCase):
 
 	def test_metrics_windows_and_unmatched_cardinality(self):
 		metrics_module = import_module('DefEssential.Extensions.Metrics')
-		metrics = Metrics('/metrics')
-		app = Application(exts=(metrics,))
+		extension = Metrics('/metrics')
+		metrics = extension.collector
+		app = Application(exts=(extension,))
 		app.add(Echo)
 		with patch.object(metrics_module, 'monotonic', return_value=100.0):
 			app.start()
 			req = request('/echo/one')
-			context = metrics.begin(req)
-			self.assertEqual(metrics.snapshot(app)['requests']['GET /echo/:id']['active'], 1)
+			metrics.begin(req)
+			self.assertEqual(metrics.snapshot()['requests']['GET /echo/:id']['active'], 1)
 		with patch.object(metrics_module, 'monotonic', return_value=102.0):
-			metrics.end(req, context, 200, None)
+			metrics.end(req, 200, None)
 		with patch.object(metrics_module, 'monotonic', return_value=103.0):
-			stats = metrics.snapshot(app)['requests']['GET /echo/:id']
+			stats = metrics.snapshot()['requests']['GET /echo/:id']
 			self.assertEqual(stats['windows']['1']['success'], 1)
 			self.assertEqual(stats['windows']['1']['max_duration'], 2.0)
 			self.assertEqual(stats['duration'], 2.0)
@@ -390,18 +422,18 @@ class ExtensionTests(TestCase):
 			'/unknown-two',
 		):
 			req = request(uri)
-			context = metrics.begin(req)
-			metrics.end(req, context, 404, None)
-		self.assertEqual(metrics.snapshot(app)['requests']['<unmatched>']['failure'], 2)
+			metrics.begin(req)
+			metrics.end(req, 404, None)
+		self.assertEqual(metrics.snapshot()['requests']['<unmatched>']['failure'], 2)
 		self.assertNotIn('/unknown-one', metrics.requests)
-		self.assertIn('route="GET /echo/:id"', metrics.render(app))
+		self.assertIn('route="GET /echo/:id"', metrics.render())
 		app.stop()
 		return
 
-	def test_metrics_stream_active_until_transmission_finishes_and_error(self):
+	def test_metrics_stream_completes_at_application_return_and_observes_processing_error(self):
 		release = Event()
-		done = Event()
-		metrics = Metrics('/metrics')
+		extension = Metrics('/metrics')
+		metrics = extension.collector
 
 		class Stream(
 			RequestRunner,
@@ -424,14 +456,9 @@ class ExtensionTests(TestCase):
 			def run(self, req):
 				raise ClientError('요청 오류')
 
-		class SignalMetrics(Metrics):
-			def end(self, req, context, status, error):
-				super().end(req, context, status, error)
-				done.set()
-				return
-
-		metrics = SignalMetrics('/metrics')
-		app = Application(exts=(metrics,))
+		app = Application(
+			exts=(extension,),
+		)
 		app.add(Stream)
 		app.add(Invalid)
 		with redirect_stdout(StringIO()):
@@ -441,15 +468,12 @@ class ExtensionTests(TestCase):
 					connection.request('GET', '/stream')
 					response = connection.getresponse()
 					self.assertEqual(response.read(5), b'first')
-					self.assertEqual(metrics.snapshot(app)['requests']['GET /stream']['active'], 1)
+					self.assertEqual(metrics.snapshot()['requests']['GET /stream']['active'], 0)
 					release.set()
 					self.assertEqual(response.read(), b'last')
-					self.assertTrue(done.wait(3))
-					self.assertEqual(metrics.snapshot(app)['requests']['GET /stream']['success'], 1)
-					done.clear()
+					self.assertEqual(metrics.snapshot()['requests']['GET /stream']['success'], 1)
 					self.assertEqual(self.get(address, '/error')[0], 400)
-					self.assertTrue(done.wait(3))
-					self.assertEqual(metrics.snapshot(app)['requests']['GET /error']['failure'], 1)
+					self.assertEqual(metrics.snapshot()['requests']['GET /error']['failure'], 1)
 				finally:
 					release.set()
 					connection.close()
@@ -458,11 +482,10 @@ class ExtensionTests(TestCase):
 	def test_metrics_direct_output_status_and_failed_stream(self):
 		done = Event()
 
-		class SignalMetrics(Metrics):
-			def end(self, req, context, status, error):
-				super().end(req, context, status, error)
+		class Completion(ApplicationRequestResponse):
+			def __call__(self, req, response):
 				done.set()
-				return
+				return response
 
 		class Direct(
 			RequestRunner,
@@ -475,25 +498,21 @@ class ExtensionTests(TestCase):
 				writer.chunk(b'bad')
 				return None
 
-		metrics = SignalMetrics('/metrics')
-		app = Application(exts=(metrics,))
+		extension = Metrics('/metrics')
+		metrics = extension.collector
+		app = Application(
+			exts=(extension,),
+			on_request_response=Completion(),
+		)
 		app.add(Direct)
 		with redirect_stdout(StringIO()):
 			with running(app) as address:
 				self.assertEqual(self.get(address, '/direct')[0], 400)
 				self.assertTrue(done.wait(3))
-				self.assertEqual(metrics.snapshot(app)['requests']['GET /direct']['failure'], 1)
+				self.assertEqual(metrics.snapshot()['requests']['GET /direct']['failure'], 1)
 		return
 
-	def test_metrics_stream_failure_is_not_success(self):
-		done = Event()
-
-		class SignalMetrics(Metrics):
-			def end(self, req, context, status, error):
-				super().end(req, context, status, error)
-				done.set()
-				return
-
+	def test_metrics_does_not_reclassify_later_stream_failure(self):
 		class Broken(
 			RequestRunner,
 			method='GET',
@@ -505,22 +524,49 @@ class ExtensionTests(TestCase):
 					raise ValueError('스트림 생성 오류')
 				return Response(body=parts())
 
-		metrics = SignalMetrics('/metrics')
-		app = Application(exts=(metrics,))
+		extension = Metrics('/metrics')
+		metrics = extension.collector
+		app = Application(
+			exts=(extension,),
+		)
 		app.add(Broken)
 		with redirect_stdout(StringIO()):
 			with self.assertLogs('DefEssential.Server', level='ERROR'):
 				with running(app) as address:
 					self.assertEqual(self.get(address, '/broken')[2], b'partial')
-					self.assertTrue(done.wait(3))
-					stats = metrics.snapshot(app)['requests']['GET /broken']
-					self.assertEqual(stats['failure'], 1)
-					self.assertEqual(stats['success'], 0)
+					stats = metrics.snapshot()['requests']['GET /broken']
+					self.assertEqual(stats['failure'], 0)
+					self.assertEqual(stats['success'], 1)
 					self.assertEqual(stats['active'], 0)
 		return
 
 
 class SpecTests(TestCase):
+	def test_live_extension_ownership_does_not_hide_general_methods_at_same_path(self):
+		class Submit(
+			RequestRunner,
+			method='POST',
+			url='/shared',
+		):
+			def run(
+				self,
+				req,
+			):
+				return Response()
+
+		app = Application(exts=(
+			Specifications('/spec'),
+			Ping('/shared'),
+		))
+		app.add(Submit)
+		app.start()
+		self.addCleanup(app.stop)
+		specification = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		document = specification.document()
+		self.assertEqual(set(document['paths']['/shared']), {'post'})
+		self.assertNotIn('/spec', document['paths'])
+		return
+
 	def test_openapi_metadata_schema_auth_and_custom_methods(self):
 		@dataclass
 		class Model:
@@ -589,12 +635,15 @@ class SpecTests(TestCase):
 			def run(self, req):
 				return Response()
 
-		spec = Specifications('/spec')
-		app = Application(exts=(spec,))
+		specification = Specifications('/spec')
+		app = Application(exts=(specification,))
 		app.add(Documented)
 		app.add(Custom)
 		app.add(Upload)
-		document = spec.document(app)
+		app.start()
+		self.addCleanup(app.stop)
+		spec = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		document = spec.document()
 		self.assertEqual(
 			list(document['paths']['/upload']['put']['requestBody']['content']),
 			['*/*'],
@@ -630,12 +679,14 @@ class SpecTests(TestCase):
 					return Response()
 			return Secured
 
-		spec = Specifications('/spec')
-		app = Application(exts=(spec,))
+		app = Application(exts=(Specifications('/spec'),))
 		app.add(handler('/one', Header('X-One')))
 		app.add(handler('/two', Header('X-Two')))
 		app.add(handler('/oauth', OAuth2Password('/token')))
-		document = spec.document(app)
+		app.start()
+		self.addCleanup(app.stop)
+		spec = next(extension for extension in app.exts if isinstance(extension, Specifications))
+		document = spec.document()
 		schemes = document['components']['securitySchemes']
 		self.assertEqual(schemes['Header']['name'], 'X-One')
 		self.assertEqual(schemes['Header2']['name'], 'X-Two')
@@ -663,9 +714,11 @@ class SpecTests(TestCase):
 			def run(self, req):
 				return Response()
 
-		spec = Specifications('/spec')
-		app = Application(exts=(spec,))
+		app = Application(exts=(Specifications('/spec'),))
 		app.add(Conflicting)
+		app.start()
+		self.addCleanup(app.stop)
+		spec = next(extension for extension in app.exts if isinstance(extension, Specifications))
 		with self.assertRaises(ValueError):
-			spec.document(app)
+			spec.document()
 		return

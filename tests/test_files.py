@@ -8,8 +8,8 @@ from http.client import HTTPConnection
 from DefEssential import (
 	Application,
 	ClientError,
-	RequestFilter,
-	ResponseFilter,
+	ExtensionRequest,
+	ExtensionRequestResponse,
 	Response,
 	ResponseWriter,
 )
@@ -71,9 +71,14 @@ class FileTests(TestCase):
 			file = File('/file', Path(directory) / 'sample.txt')
 			files = FileSystem('/files', fso)
 			app = Application(exts=(file, files))
+			self.assertEqual(app.router.routes, [])
+			app.start()
+			self.addCleanup(app.stop)
 			self.assertEqual(set(app.router.matches('/file')), {'GET', 'HEAD'})
 			self.assertEqual(set(app.router.matches('/files/sample.txt')), {'GET', 'HEAD'})
-			self.assertIs(files.application, app)
+			self.assertEqual(app.exts, (file, files))
+			with self.assertRaises(ValueError):
+				Application(exts=(file,))
 			with self.assertRaises(ValueError):
 				Application(exts=(files,))
 		return
@@ -106,16 +111,18 @@ class FileTests(TestCase):
 			(root / 'nested' / 'file.bin').write_bytes(b'\x00\xff')
 			fso = Connection(Configuration(directory))
 
-			class Rewrite(RequestFilter):
+			class Rewrite(ExtensionRequest):
 				def __call__(self, req):
 					req.params['path'] += '.txt'
-					return req, None
+					return req
 
 			app = Application(exts=(
 				File('/fixed', root / 'sample.txt'),
 				FileSystem('/tree', Connection(Configuration(directory))),
-				FileSystem('/dynamic', fso, onRequest=Rewrite()),
+				FileSystem('/dynamic', fso, on_request=Rewrite()),
 			))
+			app.start()
+			self.addCleanup(app.stop)
 			for url, expected in (
 				('/fixed', b'content'),
 				('/tree/sample.txt', b'content'),
@@ -165,7 +172,7 @@ class FileTests(TestCase):
 			self.assertEqual(output.getvalue(), b'')
 			captured = []
 
-			class FileResponseFilter(ResponseFilter):
+			class FileResponseFilter(ExtensionRequestResponse):
 				def __init__(self, action):
 					self.action = action
 					return
@@ -180,10 +187,12 @@ class FileTests(TestCase):
 					return response
 
 			app = Application(exts=(
-				File('/replace', path, onResponse=FileResponseFilter('replace')),
-				File('/fail', path, onResponse=FileResponseFilter('fail')),
-				File('/mutate', path, onResponse=FileResponseFilter('mutate')),
+				File('/replace', path, on_request_response=FileResponseFilter('replace')),
+				File('/fail', path, on_request_response=FileResponseFilter('fail')),
+				File('/mutate', path, on_request_response=FileResponseFilter('mutate')),
 			))
+			app.start()
+			self.addCleanup(app.stop)
 			replacement = app(request('/replace'))
 			assert isinstance(replacement, Response)
 			self.assertEqual(replacement.body, b'replaced')
@@ -206,6 +215,8 @@ class FileTests(TestCase):
 				FileSystem('/files/nested', Connection(Configuration(directory))),
 				File('/files/fixed', root / 'large.bin'),
 			))
+			app.start()
+			self.addCleanup(app.stop)
 			for url in (
 				'/files/large.bin',
 				'/files/nested/large.bin',
