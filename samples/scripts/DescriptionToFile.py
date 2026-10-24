@@ -7,21 +7,28 @@ from ..Sample import create_application
 
 
 def main() -> None:
-	"""Save the sample Application's OpenAPI document to a file."""
-	parser = ArgumentParser(description='Generate the sample OpenAPI document')
-	parser.add_argument('output', type=Path)
+	"""시작한 샘플 앱의 OpenAPI 문서를 저장하고 자원을 정리한다."""
+	parser = ArgumentParser(description='샘플 OpenAPI 문서 생성')
+	parser.add_argument(
+		'output',
+		type=Path,
+	)
 	args = parser.parse_args()
 	app = create_application()
-	spec = next(extension for extension in app.exts.values() if isinstance(extension, Specifications))
-	args.output.write_text(
-		dumps(
-			spec.document(app),
-			ensure_ascii=False,
-			indent=2,
-			allow_nan=False,
-		) + '\n',
-		encoding='utf-8',
-	)
+	spec = next(extension for extension in app.exts if isinstance(extension, Specifications))
+	app.start()
+	try:
+		args.output.write_text(
+			dumps(
+				spec.document(),
+				ensure_ascii=False,
+				indent=2,
+				allow_nan=False,
+			) + '\n',
+			encoding='utf-8',
+		)
+	finally:
+		app.stop()
 	return
 
 
