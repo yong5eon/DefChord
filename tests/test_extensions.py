@@ -220,7 +220,12 @@ class ExtensionTests(TestCase):
 				self.assertEqual(loads(body), {'status': 'running'})
 		self.assertFalse(app.running)
 		self.assertIn('Extensions: 5 extensions', output.getvalue())
-		self.assertIn('    - Swagger(/swagger)', output.getvalue())
+		self.assertIn(
+			'  Extensions: 5 extensions\n' + '\n'.join(
+				'    - ' + str(extension) for extension in app.exts
+			),
+			output.getvalue(),
+		)
 		self.assertNotIn(f'Swagger: http://127.0.0.1:{address[1]}', output.getvalue())
 		self.started(other)
 		other_spec = next(extension for extension in other.exts if isinstance(extension, Specifications))
