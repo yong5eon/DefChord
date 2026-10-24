@@ -28,7 +28,7 @@ class Server(
 	ThreadingHTTPServer,
 	ServerAdapter,
 ):
-	"""외부 의존성 없이 자체 HTTP 전송 계층으로 실행하는 기본 서버."""
+	"""Run the built-in HTTP transport without external dependencies."""
 
 	daemon_threads = True
 	app: Application
@@ -65,7 +65,7 @@ class Server(
 		return
 
 	def run(self) -> None:
-		"""종료 시 수신 소켓까지 닫고 확장 기능의 종료를 보장한다."""
+		"""Close the listening socket and ensure extensions shut down when serving stops."""
 		with self:
 			self.serve_forever(self.poll_interval)
 		self.logger.info('Server stopped: adapter=Python')
@@ -182,7 +182,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 				writer,
 			)
 		except Exception:
-			# 공통 처리기가 기록한 전송 오류는 연결 종료로 마무리한다.
+			# The shared handler logs transport errors; finish by closing the connection.
 			self.close_connection = True
 		return
 
@@ -264,7 +264,7 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 		code: Union[int, str] = '-',
 		size: Union[int, str] = '-',
 	) -> None:
-		"""헤더 생성은 전송 완료가 아니므로 공통 결과 기록과 분리한다."""
+		"""Keep shared result logging separate because selecting headers does not complete transmission."""
 		self.logger.debug(
 			'HTTP response headers selected: status=%s method=%s',
 			code,

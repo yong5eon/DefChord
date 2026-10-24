@@ -6,7 +6,7 @@ __all__ = (
 
 
 class WebSocketFrame:
-	"""WebSocket 프레임 하나를 표현하고 서버가 보내는 마스크 없는 바이트로 인코딩한다."""
+	"""Represent a WebSocket frame and encode it as unmasked bytes for server transmission."""
 
 	CONTINUATION = 0x0
 	TEXT = 0x1

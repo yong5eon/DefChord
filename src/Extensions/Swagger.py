@@ -28,7 +28,7 @@ __all__ = (
 
 
 class Swagger(Extension):
-	"""명시적인 같은 출처 명세 경로를 Swagger UI에 연결한다."""
+	"""Connect Swagger UI to an explicitly configured same-origin specification path."""
 
 	logger = getLogger('DefEssential.Extensions.Swagger')
 

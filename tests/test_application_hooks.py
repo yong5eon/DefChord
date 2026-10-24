@@ -24,7 +24,7 @@ from DefEssential.IO.ResponseWriter import ResponseWriter
 
 
 class Lifecycle(Extension):
-	"""라우트 없이 인스턴스별 수명주기 훅을 실행한다."""
+	"""Run per-instance lifecycle hooks without routes."""
 
 	def __init__(
 		self,

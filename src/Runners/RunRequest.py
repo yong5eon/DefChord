@@ -18,7 +18,7 @@ __all__ = (
 
 
 class RunRequest:
-	"""검증·핸들러 실행·응답 후처리와 오류 관찰의 경계를 관리한다."""
+	"""Manage validation, handler execution, response processing, and error observation."""
 
 	logger = getLogger('DefEssential.RequestRunner')
 

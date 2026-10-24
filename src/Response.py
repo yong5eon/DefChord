@@ -19,7 +19,7 @@ def close_bodies(
 	*bodies: object,
 	preserve_error: bool = False,
 ) -> None:
-	"""중복 본문은 한 번씩 모두 정리하고 추가 오류가 원래 실패를 가리지 않게 한다."""
+	"""Close every repeated body once without letting cleanup errors hide the original failure."""
 	closed: list[object] = []
 	error: Optional[Exception] = None
 	for body in bodies:

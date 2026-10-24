@@ -57,7 +57,7 @@ __all__ = (
 )
 
 class Specifications(Extension):
-	"""공유 라우트 목록의 현재 선언을 OpenAPI 3.1 문서로 변환한다."""
+	"""Convert the current declarations in the shared route list to an OpenAPI 3.1 document."""
 
 	logger = getLogger('DefEssential.Extensions.Specifications')
 

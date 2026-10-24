@@ -1,3 +1,3 @@
-"""필요한 서버 구현을 각 하위 패키지에서 선택해 가져온다."""
+"""Import the required server implementations from their respective subpackages."""
 
 __all__ = ()

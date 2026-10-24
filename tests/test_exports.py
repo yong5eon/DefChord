@@ -20,7 +20,7 @@ from unittest import (
 
 
 class ExportTests(TestCase):
-	"""모든 모듈의 공개 목록 형식과 실제 와일드카드 임포트를 검증한다."""
+	"""Validate every module's public export format and actual wildcard imports."""
 
 	def test_all_modules_declare_exports_before_definitions(self):
 		source = Path(__file__).resolve().parent.parent / 'src'

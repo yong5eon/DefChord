@@ -16,7 +16,7 @@ __all__ = (
 
 
 class CrossOriginResourceSharing:
-	"""요청 설정에 따라 Cross-Origin Resource Sharing 정책을 적용한다."""
+	"""Apply the Cross-Origin Resource Sharing policy configured for a request."""
 
 	def __init__(
 		self,

@@ -15,7 +15,7 @@ __all__ = (
 
 
 class Server(ServerAdapter):
-	"""a2wsgi로 동기 애플리케이션을 Uvicorn에서 실행한다."""
+	"""Run a synchronous application on Uvicorn through a2wsgi."""
 
 	logger = getLogger('DefEssential.Server')
 
@@ -51,7 +51,7 @@ class Server(ServerAdapter):
 		return
 
 	def run(self) -> None:
-		# 기본 서버를 사용할 때 선택적 의존성을 가져오지 않는다.
+		# Do not import optional dependencies when using the built-in server.
 		from .HTTP import Middleware
 		from .WebSocket import WebSocketProtocol
 		from uvicorn import (

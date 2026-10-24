@@ -14,7 +14,7 @@ __all__ = (
 
 
 class WebSocketFrameReader:
-	"""업그레이드된 연결에서 클라이언트 프레임을 하나씩 읽고 프레임 규칙을 검사한다."""
+	"""Read client frames one at a time from an upgraded connection and validate frame rules."""
 
 	def __init__(
 		self,
@@ -32,7 +32,7 @@ class WebSocketFrameReader:
 		try:
 			return self.reader.exact(size)
 		except ClientError as error:
-			# RequestReader.exact()는 EOF를 본문 오류로 보고하지만, 업그레이드 뒤의 EOF는 연결 종료다.
+			# RequestReader.exact() treats EOF as a body error, but EOF after an upgrade means disconnection.
 			raise ClientDisconnected(error.reason) from error
 
 	def unmask(

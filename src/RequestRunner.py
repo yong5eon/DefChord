@@ -36,7 +36,7 @@ __all__ = (
 
 
 class RequestRunnerRequest(ABC):
-	"""핸들러 실행 직전에 준비된 요청을 변환한다."""
+	"""Transform a prepared request immediately before the handler runs."""
 
 	@abstractmethod
 	def __call__(
@@ -47,7 +47,7 @@ class RequestRunnerRequest(ABC):
 
 
 class RequestRunnerRequestResponse(ABC):
-	"""반환 응답 또는 직접 출력의 전송 전 응답을 변환한다."""
+	"""Transform a returned response or a direct-output response before transmission."""
 
 	@abstractmethod
 	def __call__(
@@ -59,7 +59,7 @@ class RequestRunnerRequestResponse(ABC):
 
 
 class RequestRunnerRequestError(ABC):
-	"""검증부터 응답 후처리까지의 실행 오류를 관찰한다."""
+	"""Observe execution errors from validation through response processing."""
 
 	@abstractmethod
 	def __call__(
@@ -133,7 +133,7 @@ class RequestRunnerMeta(ABCMeta):
 
 @dataclass(frozen=True)
 class RequestProperties:
-	"""애플리케이션 등록에 사용할 요청 핸들러 설정을 보관한다."""
+	"""Store request handler settings for registration with an application."""
 
 	method: Optional[str]
 	url: Optional[str]

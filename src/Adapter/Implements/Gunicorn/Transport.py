@@ -24,7 +24,7 @@ __all__ = (
 
 
 class Input:
-	"""Gunicorn 파서의 선행 입력과 본문 상태를 프레임워크 및 워커가 공유한다."""
+	"""Share the Gunicorn parser's buffered input and body state with the framework and worker."""
 
 	def __init__(
 		self,
@@ -65,7 +65,7 @@ class Input:
 
 
 class Body:
-	"""워커가 남은 본문을 버릴 때도 애플리케이션이 읽은 위치를 유지한다."""
+	"""Preserve the application's read position when the worker discards the remaining body."""
 
 	def __init__(
 		self,
@@ -88,7 +88,7 @@ class Body:
 
 
 class Transport(WSGITransport):
-	"""HTTP는 Gunicorn에 맡기고 101 전환 뒤에는 원시 소켓을 사용한다."""
+	"""Delegate HTTP to Gunicorn and use the raw socket after a 101 upgrade."""
 
 	def __init__(
 		self,
@@ -143,7 +143,7 @@ class Writer(WSGIResponseWriter):
 
 
 class GunicornApplication(WSGIApplication):
-	"""sync·gthread·gevent에서 같은 입출력 및 WebSocket API를 제공한다."""
+	"""Provide the same I/O and WebSocket API for sync, gthread, and gevent workers."""
 
 	def request_reader(
 		self,

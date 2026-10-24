@@ -28,7 +28,7 @@ __all__ = (
 
 
 class Ping(Extension):
-	"""시작 시 연결한 Application의 현재 실행 상태를 응답한다."""
+	"""Report the current running state of the application connected at startup."""
 
 	logger = getLogger('DefEssential.Extensions.Ping')
 

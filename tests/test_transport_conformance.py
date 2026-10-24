@@ -66,7 +66,7 @@ def run_server(
 	directory: str,
 	worker: str,
 ) -> None:
-	"""서로 다른 프로세스에서도 같은 핸들러로 전송 계약을 검증한다."""
+	"""Validate transport contracts with the same handler across separate processes."""
 	root = Path(directory)
 
 	def record(event: str) -> None:
@@ -93,7 +93,7 @@ def run_server(
 			return
 
 	class RequestResponse(ApplicationRequestResponse):
-		"""서버의 최종 전송 전 Application 처리 완료를 기록한다."""
+		"""Record application processing completion before the server's final transmission."""
 
 		def __call__(
 			self,
@@ -313,7 +313,7 @@ run_server(adapter, int(port), directory, worker)
 			with log.open('w') as output:
 				environment = dict(environ)
 				if name == 'nt':
-					# venv 리다이렉터 대신 실제 인터프리터를 종료해야 로그 핸들도 함께 닫힌다.
+					# Stop the actual interpreter rather than the venv redirector so its log handles also close.
 					environment['__PYVENV_LAUNCHER__'] = executable
 				process = Popen(
 					[

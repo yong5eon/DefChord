@@ -19,7 +19,7 @@ __all__ = (
 
 
 class Server(ServerAdapter):
-	"""Gunicorn의 워커별로 애플리케이션을 시작하고 종료한다."""
+	"""Start and stop the application in each Gunicorn worker."""
 
 	logger = getLogger('DefEssential.Server')
 
@@ -50,7 +50,7 @@ class Server(ServerAdapter):
 	def run(self) -> None:
 		if name == 'nt':
 			raise RuntimeError('Gunicorn requires a POSIX platform; use Linux or WSL')
-		# Gunicorn은 선택적 의존성이며 Windows에서는 가져올 수 없다.
+		# Gunicorn is an optional dependency and cannot be imported on Windows.
 		from gunicorn.app.base import BaseApplication
 
 		application = self.application

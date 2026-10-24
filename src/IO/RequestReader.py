@@ -33,9 +33,9 @@ class ClientDisconnected(ConnectionError):
 
 
 class RequestReader:
-	"""길이 기반 본문과 chunked 입력을 읽는다.
+	"""Read length-delimited and chunked request bodies.
 
-	decoded=True이면 전송 계층이 청크 프레이밍을 이미 제거한 입력으로 취급한다.
+	When decoded=True, treat the input as having already been decoded by the transport layer.
 	"""
 
 	def __init__(

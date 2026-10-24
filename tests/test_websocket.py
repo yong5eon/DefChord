@@ -43,7 +43,7 @@ def client_frame(
 	final=True,
 	masked=True,
 ):
-	"""클라이언트가 보내는 마스크된 프레임을 만든다."""
+	"""Build a masked frame as sent by a client."""
 	first = (0x80 if final else 0) | opcode
 	flag = 0x80 if masked else 0
 	size = len(payload)
@@ -76,7 +76,7 @@ def handshake_request(
 
 
 class Client:
-	"""테스트용 원시 WebSocket 클라이언트."""
+	"""A raw WebSocket client for tests."""
 
 	def __init__(
 		self,
@@ -168,7 +168,7 @@ def echo_application(
 			return
 
 	class RequestResponse(ApplicationRequestResponse):
-		"""전송 완료가 아니라 WebSocket 핸들러 반환을 관찰한다."""
+		"""Observe the WebSocket handler return rather than transmission completion."""
 
 		def __call__(
 			self,

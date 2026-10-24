@@ -730,7 +730,7 @@ class DirectServerTests(TestCase):
 		return
 
 	def test_response_hooks_finish_before_body_transmission_failure(self):
-		"""반환 이후 전송 실패와 본문 정리는 Application 훅의 관찰 대상이 아니다."""
+		"""Post-return transmission failures and body cleanup are not observed by application hooks."""
 		events = []
 		errors = []
 

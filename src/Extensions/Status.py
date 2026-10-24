@@ -28,7 +28,7 @@ __all__ = (
 
 
 class Status(Extension):
-	"""명시적인 같은 출처 Metrics 경로를 사용하는 상태 페이지."""
+	"""Provide a status page using an explicitly configured same-origin metrics path."""
 
 	logger = getLogger('DefEssential.Extensions.Status')
 

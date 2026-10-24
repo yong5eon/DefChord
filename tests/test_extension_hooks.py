@@ -30,7 +30,7 @@ from test_features import request
 
 
 class Echo(Extension):
-	"""테스트용 다중 경로 확장."""
+	"""A multi-route extension for tests."""
 
 	def __init__(
 		self,

@@ -21,7 +21,7 @@ def run_extension(
 	extension: Extension,
 	request: Request,
 ) -> Optional[Response]:
-	"""내부 RequestRunner 검증 이후의 확장 처리 경계만 감싼다."""
+	"""Wrap only the extension-processing boundary after internal RequestRunner validation."""
 	try:
 		for index, hook in enumerate(extension.request_hooks):
 			logger.debug('Extension request hook starting: request_id=%s index=%s hook=%s', request.id, index, type(hook).__qualname__)
@@ -82,7 +82,7 @@ def run_extension(
 
 
 class RunExtensionFactory(RunFactory[Type[RequestRunner]]):
-	"""확장 호출을 위임하는 요청 처리 클래스를 생성한다."""
+	"""Create a request handler class that delegates calls to an extension."""
 
 	def __init__(
 		self,

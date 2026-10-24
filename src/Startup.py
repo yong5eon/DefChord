@@ -59,7 +59,7 @@ def startup(
 	host: str,
 	port: int,
 ) -> None:
-	"""애플리케이션의 등록 정보와 어댑터 이름, 수신 주소를 출력한다."""
+	"""Log the application's registration details, adapter name, and listening address."""
 	if not isinstance(host, str):
 		raise TypeError('HTTP listen address must be a string')
 	address = f'[{host}]' if ':' in host else host
@@ -95,7 +95,7 @@ def startup(
 	text = '\n'.join(lines)
 	encoding = getattr(sys.stdout, 'encoding', None)
 	if encoding is not None:
-		# 출력할 수 없는 문자만 이스케이프해 시작 정보를 보존한다.
+		# Escape only unprintable characters to preserve the startup details.
 		text = text.encode(encoding, errors='backslashreplace').decode(encoding)
 	print(
 		text,

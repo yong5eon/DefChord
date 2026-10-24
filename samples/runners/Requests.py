@@ -188,7 +188,7 @@ CALCULATION_RESPONSE = ResponseSpecification(
 
 
 class RequestLog(RequestRunnerRequest):
-	"""검증된 요청의 핸들러 실행 진입을 기록한다."""
+	"""Log entry into the handler for a validated request."""
 
 	def __call__(
 		self,
@@ -202,7 +202,7 @@ class RequestLog(RequestRunnerRequest):
 
 
 class ResponseLog(RequestRunnerRequestResponse):
-	"""반환 응답의 전송 전 후처리 시점을 기록한다."""
+	"""Log when a returned response is processed before transmission."""
 
 	def __call__(
 		self,
@@ -218,7 +218,7 @@ class ResponseLog(RequestRunnerRequestResponse):
 
 
 class ErrorLog(RequestRunnerRequestError):
-	"""검증 및 핸들러 실행 오류의 타입을 관찰한다."""
+	"""Observe the types of validation and handler execution errors."""
 
 	def __call__(
 		self,

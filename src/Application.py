@@ -42,7 +42,7 @@ __all__ = (
 
 
 class ApplicationStartup(ABC):
-	"""애플리케이션 시작 훅의 호출 계약."""
+	"""Define the call contract for application startup hooks."""
 
 	@abstractmethod
 	def __call__(self) -> None:
@@ -50,7 +50,7 @@ class ApplicationStartup(ABC):
 
 
 class ApplicationCleanup(ABC):
-	"""애플리케이션 정리 훅의 호출 계약."""
+	"""Define the call contract for application cleanup hooks."""
 
 	@abstractmethod
 	def __call__(self) -> None:
@@ -58,7 +58,7 @@ class ApplicationCleanup(ABC):
 
 
 class ApplicationRequest(ABC):
-	"""요청 처리 진입 훅의 호출 계약."""
+	"""Define the call contract for request-entry hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -69,7 +69,7 @@ class ApplicationRequest(ABC):
 
 
 class ApplicationRequestResponse(ABC):
-	"""요청 응답 반환 훅의 호출 계약."""
+	"""Define the call contract for response-return hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -81,7 +81,7 @@ class ApplicationRequestResponse(ABC):
 
 
 class ApplicationRequestError(ABC):
-	"""요청 처리 오류 훅의 호출 계약."""
+	"""Define the call contract for request-error hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -94,7 +94,7 @@ class ApplicationRequestError(ABC):
 
 @dataclass(frozen=True, eq=False)
 class RequestHookRegistration:
-	"""시작 단계에서 등록한 요청 훅 묶음의 해제 토큰."""
+	"""Provide a token for unregistering request hooks registered during startup."""
 
 	owner: Extension
 	request: tuple[ApplicationRequest, ...]
@@ -219,7 +219,7 @@ class Application:
 		return
 
 	def start(self) -> None:
-		"""Application 시작 훅 뒤 등록된 확장을 순서대로 연결·시작한다."""
+		"""Bind and start registered extensions in order after application startup hooks."""
 		self.ensure_not_in_hook()
 		with self.lifecycle_lock:
 			if self.running or self.lifecycle_transition:
@@ -271,7 +271,7 @@ class Application:
 		return
 
 	def stop(self) -> None:
-		"""시작한 확장을 역순 정리하고 모든 정리 시도 뒤 첫 오류를 전파한다."""
+		"""Clean up started extensions in reverse order and raise the first error after all attempts."""
 		self.ensure_not_in_hook()
 		with self.lifecycle_lock:
 			if self.lifecycle_transition:
@@ -320,7 +320,7 @@ class Application:
 		extension: Extension,
 		route: Route,
 	) -> None:
-		"""현재 시작 중인 확장의 라우트를 검증하고 소유 관계와 함께 등록한다."""
+		"""Validate and register a route owned by the extension currently starting."""
 		self.ensure_not_in_hook()
 		with self.lifecycle_lock:
 			if (
@@ -366,7 +366,7 @@ class Application:
 			Sequence[ApplicationRequestError],
 		] = (),
 	) -> RequestHookRegistration:
-		"""확장 시작 중 요청 훅을 등록한다. 생성자 훅보다 먼저 실행한다."""
+		"""Register request hooks during extension startup, before constructor hooks."""
 		self.ensure_not_in_hook()
 		with self.lifecycle_lock:
 			owner = self.current_extension
@@ -434,7 +434,7 @@ class Application:
 		self,
 		registration: RequestHookRegistration,
 	) -> None:
-		"""소유 확장의 시작·정리 중 등록 토큰으로 요청 훅을 해제한다."""
+		"""Unregister request hooks using a token during the owning extension's startup or cleanup."""
 		self.ensure_not_in_hook()
 		with self.lifecycle_lock:
 			if self.running or not self.lifecycle_transition or self.current_extension is None:
