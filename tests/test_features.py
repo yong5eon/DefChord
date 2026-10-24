@@ -14,7 +14,6 @@ from DefEssential import (
 	QueryString,
 	Request,
 	RequestValidator,
-	RequestFilter,
 	RequestReader,
 	RequestRunner,
 	Response,
@@ -285,11 +284,7 @@ class FeatureTests(TestCase):
 		)
 		return
 
-	def test_cors_is_applied_to_direct_output_and_early_filter_response(self):
-		class EarlyResponse(RequestFilter):
-			def __call__(self, req):
-				return req, Response(body=b'early')
-
+	def test_cors_is_applied_to_direct_output_and_returned_response(self):
 		class Direct(
 			RequestRunner,
 			method='GET',
@@ -311,13 +306,12 @@ class FeatureTests(TestCase):
 			method='GET',
 			url='/early',
 			origin=Origin(all=True),
-			onRequest=EarlyResponse(),
 		):
 			def run(
 				self,
 				req,
 			):
-				raise AssertionError('요청 필터에서 응답해야 합니다')
+				return Response(body=b'early')
 
 		app = Application()
 		app.add(Direct)

@@ -14,11 +14,11 @@ from DefEssential import (
 	ExtensionCleanup,
 	ExtensionStartup,
 	Request,
-	RequestFilter,
+	RequestRunnerRequest,
 	RequestReader,
 	RequestRunner,
 	Response,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 )
 from DefEssential.IO.ResponseWriter import ResponseWriter
 
@@ -196,15 +196,15 @@ class ApplicationHookTests(TestCase):
 		])
 		return
 
-	def test_request_and_response_hooks_wrap_request_runner_filters(self):
+	def test_request_and_response_hooks_wrap_request_runner_hooks(self):
 		events = []
 
-		class FilterRequest(RequestFilter):
+		class FilterRequest(RequestRunnerRequest):
 			def __call__(self, req):
 				events.append('runner-request')
-				return req, None
+				return req
 
-		class FilterResponse(ResponseFilter):
+		class FilterResponse(RequestRunnerRequestResponse):
 			def __call__(self, req, response):
 				events.append('runner-response')
 				return response
@@ -233,8 +233,8 @@ class ApplicationHookTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/hook',
-			onRequest=FilterRequest(),
-			onResponse=FilterResponse(),
+			on_request=FilterRequest(),
+			on_request_response=FilterResponse(),
 		):
 			def run(self, req):
 				events.append('handler')

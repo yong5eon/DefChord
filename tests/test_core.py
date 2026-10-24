@@ -9,11 +9,11 @@ from DefEssential import (
 	Error,
 	Body,
 	Request,
-	RequestFilter,
+	RequestRunnerRequest,
 	RequestReader,
 	RequestRunner,
 	Response,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 	ServerError,
 )
 from DefEssential.IO.Readers import (
@@ -149,12 +149,12 @@ class CoreTests(TestCase):
 				calls.append('body')
 				return 42
 
-		class Before(RequestFilter):
+		class Before(RequestRunnerRequest):
 			def __call__(self, request):
 				calls.append('request')
-				return request, None
+				return request
 
-		class After(ResponseFilter):
+		class After(RequestRunnerRequestResponse):
 			def __call__(self, request, response):
 				calls.append('response')
 				return response
@@ -168,8 +168,11 @@ class CoreTests(TestCase):
 			summary='요약',
 			description='설명',
 			tags=['sample'],
-			onRequest=[Before(), Before()],
-			onResponse=After(),
+			on_request=[
+				Before(),
+				Before(),
+			],
+			on_request_response=After(),
 		):
 			def run(
 				self,
@@ -204,10 +207,10 @@ class CoreTests(TestCase):
 		)
 		return
 
-	def test_request_filter_short_circuit(self):
+	def test_request_hook_rejects_short_circuit_tuple(self):
 		calls = []
 
-		class Before(RequestFilter):
+		class Before(RequestRunnerRequest):
 			def __call__(self, request):
 				return request, Response(status=403)
 
@@ -215,7 +218,7 @@ class CoreTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/sample',
-			onRequest=Before(),
+			on_request=Before(),
 		):
 			def run(
 				self,
@@ -226,10 +229,8 @@ class CoreTests(TestCase):
 
 		app = Application()
 		app.add(Sample)
-		self.assertEqual(
-			app(request()).status,
-			403,
-		)
+		with self.assertRaises(TypeError):
+			app(request())
 		self.assertEqual(
 			calls,
 			[],

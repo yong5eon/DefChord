@@ -134,6 +134,8 @@ Application 요청 훅은 이 경계의 바깥에서 동작한다. 응답 반환
 
 ### EXT-06. FileSystem과 기본 Extension 이전
 
+후속 [feature/6 명세](../6/REQUIREMENTS.md)에서 일반 RequestRunner 필터도 제거하고 세 훅으로 대체한다. 내부 RequestRunner에 응답 훅이 설정된 직접 출력은 writer의 begin 또는 upgrade에서 해당 훅을 먼저 실행한 뒤, 확장 처리 완료 시 Extension 응답 훅을 실행한다. 반환 응답은 기존처럼 Extension 응답 훅 이후 RequestRunner 응답 훅 순서다. RequestRunner 콜백을 통한 직접 출력 후처리 실패는 실행 중인 Extension 경계에도 전파되며, 응답 훅 완료를 전체 처리 성공으로 보지 않는다.
+
 FileSystem의 기존 `onRequest/onResponse`는 새 Extension 생성자의 `on_request/on_request_response`로 대체한다. 기본 File을 비롯한 Extension에서도 RequestFilter·ResponseFilter 인자를 받거나 내부 RequestRunner 필터에 연결하지 않는다.
 
 새 요청 훅은 Request만 반환하며 `(request, response)` 조기 응답 튜플을 반환하지 않는다. 샘플의 파일명 변환과 응답 교체도 새 Extension 훅 인터페이스로 이전한다. RequestRunner 자체의 기존 필터 API 제거는 별도 작업으로 남겨두며 이번 변경에서 일반 핸들러의 계약은 깨지 않는다.

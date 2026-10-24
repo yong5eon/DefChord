@@ -1,5 +1,6 @@
 from email.message import Message
 from http import HTTPStatus
+from logging import getLogger
 from typing import (
 	Iterable,
 	Mapping,
@@ -10,6 +11,31 @@ from typing import (
 __all__ = (
 	'Response',
 )
+
+
+def close_bodies(
+	*bodies: object,
+	preserve_error: bool = False,
+) -> None:
+	"""중복 본문은 한 번씩 모두 정리하고 추가 오류가 원래 실패를 가리지 않게 한다."""
+	closed: list[object] = []
+	error: Optional[Exception] = None
+	for body in bodies:
+		if any(body is previous for previous in closed):
+			continue
+		closed.append(body)
+		try:
+			close = getattr(body, 'close', None)
+			if close is not None:
+				close()
+		except Exception as caught:
+			if preserve_error or error is not None:
+				getLogger('DefEssential.RequestRunner').exception('Response body cleanup failed')
+			else:
+				error = caught
+	if error is not None:
+		raise error
+	return
 
 
 class Response:
@@ -57,7 +83,5 @@ class Response:
 		return list(self.props.items())
 
 	def close(self) -> None:
-		close = getattr(self.body, 'close', None)
-		if close is not None:
-			close()
+		close_bodies(self.body)
 		return

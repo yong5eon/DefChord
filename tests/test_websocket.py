@@ -15,7 +15,7 @@ from DefEssential import (
 	Request,
 	RequestRunner,
 	Response,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 	ResponseWriter,
 )
 from DefEssential.IO.RequestReader import (
@@ -334,7 +334,7 @@ class WebSocketUnitTests(TestCase):
 		)
 		with self.assertRaises(ValueError):
 			writer.upgrade(Response(status=200))
-		writer.on_response = lambda response: Response(status=200)
+		writer.on_request_response = lambda response: Response(status=200)
 		with self.assertRaises(ValueError):
 			writer.upgrade(Response(status=101))
 		self.assertFalse(writer.started)
@@ -417,8 +417,8 @@ class WebSocketServerTests(TestCase):
 				client.close()
 		return
 
-	def test_response_filters_apply_to_upgrade_headers(self):
-		class Tag(ResponseFilter):
+	def test_response_hooks_apply_to_upgrade_headers(self):
+		class Tag(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -431,7 +431,7 @@ class WebSocketServerTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/ws',
-			onResponse=Tag(),
+			on_request_response=Tag(),
 		):
 			def run(
 				self,

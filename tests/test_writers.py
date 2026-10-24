@@ -21,7 +21,7 @@ from DefEssential import (
 	Body,
 	ClientError,
 	Request,
-	ResponseFilter,
+	RequestRunnerRequestResponse,
 	RequestRunner,
 	Response,
 	ResponseWriter,
@@ -222,10 +222,10 @@ class WriterTests(TestCase):
 			app(req)
 		return
 
-	def test_filter_applies_once_before_direct_headers(self):
+	def test_response_hook_applies_once_before_direct_headers(self):
 		calls = []
 
-		class After(ResponseFilter):
+		class After(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -242,7 +242,7 @@ class WriterTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=After(),
+			on_request_response=After(),
 		):
 			def run(
 				self,
@@ -374,8 +374,8 @@ class DirectServerTests(TestCase):
 				)
 		return
 
-	def test_filters_cannot_replace_direct_output_body(self):
-		class After(ResponseFilter):
+	def test_response_hooks_cannot_replace_direct_output_body(self):
+		class After(RequestRunnerRequestResponse):
 			def __call__(
 				self,
 				request,
@@ -388,7 +388,7 @@ class DirectServerTests(TestCase):
 			RequestRunner,
 			method='GET',
 			url='/',
-			onResponse=After(),
+			on_request_response=After(),
 		):
 			def run(
 				self,

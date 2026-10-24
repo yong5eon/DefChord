@@ -34,8 +34,9 @@ from .Validators import (
 )
 from .RequestRunner import (
 	RequestRunner,
-	RequestFilter,
-	ResponseFilter,
+	RequestRunnerRequest,
+	RequestRunnerRequestResponse,
+	RequestRunnerRequestError,
 )
 from .Request import Request
 from .IO.RequestReader import RequestReader
@@ -62,8 +63,9 @@ __all__ = (
 	'ClientError',
 	'ServerError',
 	'RequestRunner',
-	'RequestFilter',
-	'ResponseFilter',
+	'RequestRunnerRequest',
+	'RequestRunnerRequestResponse',
+	'RequestRunnerRequestError',
 	'Body',
 	'Content',
 	'Origin',
