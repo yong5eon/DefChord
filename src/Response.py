@@ -12,6 +12,8 @@ __all__ = (
 	'Response',
 )
 
+logger = getLogger('DefEssential.RequestRunner')
+
 
 def close_bodies(
 	*bodies: object,
@@ -30,7 +32,7 @@ def close_bodies(
 				close()
 		except Exception as caught:
 			if preserve_error or error is not None:
-				getLogger('DefEssential.RequestRunner').exception('Response body cleanup failed')
+				logger.exception('Response body cleanup failed')
 			else:
 				error = caught
 	if error is not None:

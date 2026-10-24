@@ -84,6 +84,8 @@ class Connection:
 class WebSocketProtocol(Protocol):
 	"""Uvicorn의 upgrade 연결에서 기존 RFC 6455 처리기를 그대로 실행한다."""
 
+	logger = getLogger('DefEssential.Server')
+
 	def __init__(
 		self,
 		config: Any,
@@ -213,7 +215,7 @@ class WebSocketProtocol(Protocol):
 				await worker
 			raise
 		except Exception:
-			getLogger('DefEssential.Server').exception('WebSocket connection handling failed')
+			self.logger.exception('WebSocket connection handling failed: adapter=Uvicorn')
 		finally:
 			self.portal.close()
 			self.transport.close()

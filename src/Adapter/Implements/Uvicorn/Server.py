@@ -1,4 +1,9 @@
-from typing import Any
+from logging import getLogger
+from socket import socket
+from typing import (
+	Any,
+	Optional,
+)
 
 from ....Application import Application
 from ....Startup import startup
@@ -11,6 +16,8 @@ __all__ = (
 
 class Server(ServerAdapter):
 	"""a2wsgi로 동기 애플리케이션을 Uvicorn에서 실행한다."""
+
+	logger = getLogger('DefEssential.Server')
 
 	def __init__(
 		self,
@@ -79,7 +86,28 @@ class Server(ServerAdapter):
 			options = dict(self.options)
 			options['workers'] = 1
 			options['interface'] = 'asgi3'
-			server = UvicornServer(Config(
+			logger = self.logger
+
+			class NativeServer(UvicornServer):
+				async def startup(
+					self,
+					sockets: Optional[list[socket]] = None,
+				) -> None:
+					try:
+						await super().startup(sockets=sockets)
+					except SystemExit:
+						logger.error('Server startup aborted: adapter=Uvicorn', exc_info=True)
+						raise
+					if self.started:
+						for listener in self.servers:
+							for bound_socket in listener.sockets or ():
+								logger.info(
+									'Server ready: adapter=Uvicorn address=%s',
+									bound_socket.getsockname(),
+								)
+					return
+
+			server = NativeServer(Config(
 				middleware,
 				host=self.host,
 				port=self.port,
@@ -94,9 +122,16 @@ class Server(ServerAdapter):
 			)
 			self.application.start()
 			try:
-				server.run()
+				self.logger.info('Server starting: adapter=Uvicorn host=%s port=%s', self.host, self.port)
+				try:
+					server.run()
+				except Exception:
+					self.logger.exception('Server execution failed: adapter=Uvicorn')
+					raise
 			finally:
+				self.logger.info('Server stopping: adapter=Uvicorn')
 				self.application.stop()
+			self.logger.info('Server stopped: adapter=Uvicorn')
 		finally:
 			middleware.executor.shutdown(wait=True)
 		return

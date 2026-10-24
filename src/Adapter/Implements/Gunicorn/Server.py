@@ -1,4 +1,5 @@
 from os import name
+from logging import getLogger
 from typing import (
 	Any,
 	Union,
@@ -19,6 +20,8 @@ __all__ = (
 
 class Server(ServerAdapter):
 	"""Gunicorn의 워커별로 애플리케이션을 시작하고 종료한다."""
+
+	logger = getLogger('DefEssential.Server')
 
 	def __init__(
 		self,
@@ -72,6 +75,11 @@ class Server(ServerAdapter):
 				self.host,
 				self.port,
 			)
+			for listener in server.LISTENERS:
+				self.logger.info(
+					'Server ready: adapter=Gunicorn address=%s',
+					listener.getsockname(),
+				)
 			return
 
 		def start(worker: Any) -> None:
@@ -130,5 +138,15 @@ class Server(ServerAdapter):
 			def load(self) -> RequestApplication:
 				return RequestApplication(application)
 
-		GunicornApplication().run()
+		self.logger.info('Server starting: adapter=Gunicorn host=%s port=%s', self.host, self.port)
+		try:
+			GunicornApplication().run()
+		except SystemExit as error:
+			if error.code:
+				self.logger.error('Server exited unsuccessfully: adapter=Gunicorn code=%s', error.code)
+			raise
+		except Exception:
+			self.logger.exception('Server execution failed: adapter=Gunicorn')
+			raise
+		self.logger.info('Server stopped: adapter=Gunicorn')
 		return

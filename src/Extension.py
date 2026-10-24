@@ -2,6 +2,7 @@ from abc import (
 	ABC,
 	abstractmethod,
 )
+from logging import getLogger
 from typing import (
 	Optional,
 	Sequence,
@@ -100,6 +101,8 @@ def extension_hooks(
 class Extension(ABC):
 	"""인스턴스별 사용자 훅과 시작·요청·정리 계약을 제공한다."""
 
+	logger = getLogger('DefEssential.Extension')
+
 	def __init__(
 		self,
 		*,
@@ -164,16 +167,20 @@ class Extension(ABC):
 		application: 'Application',
 	) -> None:
 		"""구현체 준비 후 호출하여 사용자 시작 훅을 실행한다."""
-		for hook in self.startup_hooks:
+		for index, hook in enumerate(self.startup_hooks):
+			self.logger.debug('Extension startup hook starting: index=%s hook=%s', index, type(hook).__qualname__)
 			if hook() is not None:
 				raise TypeError('ExtensionStartup hooks must return None')
+			self.logger.debug('Extension startup hook completed: index=%s', index)
 		return
 
 	def cleanup(self) -> None:
 		"""사용자 정리 훅을 실행한다. 구현체는 별도로 자원 회수를 보장한다."""
-		for hook in self.cleanup_hooks:
+		for index, hook in enumerate(self.cleanup_hooks):
+			self.logger.debug('Extension cleanup hook starting: index=%s hook=%s', index, type(hook).__qualname__)
 			if hook() is not None:
 				raise TypeError('ExtensionCleanup hooks must return None')
+			self.logger.debug('Extension cleanup hook completed: index=%s', index)
 		return
 
 	@abstractmethod

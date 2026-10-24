@@ -113,7 +113,7 @@ class ServerTests(TestCase):
 				'start',
 				'stop',
 			])
-			self.assertIn('Shutdown requested', logs.output[0])
+			self.assertTrue(any('Shutdown requested' in message for message in logs.output))
 		self.assertEqual(server.socket.fileno(), -1)
 		return
 

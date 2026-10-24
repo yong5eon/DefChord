@@ -194,11 +194,9 @@ class RequestLog(RequestRunnerRequest):
 		self,
 		request: Request,
 	) -> Request:
-		getLogger('Sample.Requests').info(
-			'요청 훅: id=%s method=%s uri=%s',
+		getLogger('Sample.Requests').debug(
+			'요청 훅: id=%s (핸들러 실행 전)',
 			request.id,
-			request.method,
-			request.uri,
 		)
 		return request
 
@@ -211,35 +209,26 @@ class ResponseLog(RequestRunnerRequestResponse):
 		request: Request,
 		response: Response,
 	) -> Response:
-		getLogger('Sample.Requests').info(
-			'응답 훅: id=%s method=%s uri=%s status=%s (헤더 전송 전)',
+		getLogger('Sample.Requests').debug(
+			'응답 훅: id=%s status=%s (헤더 전송 전)',
 			request.id,
-			request.method,
-			request.uri,
 			response.status,
 		)
 		return response
 
 
 class ErrorLog(RequestRunnerRequestError):
-	"""검증 및 핸들러 실행 오류를 예외 정보와 함께 기록한다."""
+	"""검증 및 핸들러 실행 오류의 타입을 관찰한다."""
 
 	def __call__(
 		self,
 		request: Request,
 		error: Exception,
 	) -> None:
-		getLogger('Sample.Requests').error(
-			'오류 훅: id=%s method=%s uri=%s error=%s',
+		getLogger('Sample.Requests').debug(
+			'오류 훅: id=%s error_type=%s',
 			request.id,
-			request.method,
-			request.uri,
-			error,
-			exc_info=(
-				type(error),
-				error,
-				error.__traceback__,
-			),
+			type(error).__name__,
 		)
 		return
 

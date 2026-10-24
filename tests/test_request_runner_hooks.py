@@ -272,7 +272,36 @@ class RequestRunnerHookTests(TestCase):
 				events.append('constructor')
 				return
 
-		RunRequest(Handler).run(request())
+		with self.assertLogs('DefEssential.RequestRunner', level='DEBUG') as logs:
+			RunRequest(Handler).run(request())
+		messages = '\n'.join(logs.output)
+		for phase in (
+			'runner.validation.auth',
+			'runner.validation.parameters',
+			'runner.validation.query',
+			'runner.validation.headers',
+		):
+			self.assertTrue(any(
+				'Validation starting' in record.getMessage() and 'phase=' + phase in record.getMessage()
+				for record in logs.records
+			))
+			self.assertTrue(any(
+				'Validation completed' in record.getMessage() and 'phase=' + phase in record.getMessage()
+				for record in logs.records
+			))
+		for event in (
+			'Request body processing',
+			'Request body processed',
+			'Handler creating',
+			'Handler created',
+			'Request hook starting',
+			'Request hook completed',
+			'Handler running',
+			'Handler returned',
+			'Response hook starting',
+			'Response hook completed',
+		):
+			self.assertIn(event, messages)
 		self.assertEqual(events, [
 			'auth',
 			'parameters',

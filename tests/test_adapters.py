@@ -438,6 +438,28 @@ class WSGITests(TestCase):
 
 @skipUnless(find_spec('uvicorn') and find_spec('a2wsgi'), 'Uvicorn 선택적 의존성 필요')
 class UvicornTests(TestCase):
+	def test_bind_failure_is_logged_without_false_readiness_and_cleans_up(self):
+		application = Application()
+		with PythonServer('127.0.0.1', 0, Application()) as occupied:
+			with redirect_stdout(StringIO()), self.assertLogs('DefEssential.Server', level='DEBUG') as logs:
+				with self.assertRaises(SystemExit) as caught:
+					UvicornServer(
+						'127.0.0.1',
+						occupied.server_port,
+						application,
+						log_config=None,
+						log_level='critical',
+						access_log=False,
+					).run()
+		self.assertNotEqual(caught.exception.code, 0)
+		self.assertFalse(application.running)
+		self.assertFalse(any('Server ready' in message for message in logs.output))
+		self.assertFalse(any('Server stopped:' in message for message in logs.output))
+		errors = [record for record in logs.records if record.levelname == 'ERROR']
+		self.assertEqual(len(errors), 1)
+		self.assertIn('Server startup aborted: adapter=Uvicorn', errors[0].getMessage())
+		return
+
 	def test_real_http_and_lifecycle(self):
 		from uvicorn import Server as HTTPServer
 
@@ -488,11 +510,15 @@ class UvicornTests(TestCase):
 		servers = []
 		errors = []
 
-		def create(config):
-			server = HTTPServer(config)
-			servers.append(server)
-			created.set()
-			return server
+		class ObservedServer(HTTPServer):
+			def __init__(
+				self,
+				config,
+			):
+				super().__init__(config)
+				servers.append(self)
+				created.set()
+				return
 
 		def run():
 			try:
@@ -502,7 +528,7 @@ class UvicornTests(TestCase):
 				errors.append(error)
 			return
 
-		with patch('uvicorn.Server', side_effect=create):
+		with patch('uvicorn.Server', ObservedServer), self.assertLogs('DefEssential.Server', level='INFO') as logs:
 			thread = Thread(target=run)
 			thread.start()
 			try:
@@ -544,6 +570,13 @@ class UvicornTests(TestCase):
 				thread.join(timeout=10)
 		self.assertFalse(thread.is_alive())
 		self.assertEqual(errors, [])
+		self.assertTrue(any(
+			'Server ready: adapter=Uvicorn' in message and str(port) in message
+			for message in logs.output
+		))
+		summaries = [message for message in logs.output if 'HTTP transmission result' in message]
+		self.assertEqual(len(summaries), 3)
+		self.assertTrue(all('outcome=completed' in message for message in summaries))
 		self.assertFalse(application.running)
 		self.assertEqual(lifecycle.events, [
 			'start',

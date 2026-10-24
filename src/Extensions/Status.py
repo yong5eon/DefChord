@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import (
 	Optional,
 	Sequence,
@@ -28,6 +29,8 @@ __all__ = (
 
 class Status(Extension):
 	"""명시적인 같은 출처 Metrics 경로를 사용하는 상태 페이지."""
+
+	logger = getLogger('DefEssential.Extensions.Status')
 
 	def __init__(
 		self,
@@ -96,9 +99,12 @@ class Status(Extension):
 		self,
 		request: Request,
 	) -> Response:
-		return page(
+		self.logger.debug('Status page preparing: request_id=%s', request.id)
+		response = page(
 			'Status',
 			self.title,
 			self.description,
 			parameters={'metrics_uri': self.metrics_uri},
 		)
+		self.logger.debug('Status page prepared: request_id=%s', request.id)
+		return response
