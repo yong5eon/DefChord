@@ -114,7 +114,7 @@ class LoggingFormatter(Formatter):
 
 
 class LoggingSetup(ApplicationStartup):
-	"""첫 시작 훅에서 샘플 전용 출력 정책을 설정한다."""
+	"""Configure sample-specific output in the first startup hook."""
 
 	def __init__(self) -> None:
 		sources = (
@@ -198,7 +198,7 @@ class AddJpegExtension(ExtensionRequest):
 
 
 class ReplaceWithPng(ExtensionRequestResponse):
-	"""JPG 파일 응답을 샘플 PNG 파일 응답으로 교체한다."""
+	"""Replace a JPG file response with the sample PNG file."""
 
 	def __init__(
 		self,
@@ -218,7 +218,7 @@ class ReplaceWithPng(ExtensionRequestResponse):
 
 
 def create_application() -> Application:
-	"""기본 Extension 인스턴스로 샘플 앱을 구성한다."""
+	"""Configure the sample application with built-in extension instances."""
 	resources = Path(__file__).resolve().parent / 'res'
 	app = Application(
 		exts=(

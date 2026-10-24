@@ -37,7 +37,7 @@ __all__ = (
 
 
 class RequestValidator(ABC):
-	"""HTTP 요청 검증 객체의 인터페이스를 정의한다."""
+	"""Define the interface for HTTP request validators."""
 
 	@abstractmethod
 	def __call__(

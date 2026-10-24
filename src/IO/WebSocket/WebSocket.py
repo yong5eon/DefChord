@@ -21,9 +21,10 @@ __all__ = (
 
 
 class WebSocket:
-	"""업그레이드된 HTTP 연결에서 WebSocket 메시지를 주고받는다.
+	"""Exchange WebSocket messages over an upgraded HTTP connection.
 
-	receive()는 한 스레드에서만 호출한다. send(), ping(), close()는 다른 스레드에서도 호출할 수 있다.
+	Call receive() from a single thread. send(), ping(), and close() may also be
+	called from other threads.
 	"""
 
 	logger = getLogger('DefEssential.IO.WebSocket')
@@ -58,7 +59,7 @@ class WebSocket:
 		self,
 		protocol: Optional[str] = None,
 	) -> None:
-		"""핸드셰이크를 검사하고 101 응답을 보낸다. 실패하면 101 전이므로 일반 오류 응답이 나간다."""
+		"""Validate the handshake and send a 101 response. On failure, a regular error response is sent because the connection has not been upgraded."""
 		if self.accepted:
 			raise RuntimeError('WebSocket has already been accepted')
 		self.request.writer.upgrade(self.handshake.response(protocol))
@@ -104,7 +105,7 @@ class WebSocket:
 		self,
 		message: Union[str, bytes],
 	) -> None:
-		"""str은 text 메시지로, bytes는 binary 메시지로 보낸다."""
+		"""Send str values as text messages and bytes values as binary messages."""
 		if isinstance(message, str):
 			frame = WebSocketFrame(
 				WebSocketFrame.TEXT,
@@ -199,10 +200,11 @@ class WebSocket:
 		return
 
 	def receive(self) -> Union[str, bytes, None]:
-		"""다음 메시지를 반환한다. 연결이 닫히는 과정에 들어가면 None을 반환한다.
+		"""Return the next message, or None once the connection starts closing.
 
-		ping에는 자동으로 pong을 보낸다. 프로토콜 위반은 닫기 코드를 보낸 뒤 None을 반환하고,
-		TCP 연결이 끊기면 ClientDisconnected가 전파된다.
+		Automatically reply to ping frames with pong. On a protocol violation,
+		send a close code and return None. Propagate ClientDisconnected if the
+		TCP connection is lost.
 		"""
 		if not self.accepted:
 			raise RuntimeError('WebSocket must be accepted first')
@@ -269,7 +271,7 @@ class WebSocket:
 		code: int = 1000,
 		reason: str = '',
 	) -> None:
-		"""닫기 프레임을 보내고 클라이언트의 닫기 프레임을 받을 때까지 남은 메시지를 버린다."""
+		"""Send a close frame and discard messages until the client's close frame arrives."""
 		if not self.valid_code(code):
 			raise ValueError('Invalid WebSocket close code')
 		if len(reason.encode('utf-8')) > 123:

@@ -24,7 +24,7 @@ from DefEssential.IO.Writers import (
 
 
 class StreamingRequestLog(RequestRunnerRequest):
-	"""본문 처리 후 핸들러 실행 직전에 요청을 기록한다."""
+	"""Log the request after body processing and immediately before the handler runs."""
 
 	def __call__(
 		self,
@@ -38,7 +38,7 @@ class StreamingRequestLog(RequestRunnerRequest):
 
 
 class StreamingResponseHeaders(RequestRunnerRequestResponse):
-	"""스트림 begin 시 헤더 전송 전에 응답을 수정한다."""
+	"""Modify the response before headers are sent when the stream begins."""
 
 	def __call__(
 		self,
@@ -58,7 +58,7 @@ class StreamingResponseHeaders(RequestRunnerRequestResponse):
 
 
 class StreamingErrorLog(RequestRunnerRequestError):
-	"""스트리밍 실행 오류를 요청 식별자와 예외 타입으로 관찰한다."""
+	"""Observe streaming errors by request ID and exception type."""
 
 	def __call__(
 		self,
@@ -209,7 +209,7 @@ class RunWebSocket(
 	on_request_response=StreamingResponseHeaders(),
 	on_request_error=StreamingErrorLog(),
 ):
-	"""받은 text·binary 메시지를 그대로 돌려보낸다."""
+	"""Echo received text and binary messages."""
 
 	def run(
 		self,

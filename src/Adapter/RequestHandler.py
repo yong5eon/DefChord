@@ -21,7 +21,7 @@ def handle_request(
 	create_request: Callable[[], Request],
 	writer: ResponseWriter,
 ) -> None:
-	"""전송 계층과 무관하게 오류 응답과 자원 정리를 수행한다."""
+	"""Handle error responses and resource cleanup independently of the transport layer."""
 	logger = LOGGER
 	started = monotonic()
 	request = None

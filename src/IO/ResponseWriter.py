@@ -84,7 +84,7 @@ class ResponseWriter:
 		self,
 		response: Response,
 	) -> Response:
-		"""주입된 응답 후처리를 호출하고 직접 출력용 헤더 응답을 검증한다."""
+		"""Call the injected response hook and validate a response for direct output."""
 		if self.on_request_response is not None:
 			response = self.on_request_response(response)
 		if not isinstance(response, Response):
@@ -107,7 +107,7 @@ class ResponseWriter:
 		response: Response,
 		chunked: bool = False,
 	) -> None:
-		"""응답 훅과 검증 후 직접 출력 헤더를 한 번 전송한다."""
+		"""Send direct-output response headers once, after running response hooks and validation."""
 		if self.started:
 			raise RuntimeError('Cannot start a response that has already started')
 		self.start(
@@ -120,9 +120,10 @@ class ResponseWriter:
 		self,
 		response: Response,
 	) -> None:
-		"""101 Switching Protocols 헤더를 응답 훅을 거쳐 한 번만 보낸다.
+		"""Send 101 Switching Protocols headers once through the response hook.
 
-		이후 write()는 HTTP 프레이밍 없이 바이트를 그대로 쓰며, 전환된 프로토콜의 프레이밍은 호출자가 맡는다.
+		Subsequent write() calls send bytes without HTTP framing; the caller is
+		responsible for framing the upgraded protocol.
 		"""
 		if self.started:
 			raise RuntimeError('Cannot start a response that has already started')

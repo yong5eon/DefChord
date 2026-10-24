@@ -24,7 +24,7 @@ def http_routes(
 	extension: Extension,
 	path: str,
 ) -> tuple[Route, ...]:
-	"""확장에 GET 및 HEAD 요청 실행기를 연결한다."""
+	"""Create GET and HEAD request handlers for an extension."""
 	return tuple(
 		Route(
 			method,

@@ -1,1 +1,1 @@
-"""RequestRunner 예제를 기능별로 모은 패키지."""
+"""Group RequestRunner examples by feature."""

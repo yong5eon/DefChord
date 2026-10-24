@@ -7,7 +7,7 @@ from ..Sample import create_application
 
 
 def main() -> None:
-	"""시작한 샘플 앱의 OpenAPI 문서를 저장하고 자원을 정리한다."""
+	"""Save the OpenAPI document from the started sample app and clean up its resources."""
 	parser = ArgumentParser(description='샘플 OpenAPI 문서 생성')
 	parser.add_argument(
 		'output',

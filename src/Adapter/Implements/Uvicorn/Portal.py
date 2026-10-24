@@ -24,7 +24,7 @@ Result = TypeVar('Result')
 
 
 class Portal:
-	"""동기 핸들러의 입출력을 이벤트 루프에 전달하고 취소 시 대기를 해제한다."""
+	"""Bridge synchronous handler I/O to the event loop and release waits on cancellation."""
 
 	def __init__(
 		self,

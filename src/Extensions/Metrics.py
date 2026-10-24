@@ -97,10 +97,11 @@ def label(value: str) -> str:
 
 
 class MetricsCollector:
-	"""Application 처리 경계의 통계를 집계한다.
+	"""Collect metrics at application processing boundaries.
 
-	시작한 Metrics가 Application 요청 훅에 수집기를 연결한다. 응답 반환 이후의
-	전송 시간과 스트림 소비 오류는 집계하지 않는다.
+	A started Metrics instance attaches the collector to application request hooks.
+	Transmission time and stream-consumption errors after a response is returned
+	are not included.
 	"""
 
 	def __init__(
@@ -137,7 +138,7 @@ class MetricsCollector:
 		self,
 		request: Request,
 	) -> Request:
-		"""교체된 Request도 현재 Application 호출의 최초 요청과 연결한다."""
+		"""Associate a replacement Request with the original request in the current application call."""
 		if self.request_scope is None:
 			raise RuntimeError('MetricsCollector is not bound to an Application request scope')
 		current = self.request_scope()
@@ -326,7 +327,7 @@ class MetricsCollector:
 
 
 class ObserveRequest(ApplicationRequest):
-	"""Application 요청 진입을 공유 수집기에 전달한다."""
+	"""Forward application request entry to the shared collector."""
 
 	def __init__(
 		self,
@@ -344,7 +345,7 @@ class ObserveRequest(ApplicationRequest):
 
 
 class ObserveResponse(ApplicationRequestResponse):
-	"""반환 응답 또는 직접 출력 writer의 상태를 집계한다."""
+	"""Collect the state of a returned response or direct-output writer."""
 
 	def __init__(
 		self,
@@ -368,7 +369,7 @@ class ObserveResponse(ApplicationRequestResponse):
 
 
 class ObserveError(ApplicationRequestError):
-	"""실패를 집계하며 응답 훅 이후의 오류도 중복 완료 없이 반영한다."""
+	"""Collect failures, including post-response-hook errors, without double-counting completions."""
 
 	def __init__(
 		self,
@@ -391,7 +392,7 @@ class ObserveError(ApplicationRequestError):
 
 
 class Metrics(Extension):
-	"""전체 Application 요청을 관찰하고 JSON 또는 Prometheus로 응답한다."""
+	"""Observe all application requests and expose metrics as JSON or Prometheus."""
 
 	logger = getLogger('DefEssential.Extensions.Metrics')
 

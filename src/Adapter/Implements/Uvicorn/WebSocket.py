@@ -35,7 +35,7 @@ class ServerContext(BaseServer):
 
 
 class Connection:
-	"""기존 HTTP/WebSocket 처리기에 asyncio 연결을 소켓 형태로 제공한다."""
+	"""Expose an asyncio connection as a socket to the existing HTTP/WebSocket handler."""
 
 	def __init__(
 		self,
@@ -82,7 +82,7 @@ class Connection:
 
 
 class WebSocketProtocol(Protocol):
-	"""Uvicorn의 upgrade 연결에서 기존 RFC 6455 처리기를 그대로 실행한다."""
+	"""Run the existing RFC 6455 handler on Uvicorn's upgraded connection."""
 
 	logger = getLogger('DefEssential.Server')
 
@@ -193,7 +193,7 @@ class WebSocketProtocol(Protocol):
 				self.transport.get_extra_info('sockname'),
 				ServerRequestHandler,
 			)
-			# 표준 처리기는 socket의 명목 타입을 요구하지만 실제로는 아래 파일/송신 계약만 사용한다.
+			# The standard handler requires the nominal socket type but uses only the file and send contracts below.
 			connection = Connection(self)
 			server.app = self.application
 			ServerRequestHandler(

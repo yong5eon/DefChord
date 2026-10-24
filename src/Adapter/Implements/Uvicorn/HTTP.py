@@ -30,7 +30,7 @@ __all__ = (
 
 
 class Input(Body):
-	"""ASGI 본문을 전체 업로드 대기 없이 읽으며 연결 종료도 감시한다."""
+	"""Read ASGI request bodies without waiting for the full upload and monitor disconnects."""
 
 	def __init__(
 		self,
@@ -146,7 +146,7 @@ class Input(Body):
 
 
 class Middleware:
-	"""a2wsgi의 환경 변환을 사용하고 바이트 전송은 즉시 역압을 적용한다."""
+	"""Use a2wsgi for environment conversion and apply backpressure during byte transmission."""
 
 	def __init__(
 		self,

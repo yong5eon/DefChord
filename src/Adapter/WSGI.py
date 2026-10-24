@@ -36,7 +36,7 @@ class StartResponse(Protocol):
 
 
 class WSGITransport:
-	"""HTTP 프레이밍을 WSGI 서버에 맡기고 바이트를 즉시 전달한다."""
+	"""Delegate HTTP framing to the WSGI server and forward bytes immediately."""
 
 	def __init__(
 		self,
@@ -85,12 +85,12 @@ class WSGITransport:
 		return len(data)
 
 	def flush(self) -> None:
-		# WSGI의 write() 호출 자체가 서버로 바이트를 전달한다.
+		# Calling WSGI write() forwards the bytes to the server.
 		return
 
 
 class WSGIResponseWriter(ResponseWriter):
-	"""직접 출력 API를 유지하면서 청크 프레이밍의 중복 적용을 방지한다."""
+	"""Preserve the direct-output API without applying chunk framing twice."""
 
 	def start(
 		self,
@@ -114,7 +114,7 @@ class WSGIResponseWriter(ResponseWriter):
 
 
 class WSGIApplication:
-	"""DefEssential 요청을 Gunicorn과 a2wsgi의 WSGI 호출에 연결한다."""
+	"""Adapt DefEssential requests to the WSGI calls used by Gunicorn and a2wsgi."""
 
 	def __init__(
 		self,

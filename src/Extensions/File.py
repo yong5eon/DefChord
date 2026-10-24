@@ -28,7 +28,7 @@ __all__ = (
 
 
 class File(Extension):
-	"""고정 HTTP 경로에 파일과 인스턴스별 사용자 훅을 연결한다."""
+	"""Serve a file at a fixed HTTP path with per-instance user hooks."""
 
 	logger = getLogger('DefEssential.Extensions.File')
 

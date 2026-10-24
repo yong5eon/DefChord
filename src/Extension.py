@@ -29,7 +29,7 @@ __all__ = (
 
 
 class ExtensionStartup(ABC):
-	"""확장 시작 훅의 호출 계약."""
+	"""Define the call contract for extension startup hooks."""
 
 	@abstractmethod
 	def __call__(self) -> None:
@@ -37,7 +37,7 @@ class ExtensionStartup(ABC):
 
 
 class ExtensionCleanup(ABC):
-	"""확장 정리 훅의 호출 계약."""
+	"""Define the call contract for extension cleanup hooks."""
 
 	@abstractmethod
 	def __call__(self) -> None:
@@ -45,7 +45,7 @@ class ExtensionCleanup(ABC):
 
 
 class ExtensionRequest(ABC):
-	"""확장 요청 진입 훅의 호출 계약."""
+	"""Define the call contract for extension request-entry hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -56,7 +56,7 @@ class ExtensionRequest(ABC):
 
 
 class ExtensionRequestResponse(ABC):
-	"""확장 응답 반환 훅의 호출 계약."""
+	"""Define the call contract for extension response-return hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -68,7 +68,7 @@ class ExtensionRequestResponse(ABC):
 
 
 class ExtensionRequestError(ABC):
-	"""확장 오류 관찰 훅의 호출 계약."""
+	"""Define the call contract for extension error-observation hooks."""
 
 	@abstractmethod
 	def __call__(
@@ -99,7 +99,7 @@ def extension_hooks(
 
 
 class Extension(ABC):
-	"""인스턴스별 사용자 훅과 시작·요청·정리 계약을 제공한다."""
+	"""Provide per-instance user hooks and startup, request, and cleanup contracts."""
 
 	logger = getLogger('DefEssential.Extension')
 
@@ -166,7 +166,7 @@ class Extension(ABC):
 		self,
 		application: 'Application',
 	) -> None:
-		"""구현체 준비 후 호출하여 사용자 시작 훅을 실행한다."""
+		"""Run user startup hooks after the implementation is ready."""
 		for index, hook in enumerate(self.startup_hooks):
 			self.logger.debug('Extension startup hook starting: index=%s hook=%s', index, type(hook).__qualname__)
 			if hook() is not None:
@@ -175,7 +175,7 @@ class Extension(ABC):
 		return
 
 	def cleanup(self) -> None:
-		"""사용자 정리 훅을 실행한다. 구현체는 별도로 자원 회수를 보장한다."""
+		"""Run user cleanup hooks; the implementation must release its own resources."""
 		for index, hook in enumerate(self.cleanup_hooks):
 			self.logger.debug('Extension cleanup hook starting: index=%s hook=%s', index, type(hook).__qualname__)
 			if hook() is not None:

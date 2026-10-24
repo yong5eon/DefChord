@@ -15,7 +15,7 @@ __all__ = (
 
 
 class WebSocketHandshake:
-	"""WebSocket 열기 핸드셰이크 요청을 검증하고 101 응답을 만든다."""
+	"""Validate a WebSocket opening handshake request and build a 101 response."""
 
 	GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 	VERSION = '13'
@@ -36,11 +36,11 @@ class WebSocketHandshake:
 
 	@property
 	def protocols(self) -> list[str]:
-		"""클라이언트가 요청한 서브프로토콜을 요청 순서대로 반환한다."""
+		"""Return the subprotocols requested by the client in request order."""
 		return self.tokens('Sec-WebSocket-Protocol')
 
 	def validate(self) -> str:
-		"""핸드셰이크 요청을 검사하고 Sec-WebSocket-Key를 반환한다."""
+		"""Validate the handshake request and return the Sec-WebSocket-Key."""
 		if self.request.method != 'GET':
 			raise ClientError('WebSocket handshake requires GET')
 		if self.request.writer.version != 'HTTP/1.1':

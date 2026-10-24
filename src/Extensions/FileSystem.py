@@ -34,7 +34,7 @@ __all__ = (
 
 
 class FileSystemRoute(Route):
-	"""URL 접두사 아래의 하위 파일 경로를 매칭한다."""
+	"""Match file paths beneath a URL prefix."""
 
 	def __init__(
 		self,
@@ -69,7 +69,7 @@ class FileSystemRoute(Route):
 
 
 class FileSystem(Extension):
-	"""주입된 연결에서 요청 파일을 응답한다."""
+	"""Return the requested file from the injected connection."""
 
 	logger = getLogger('DefEssential.Extensions.FileSystem')
 

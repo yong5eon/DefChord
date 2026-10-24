@@ -22,7 +22,7 @@ ServerType = TypeVar(
 
 
 class Server(ABC):
-	"""애플리케이션을 지정한 주소에서 실행하는 서버 어댑터의 계약."""
+	"""Define the server adapter contract for running an application at an address."""
 
 	def __init__(
 		self,
@@ -36,7 +36,7 @@ class Server(ABC):
 		return
 
 	def __enter__(self: ServerType) -> ServerType:
-		"""서버를 시작하지 않고 같은 인스턴스를 반환한다."""
+		"""Return this instance without starting the server."""
 		return self
 
 	def __exit__(
@@ -45,10 +45,10 @@ class Server(ABC):
 		exception: Optional[BaseException],
 		traceback: Optional[TracebackType],
 	) -> None:
-		"""예외를 전파한다. 실행 중 자원은 run()에서 정리한다."""
+		"""Propagate exceptions; run() is responsible for cleaning up active resources."""
 		return
 
 	@abstractmethod
 	def run(self) -> None:
-		"""서버 종료까지 실행하고 애플리케이션 생명주기를 관리한다."""
+		"""Serve until shutdown and manage the application lifecycle."""
 		raise NotImplementedError

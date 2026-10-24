@@ -27,7 +27,7 @@ SAMPLE = Path(__file__).resolve().parent.parent / 'samples'
 
 
 def create_application():
-	"""직접 실행하는 샘플에서 서버를 열지 않고 등록된 앱을 가져온다."""
+	"""Load the application registered by the directly executed sample without starting a server."""
 	with patch('sys.path', [str(SAMPLE), *path]):
 		with patch('DefEssential.Adapter.Implements.Python.Server') as server:
 			run_path(
@@ -439,7 +439,7 @@ class SampleTests(TestCase):
 					self.assertEqual(data, b'0123456789')
 					if chunked:
 						self.assertEqual(headers['Transfer-Encoding'], 'chunked')
-				# 헤더만으로 거부되는 요청은 바디를 보내지 않아 조기 응답과 전송이 경합하지 않게 한다.
+				# Do not send a body for requests rejected by headers, avoiding a race with the early response.
 				status, headers, data = self.call(
 					address,
 					'PUT',
