@@ -11,6 +11,8 @@ from DefEssential import (
 	ApplicationStartup,
 	ClientError,
 	Extension,
+	ExtensionCleanup,
+	ExtensionStartup,
 	Request,
 	RequestFilter,
 	RequestReader,
@@ -19,6 +21,42 @@ from DefEssential import (
 	ResponseFilter,
 )
 from DefEssential.IO.ResponseWriter import ResponseWriter
+
+
+class Lifecycle(Extension):
+	"""라우트 없이 인스턴스별 수명주기 훅을 실행한다."""
+
+	def __init__(
+		self,
+		events,
+		label='',
+		fail_cleanup=False,
+	):
+		suffix = ':' + label if label else ''
+
+		class Startup(ExtensionStartup):
+			def __call__(self):
+				events.append('extension-start' + suffix)
+				return
+
+		class Cleanup(ExtensionCleanup):
+			def __call__(self):
+				events.append('extension-cleanup' + suffix)
+				if fail_cleanup:
+					raise ValueError(label)
+				return
+
+		super().__init__(
+			on_startup=Startup(),
+			on_cleanup=Cleanup(),
+		)
+		return
+
+	def __call__(
+		self,
+		req,
+	):
+		return Response()
 
 
 def request(uri='/hook', writer=None):
@@ -71,20 +109,16 @@ class ApplicationHookTests(TestCase):
 			def __call__(self):
 				events.append('application-cleanup')
 
-		class Lifecycle(Extension):
-			def start(self, app):
-				events.append('extension-start:' + self.path)
-
-			def stop(self, app):
-				events.append('extension-cleanup:' + self.path)
-
-			def __call__(self, app, req):
-				return Response()
-
 		app = Application(
 			exts=(
-				Lifecycle('/first'),
-				Lifecycle('/last'),
+				Lifecycle(
+					events,
+					'/first',
+				),
+				Lifecycle(
+					events,
+					'/last',
+				),
 			),
 			on_startup=Startup(),
 			on_cleanup=Cleanup(),
@@ -113,24 +147,16 @@ class ApplicationHookTests(TestCase):
 			def __call__(self):
 				events.append('application-cleanup')
 
-		class Lifecycle(Extension):
-			def start(self, app):
-				events.append('extension-start')
-
-			def stop(self, app):
-				events.append('extension-cleanup')
-
-			def __call__(self, app, req):
-				return Response()
-
+		extension = Lifecycle(events)
 		app = Application(
-			exts=(Lifecycle('/lifecycle'),),
+			exts=(extension,),
 			on_startup=Startup(),
 			on_cleanup=Cleanup(),
 		)
 		with self.assertRaisesRegex(ValueError, 'startup failed'):
 			app.start()
 		self.assertFalse(app.running)
+		self.assertEqual(app.exts, (extension,))
 		self.assertEqual(events, ['application-start'])
 		return
 
@@ -142,25 +168,23 @@ class ApplicationHookTests(TestCase):
 				events.append('application-cleanup')
 				raise RuntimeError('application cleanup failed')
 
-		class Lifecycle(Extension):
-			def start(self, app):
-				return
-
-			def stop(self, app):
-				events.append('extension-cleanup:' + self.path)
-				raise ValueError(self.path)
-
-			def __call__(self, app, req):
-				return Response()
-
 		app = Application(
 			exts=(
-				Lifecycle('/first'),
-				Lifecycle('/last'),
+				Lifecycle(
+					events,
+					'/first',
+					fail_cleanup=True,
+				),
+				Lifecycle(
+					events,
+					'/last',
+					fail_cleanup=True,
+				),
 			),
 			on_cleanup=Cleanup(),
 		)
 		app.start()
+		events.clear()
 		with self.assertLogs('DefEssential.Application', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, '/last'):
 				app.stop()

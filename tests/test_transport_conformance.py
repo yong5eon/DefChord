@@ -35,8 +35,11 @@ from unittest import (
 
 from DefEssential import (
 	Application,
+	ApplicationCleanup,
+	ApplicationRequestError,
+	ApplicationRequestResponse,
+	ApplicationStartup,
 	Body,
-	Extension,
 	RequestRunner,
 	Response,
 )
@@ -79,37 +82,35 @@ def run_server(
 			sleep(0.01)
 		return
 
-	class Observation(Extension):
-		def start(
-			self,
-			application,
-		):
+	class Startup(ApplicationStartup):
+		def __call__(self):
 			record('start')
 			return
 
-		def stop(
-			self,
-			application,
-		):
+	class Cleanup(ApplicationCleanup):
+		def __call__(self):
 			record('stop')
 			return
 
-		def end(
-			self,
-			request,
-			context,
-			status,
-			error,
-		):
-			record(f'end:{request.path}:{status}')
-			return
+	class RequestResponse(ApplicationRequestResponse):
+		"""서버의 최종 전송 전 Application 처리 완료를 기록한다."""
 
 		def __call__(
 			self,
-			application,
 			request,
+			response,
 		):
-			return Response()
+			record(f'response:{request.path}')
+			return response
+
+	class RequestError(ApplicationRequestError):
+		def __call__(
+			self,
+			request,
+			error,
+		):
+			record(f'error:{request.path}:{type(error).__name__}')
+			return
 
 	class Health(
 		RequestRunner,
@@ -230,7 +231,12 @@ def run_server(
 				connection.send(message)
 			return
 
-	application = Application(exts=(Observation('/observation'),))
+	application = Application(
+		on_startup=Startup(),
+		on_cleanup=Cleanup(),
+		on_request_response=RequestResponse(),
+		on_request_error=RequestError(),
+	)
 	for handler in (
 		Health,
 		Upload,
@@ -295,7 +301,7 @@ sys.path.insert(0, tests)
 from test_transport_conformance import run_server
 run_server(adapter, int(port), directory, worker)
 '''
-		with TemporaryDirectory() as directory:
+		with TemporaryDirectory(dir='.') as directory:
 			root = Path(directory)
 			log = root / 'server.log'
 			with socket() as listener:
@@ -467,7 +473,7 @@ run_server(adapter, int(port), directory, worker)
 				response.close()
 				connection.close()
 				deadline = monotonic() + 5
-				while ':end:/disconnect:' not in (root / 'events').read_text():
+				while ':error:/disconnect:' not in (root / 'events').read_text():
 					if monotonic() >= deadline:
 						self.fail('클라이언트 연결 종료 뒤 SSE 핸들러가 정리되지 않았습니다')
 					sleep(0.02)

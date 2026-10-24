@@ -10,7 +10,9 @@
 - Application의 요청 처리 진입, 정상 응답 반환 및 오류
 - Application 종료
 
-Extension 자체의 생명 주기·요청 관찰 훅과 RequestRunner의 개별 핸들러 실행 훅은 이 문서의 구현 범위가 아니다. 관련 작업은 상위 이슈에서 구분한 `feature/5`(Extension), `feature/6`(RequestRunner)에서 다룬다. 현재 해당 이슈의 로컬 문서는 없다.
+Extension 자체의 생명 주기·요청 관찰 훅과 RequestRunner의 개별 핸들러 실행 훅은 이 문서의 구현 범위가 아니다. 관련 작업은 상위 이슈에서 구분한 [feature/5](../5/REQUIREMENTS.md)(Extension), `feature/6`(RequestRunner)에서 다룬다.
+
+후속 feature/5는 생성된 Extension 인스턴스 등록과 생성자 훅을 구현했다. Application 시작 훅 다음에 각 Extension의 `startup(application)`으로 연결·라우트 등록·자원 준비를 수행하고, 종료 시에는 Extension의 `cleanup()` 다음에 Application 정리 훅을 실행한다. Factory·별도 `bind/route/routes`는 두지 않는다. 아래 기존 `begin/end` 보존 설명은 feature/4 구현 당시 범위이며 최신 Extension 계약은 feature/5가 대체한다. 로고는 시작 로그보다 먼저 출력하고 Extension 라우트 대신 등록된 인스턴스의 `str(extension)` 표시값·개수를 안내한다.
 
 ## 2. 근거 문서
 

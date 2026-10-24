@@ -52,7 +52,8 @@ class StartupTests(TestCase):
 			def run(self, request):
 				return Response()
 
-		app = Application(exts=(Ping('/ping'),))
+		ping = Ping('/ping')
+		app = Application(exts=(ping,))
 		app.add(Submit)
 		with redirect_stdout(StringIO()) as output:
 			startup(
@@ -65,7 +66,8 @@ class StartupTests(TestCase):
 		self.assertIn('Applications: 1 applications', text)
 		self.assertIn('    - Submit\n      POST /ping', text)
 		self.assertNotIn('      GET /ping', text)
-		self.assertIn('    - Ping: /ping', text)
+		self.assertIn('    - Ping(/ping)', text)
+		self.assertEqual(app.exts, (ping,))
 		return
 
 	def test_handler_names_and_extension_paths(self):
@@ -112,9 +114,12 @@ class StartupTests(TestCase):
 			self.assertNotIn('      HEAD /ping', text)
 			self.assertNotIn('      GET /file', text)
 			self.assertNotIn('      GET /files', text)
-			self.assertIn('  Extensions: 3 extensions\n    - Ping: /ping', text)
-			self.assertIn('    - File: /file', text)
-			self.assertIn('    - FileSystem: /files', text)
+			self.assertIn(
+				'  Extensions: 3 extensions\n' + '\n'.join(
+					'    - ' + str(extension) for extension in app.exts
+				),
+				text,
+			)
 			self.assertNotIn('Factory.__call__', text)
 			self.assertNotIn('Ping: http://', text)
 		return

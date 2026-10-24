@@ -18,28 +18,16 @@ def handle_request(
 	create_request: Callable[[], Request],
 	writer: ResponseWriter,
 ) -> None:
-	"""전송 계층과 무관하게 요청 관찰, 오류 응답, 자원 정리를 수행한다."""
+	"""전송 계층과 무관하게 오류 응답과 자원 정리를 수행한다."""
 	logger = getLogger('DefEssential.Server')
 	response = None
-	request = None
-	observations = []
-	status = 500
-	failure = None
 	try:
 		try:
 			request = create_request()
-			for extension in application.exts.values():
-				context = extension.begin(request)
-				observations.append((
-					extension,
-					context,
-				))
 			response = application(request)
 		except ClientDisconnected:
 			raise
 		except Error as error:
-			status = error.status
-			failure = error
 			if writer.started:
 				raise
 			response = Response(
@@ -49,8 +37,7 @@ def handle_request(
 				format='text/plain',
 				charset='utf-8',
 			)
-		except Exception as error:
-			failure = error
+		except Exception:
 			if writer.started:
 				raise
 			logger.exception('Unexpected error while handling request')
@@ -59,43 +46,25 @@ def handle_request(
 				body=b'Internal Server Error',
 			)
 		if response is not None:
-			status = response.status
 			writer.response(
 				response,
 				filtered=True,
 			)
 		elif not writer.ended:
 			raise RuntimeError('Response was neither returned nor completed successfully')
-		else:
-			status = writer.status
 	except ConnectionError as error:
-		failure = error
 		logger.warning('Client disconnected: %s', error)
 		raise
-	except OSError as error:
-		failure = error
+	except OSError:
 		logger.warning('Connection closed while sending response', exc_info=True)
 		raise
-	except Exception as error:
-		failure = error
+	except Exception:
 		logger.exception('Response transmission failed: closing connection without another error response')
 		raise
 	finally:
 		if response is not None:
 			try:
 				response.close()
-			except Exception as error:
-				failure = error
+			except Exception:
 				logger.exception('Response body cleanup failed')
-		if request is not None:
-			for extension, context in reversed(observations):
-				try:
-					extension.end(
-						request,
-						context,
-						status,
-						failure,
-					)
-				except Exception:
-					logger.exception('Extension request observation cleanup failed')
 	return
