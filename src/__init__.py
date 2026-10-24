@@ -5,8 +5,17 @@ from .Application import (
 	ApplicationRequest,
 	ApplicationRequestResponse,
 	ApplicationRequestError,
+	RequestHookRegistration,
 )
-from .Extension import Extension
+from .Extension import (
+	Extension,
+	ExtensionStartup,
+	ExtensionCleanup,
+	ExtensionRequest,
+	ExtensionRequestResponse,
+	ExtensionRequestError,
+)
+from .Route import Route
 from .Error import (
 	Error,
 	ClientError,
@@ -41,7 +50,14 @@ __all__ = (
 	'ApplicationRequest',
 	'ApplicationRequestResponse',
 	'ApplicationRequestError',
+	'RequestHookRegistration',
 	'Extension',
+	'ExtensionStartup',
+	'ExtensionCleanup',
+	'ExtensionRequest',
+	'ExtensionRequestResponse',
+	'ExtensionRequestError',
+	'Route',
 	'Error',
 	'ClientError',
 	'ServerError',

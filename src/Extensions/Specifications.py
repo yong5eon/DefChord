@@ -7,7 +7,11 @@ from re import (
 	fullmatch,
 	sub,
 )
-from typing import Any
+from typing import (
+	Any,
+	Optional,
+	Union,
+)
 
 from ..Application import Application
 from ..Body import Body
@@ -16,7 +20,14 @@ from ..Descriptor import (
 	Schema,
 	schema_value,
 )
-from ..Extension import Extension
+from ..Extension import (
+	Extension,
+	ExtensionCleanup,
+	ExtensionRequest,
+	ExtensionRequestError,
+	ExtensionRequestResponse,
+	ExtensionStartup,
+)
 from ..Request import Request
 from ..IO.Readers import (
 	ByteStringContentReader,
@@ -26,7 +37,6 @@ from ..IO.Readers import (
 )
 from ..Response import Response
 from ..ResponseSpecification import ResponseSpecification
-from ..FileSystemRoute import FileSystemRoute
 from ..Responses import ResponseJSON
 from ..Validators import (
 	Auth,
@@ -34,13 +44,18 @@ from ..Validators import (
 	Parameters,
 	QueryString,
 )
+from .FileSystem import FileSystemRoute
+from .Utils.Routes import (
+	http_routes,
+	validate_path,
+)
 
 __all__ = (
 	'Specifications',
 )
 
 class Specifications(Extension):
-	"""Convert registered Application handler declarations to OpenAPI 3.1."""
+	"""공유 라우트 목록의 현재 선언을 OpenAPI 3.1 문서로 변환한다."""
 
 	def __init__(
 		self,
@@ -49,8 +64,36 @@ class Specifications(Extension):
 		title: str = 'DefEssential',
 		version: str = '1.0.0',
 		description=None,
+		on_startup: Optional[Union[
+			ExtensionStartup,
+			Sequence[ExtensionStartup],
+		]] = None,
+		on_cleanup: Optional[Union[
+			ExtensionCleanup,
+			Sequence[ExtensionCleanup],
+		]] = None,
+		on_request: Optional[Union[
+			ExtensionRequest,
+			Sequence[ExtensionRequest],
+		]] = None,
+		on_request_response: Optional[Union[
+			ExtensionRequestResponse,
+			Sequence[ExtensionRequestResponse],
+		]] = None,
+		on_request_error: Optional[Union[
+			ExtensionRequestError,
+			Sequence[ExtensionRequestError],
+		]] = None,
 	):
-		super().__init__(path)
+		super().__init__(
+			on_startup=on_startup,
+			on_cleanup=on_cleanup,
+			on_request=on_request,
+			on_request_response=on_request_response,
+			on_request_error=on_request_error,
+		)
+		validate_path(path)
+		self.path = path
 		if not isinstance(title, str) or not title or not isinstance(version, str) or not version:
 			raise ValueError('Document title and version must be non-empty strings')
 		self.title = title
@@ -58,9 +101,21 @@ class Specifications(Extension):
 		self.description = description
 		return
 
+	def __str__(self) -> str:
+		return '{}({})'.format(type(self).__name__, self.path)
+
+	def startup(
+		self,
+		application: Application,
+	) -> None:
+		self.application = application
+		for route in http_routes(self, self.path):
+			application.add_extension_route(self, route)
+		super().startup(application)
+		return
+
 	def document(
 		self,
-		app: Application,
 	) -> dict:
 		schemas: dict[str, Any] = {}
 		security: dict[str, Any] = {}
@@ -139,8 +194,8 @@ class Specifications(Extension):
 
 		paths: dict[str, Any] = {}
 		custom: list[dict] = []
-		for route in app.router.routes:
-			if route.url in app.exts:
+		for route in self.application.router.routes:
+			if any(route is extension_route for extension_route in self.application.extension_routes):
 				continue
 			properties = route.object.properties
 			operation = {
@@ -268,7 +323,6 @@ class Specifications(Extension):
 
 	def __call__(
 		self,
-		app: Application,
 		request: Request,
 	) -> Response:
-		return ResponseJSON(self.document(app))
+		return ResponseJSON(self.document())

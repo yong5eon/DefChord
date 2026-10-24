@@ -73,16 +73,16 @@
     </div>
     <div class="cards">
       <section class="card"><div class="label">구간 완료 요청</div><div id="rate" class="value rate">--</div><p id="window-hint" class="hint">완전히 지난 최근 1초의 완료 요청</p></section>
-      <section class="card"><div class="label">진행 중</div><div id="active" class="value">--</div><p class="hint">응답 전송이 끝나지 않은 요청</p></section>
+      <section class="card"><div class="label">진행 중</div><div id="active" class="value">--</div><p class="hint">Application이 처리 중인 요청</p></section>
       <section class="card"><div class="label">Application 상태</div><div id="state" class="value">--</div><p class="hint">실행 상태이며 외부 시스템 건강 검사는 아닙니다.</p></section>
       <section class="card"><div class="label">누적 성공</div><div id="success" class="value">--</div><p class="hint">Application 시작 이후</p></section>
-      <section class="card"><div class="label">누적 실패</div><div id="failure" class="value failure">--</div><p class="hint">HTTP 오류·전송 실패·연결 해제 포함</p></section>
+      <section class="card"><div class="label">누적 실패</div><div id="failure" class="value failure">--</div><p class="hint">Application 처리 오류·HTTP 오류 응답 포함</p></section>
       <section class="card"><div class="label">가동 시간</div><div id="uptime" class="value">--</div><p class="hint">Metrics 초기화 이후</p></section>
       <section class="card"><div class="label">구간 성공 / 실패</div><div id="window-outcomes" class="value">--</div><p class="hint">선택한 구간 내 완료 요청</p></section>
       <section class="card"><div class="label">구간 실패율</div><div id="failure-rate" class="value">--</div><p class="hint">실패 / 완료 요청</p></section>
-      <section class="card"><div class="label">구간 평균 시간</div><div id="average" class="value">--</div><p class="hint">응답 전송 종료까지 포함</p></section>
+      <section class="card"><div class="label">구간 평균 시간</div><div id="average" class="value">--</div><p class="hint">Application 처리 완료까지 측정</p></section>
       <section class="card"><div class="label">구간 최대 시간</div><div id="maximum" class="value">--</div><p class="hint">선택한 구간의 가장 느린 완료 요청</p></section>
-      <section class="card"><div class="label">최장 진행 시간</div><div id="oldest" class="value">--</div><p class="hint">진행 중인 스트림·SSE 포함</p></section>
+      <section class="card"><div class="label">최장 진행 시간</div><div id="oldest" class="value">--</div><p class="hint">Application에서 아직 반환하지 않은 요청</p></section>
     </div>
     <section class="panel" aria-labelledby="requests-title">
       <div class="panel-heading"><h2 id="requests-title">요청 처리 현황</h2><span class="muted">구간 집계와 누적 합계</span></div>
@@ -94,7 +94,7 @@
     </section>
     <p class="notes">약 1초 간격으로 갱신합니다. 집계 구간은 완전히 지난 monotonic 초를 기준으로 하므로 실시간 누적 합계보다 1초 미만 늦을 수 있습니다.
       최근 1분은 실제 60초의 완료 요청 수이며 초당 값을 곱한 추정치가 아닙니다. 시작 직후에는 시작 이후 데이터만 포함합니다.
-      확장 자신의 요청도 측정하며, 하나의 Application에 대한 지표입니다. 영구 이력은 저장하지 않습니다.</p>
+      확장 자신의 요청도 측정하며, 하나의 Application에 대한 지표입니다. 응답 반환 후의 전송 시간·스트림 소비 오류는 포함하지 않습니다. 영구 이력은 저장하지 않습니다.</p>
   </main>
   <script>
     'use strict';
