@@ -585,7 +585,7 @@ class UvicornTests(TestCase):
 					self.assertFalse(application.running)
 		return
 
-	def test_startup_output_failure_stops_application(self):
+	def test_startup_output_failure_does_not_start_application(self):
 		lifecycle = Lifecycle()
 		application = Application(exts=(lifecycle,))
 		with patch('DefEssential.Adapter.Implements.Uvicorn.Server.startup', side_effect=OSError('output failed')):
@@ -593,10 +593,8 @@ class UvicornTests(TestCase):
 				with self.assertRaisesRegex(OSError, 'output failed'):
 					UvicornServer('127.0.0.1', 8000, application).run()
 				run.assert_not_called()
-		self.assertEqual(lifecycle.events, [
-			'start',
-			'stop',
-		])
+		self.assertEqual(lifecycle.events, [])
+		self.assertFalse(application.running)
 		return
 
 
