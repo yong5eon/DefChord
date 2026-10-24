@@ -3,7 +3,10 @@ from http.server import (
 	ThreadingHTTPServer,
 )
 from logging import getLogger
-from typing import Optional
+from typing import (
+	Optional,
+	Union,
+)
 
 from ....Application import Application
 from ....Error import Error
@@ -29,6 +32,7 @@ class Server(
 
 	daemon_threads = True
 	app: Application
+	logger = getLogger('DefEssential.Server')
 
 	def __init__(
 		self,
@@ -46,20 +50,25 @@ class Server(
 		)
 		self.app = application
 		self.poll_interval = poll_interval
-		ThreadingHTTPServer.__init__(
-			self,
-			(
-				host,
-				port,
-			),
-			ServerRequestHandler,
-		)
+		try:
+			ThreadingHTTPServer.__init__(
+				self,
+				(
+					host,
+					port,
+				),
+				ServerRequestHandler,
+			)
+		except Exception:
+			self.logger.exception('Server bind failed: adapter=Python host=%s port=%s', host, port)
+			raise
 		return
 
 	def run(self) -> None:
 		"""종료 시 수신 소켓까지 닫고 확장 기능의 종료를 보장한다."""
 		with self:
 			self.serve_forever(self.poll_interval)
+		self.logger.info('Server stopped: adapter=Python')
 		return
 
 	def serve_forever(
@@ -69,6 +78,7 @@ class Server(
 		host = self.server_address[0]
 		if not isinstance(host, str):
 			raise TypeError('HTTP listen address must be a string')
+		self.logger.info('Server starting: adapter=Python host=%s port=%s', host, self.server_port)
 		startup(
 			self.application,
 			'Python',
@@ -76,12 +86,18 @@ class Server(
 			self.server_port,
 		)
 		self.app.start()
+		self.logger.info('Server ready: adapter=Python host=%s port=%s', host, self.server_port)
 		try:
 			super().serve_forever(poll_interval=poll_interval)
 		except KeyboardInterrupt:
-			getLogger('DefEssential.Server').info('Shutdown requested by keyboard interrupt')
+			self.logger.info('Shutdown requested by keyboard interrupt: adapter=Python')
+		except Exception:
+			self.logger.exception('Server execution failed: adapter=Python')
+			raise
 		finally:
+			self.logger.info('Server stopping: adapter=Python')
 			self.app.stop()
+		self.logger.info('Server serving stopped: adapter=Python')
 		return
 
 
@@ -137,8 +153,8 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 				return
 			if not self.parse_request():
 				return
-		except ConnectionError as error:
-			self.logger.warning('Client disconnected: %s', error)
+		except ConnectionError:
+			self.logger.warning('Client disconnected before request parsing: adapter=Python')
 			return
 		self.close_connection = True
 		writer = ResponseWriter(
@@ -237,9 +253,21 @@ class ServerRequestHandler(BaseHTTPRequestHandler):
 		format: str,
 		*args: object,
 	) -> None:
-		self.logger.info(
-			'%s - %s',
-			self.address_string(),
-			format % args,
+		self.logger.debug(
+			'HTTP parser diagnostic: method=%s',
+			ascii(self.command[:32]) if self.command is not None else None,
+		)
+		return
+
+	def log_request(
+		self,
+		code: Union[int, str] = '-',
+		size: Union[int, str] = '-',
+	) -> None:
+		"""헤더 생성은 전송 완료가 아니므로 공통 결과 기록과 분리한다."""
+		self.logger.debug(
+			'HTTP response headers selected: status=%s method=%s',
+			code,
+			ascii(self.command[:32]) if self.command is not None else None,
 		)
 		return

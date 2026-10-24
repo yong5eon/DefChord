@@ -63,6 +63,7 @@ class WebSocket:
 			raise RuntimeError('WebSocket has already been accepted')
 		self.request.writer.upgrade(self.handshake.response(protocol))
 		self.accepted = True
+		self.logger.debug('WebSocket upgraded: request_id=%s status=101', self.request.id)
 		return
 
 	def valid_code(
@@ -172,6 +173,7 @@ class WebSocket:
 				WebSocketFrame.CLOSE,
 				payload[:2],
 			))
+		self.logger.debug('WebSocket closed: request_id=%s code=%s', self.request.id, self.code)
 		return
 
 	def fail(
@@ -179,8 +181,9 @@ class WebSocket:
 		error: WebSocketError,
 	) -> None:
 		self.logger.warning(
-			'WebSocket protocol error: %s',
-			error.reason,
+			'WebSocket protocol error: request_id=%s code=%s',
+			self.request.id,
+			error.code,
 		)
 		self.code = error.code
 		self.reason = error.reason
@@ -192,6 +195,7 @@ class WebSocket:
 				error.code,
 				error.reason,
 			))
+		self.logger.debug('WebSocket failed: request_id=%s code=%s', self.request.id, error.code)
 		return
 
 	def receive(self) -> Union[str, bytes, None]:

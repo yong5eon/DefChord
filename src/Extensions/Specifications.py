@@ -3,6 +3,8 @@ from collections.abc import (
 	Sequence,
 )
 from copy import deepcopy
+from logging import getLogger
+from time import monotonic
 from re import (
 	fullmatch,
 	sub,
@@ -56,6 +58,8 @@ __all__ = (
 
 class Specifications(Extension):
 	"""공유 라우트 목록의 현재 선언을 OpenAPI 3.1 문서로 변환한다."""
+
+	logger = getLogger('DefEssential.Extensions.Specifications')
 
 	def __init__(
 		self,
@@ -117,6 +121,8 @@ class Specifications(Extension):
 	def document(
 		self,
 	) -> dict:
+		started = monotonic()
+		self.logger.debug('Specification generation started')
 		schemas: dict[str, Any] = {}
 		security: dict[str, Any] = {}
 
@@ -319,10 +325,18 @@ class Specifications(Extension):
 		}
 		if custom:
 			document['x-defessential-operations'] = custom
+		self.logger.debug(
+			'Specification generated: routes=%s duration=%.6f',
+			len(self.application.router.routes),
+			monotonic() - started,
+		)
 		return document
 
 	def __call__(
 		self,
 		request: Request,
 	) -> Response:
-		return ResponseJSON(self.document())
+		self.logger.debug('Specification response preparing: request_id=%s', request.id)
+		response = ResponseJSON(self.document())
+		self.logger.debug('Specification response prepared: request_id=%s', request.id)
+		return response

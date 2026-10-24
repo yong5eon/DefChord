@@ -393,6 +393,8 @@ class ObserveError(ApplicationRequestError):
 class Metrics(Extension):
 	"""전체 Application 요청을 관찰하고 JSON 또는 Prometheus로 응답한다."""
 
+	logger = getLogger('DefEssential.Extensions.Metrics')
+
 	def __init__(
 		self,
 		path: str,
@@ -446,6 +448,7 @@ class Metrics(Extension):
 			lambda: getattr(application.hook_context, 'request', None),
 		)
 		self.collector.reset()
+		self.logger.debug('Metrics initialized: routes=%s', len(application.router.routes))
 		for route in http_routes(self, self.path):
 			application.add_extension_route(self, route)
 		self.hook_token = application.add_request_hooks(
@@ -453,13 +456,14 @@ class Metrics(Extension):
 			on_request_response=self.collector.on_request_response,
 			on_request_error=self.collector.on_request_error,
 		)
+		self.logger.debug('Metrics observation hooks connected')
 		try:
 			super().startup(application)
 		except Exception:
 			try:
 				application.remove_request_hooks(self.hook_token)
 			except Exception:
-				getLogger('DefEssential.Extensions.Metrics').exception('시작 실패 후 요청 훅 해제에 실패했습니다')
+				self.logger.exception('시작 실패 후 요청 훅 해제에 실패했습니다')
 			finally:
 				self.hook_token = None
 			raise
@@ -470,6 +474,7 @@ class Metrics(Extension):
 		try:
 			if self.hook_token is not None:
 				self.application.remove_request_hooks(self.hook_token)
+				self.logger.debug('Metrics observation hooks disconnected')
 		except Exception as caught:
 			error = caught
 		finally:
@@ -479,7 +484,7 @@ class Metrics(Extension):
 		except Exception:
 			if error is None:
 				raise
-			getLogger('DefEssential.Extensions.Metrics').exception('요청 훅 해제 실패 후 사용자 정리에 실패했습니다')
+			self.logger.exception('요청 훅 해제 실패 후 사용자 정리에 실패했습니다')
 		if error is not None:
 			raise error
 		return
@@ -489,12 +494,17 @@ class Metrics(Extension):
 		request: Request,
 	) -> Response:
 		if request.header('Accept') == 'application/json':
-			return ResponseJSON(
+			self.logger.debug('Metrics snapshot preparing: request_id=%s', request.id)
+			response = ResponseJSON(
 				self.collector.snapshot(),
 				headers={'Cache-Control': 'no-store'},
 			)
-		return Response(
-			body=self.collector.render().encode('utf-8'),
-			format='text/plain; version=0.0.4',
-			charset='utf-8',
-		)
+		else:
+			self.logger.debug('Metrics text rendering: request_id=%s', request.id)
+			response = Response(
+				body=self.collector.render().encode('utf-8'),
+				format='text/plain; version=0.0.4',
+				charset='utf-8',
+			)
+		self.logger.debug('Metrics response prepared: request_id=%s', request.id)
+		return response

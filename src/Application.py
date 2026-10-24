@@ -140,6 +140,8 @@ def application_hooks(
 class Application:
 	"""Own registration state and execute a new handler instance per request."""
 
+	logger = getLogger('DefEssential.Application')
+
 	def __init__(
 		self,
 		exts: Sequence[Extension] = (),
@@ -231,21 +233,30 @@ class Application:
 			self.router.routes[:] = previous_routes
 			self.extension_routes.clear()
 			previous_hooks = tuple(self.request_hook_registrations)
+			self.logger.info('Application starting: extensions=%s', len(self.exts))
 			try:
 				self.run_hooks(self.startup_hooks)
 				for extension in self.exts:
 					self.current_extension = extension
+					self.logger.debug('Extension starting: extension=%s', type(extension).__qualname__)
 					if extension.startup(self) is not None:
 						raise TypeError('Extension.startup must return None')
+					self.logger.debug('Extension started: extension=%s', type(extension).__qualname__)
 					self.started_extensions.append(extension)
 			except Exception:
+				self.logger.exception('Application startup failed')
 				for extension in reversed(self.started_extensions):
 					self.current_extension = extension
 					try:
+						self.logger.debug('Extension rolling back: extension=%s', type(extension).__qualname__)
 						if extension.cleanup() is not None:
 							raise TypeError('Extension.cleanup must return None')
+						self.logger.debug('Extension rolled back: extension=%s', type(extension).__qualname__)
 					except Exception:
-						getLogger('DefEssential.Application').exception('Cleanup failed after extension startup failure')
+						self.logger.exception(
+							'Cleanup failed after extension startup failure: extension=%s',
+							type(extension).__qualname__,
+						)
 				self.router.routes[:] = previous_routes
 				self.extension_routes.clear()
 				self.started_extensions.clear()
@@ -253,6 +264,7 @@ class Application:
 				raise
 			else:
 				self.running = True
+				self.logger.info('Application started: extensions=%s', len(self.started_extensions))
 			finally:
 				self.current_extension = None
 				self.lifecycle_transition = False
@@ -268,15 +280,18 @@ class Application:
 				return
 			self.running = False
 			self.lifecycle_transition = True
+			self.logger.info('Application stopping: extensions=%s', len(self.started_extensions))
 			first_error = None
 			try:
 				for extension in reversed(self.started_extensions):
 					self.current_extension = extension
 					try:
+						self.logger.debug('Extension cleaning up: extension=%s', type(extension).__qualname__)
 						if extension.cleanup() is not None:
 							raise TypeError('Extension.cleanup must return None')
+						self.logger.debug('Extension cleaned up: extension=%s', type(extension).__qualname__)
 					except Exception as error:
-						getLogger('DefEssential.Application').exception('Extension shutdown failed')
+						self.logger.exception('Extension shutdown failed: extension=%s', type(extension).__qualname__)
 						if first_error is None:
 							first_error = error
 					finally:
@@ -288,7 +303,7 @@ class Application:
 				try:
 					self.run_hooks(self.cleanup_hooks)
 				except Exception as error:
-					getLogger('DefEssential.Application').exception('Application cleanup failed')
+					self.logger.exception('Application cleanup failed')
 					if first_error is None:
 						first_error = error
 			finally:
@@ -297,6 +312,7 @@ class Application:
 				self.lifecycle_transition = False
 			if first_error is not None:
 				raise first_error
+			self.logger.info('Application stopped')
 		return
 
 	def add_extension_route(
@@ -329,6 +345,12 @@ class Application:
 				raise ValueError('Extension route already registered: ' + route.method + ' ' + route.url)
 			self.router.add(route)
 			self.extension_routes.append(route)
+			self.logger.debug(
+				'Extension route registered: extension=%s method=%s route=%s',
+				type(extension).__qualname__,
+				route.method,
+				ascii(route.url[:256]),
+			)
 		return
 
 	def add_request_hooks(
@@ -399,6 +421,13 @@ class Application:
 					if any(first is second for first in previous for second in incoming):
 						raise ValueError('Request hook instance is already registered')
 			self.request_hook_registrations.append(registration)
+			self.logger.debug(
+				'Request hooks registered: extension=%s request=%s response=%s error=%s',
+				type(registration.owner).__qualname__,
+				len(registration.request),
+				len(registration.response),
+				len(registration.error),
+			)
 			return registration
 
 	def remove_request_hooks(
@@ -417,6 +446,7 @@ class Application:
 			if not any(record is registration for record in self.request_hook_registrations):
 				raise ValueError('Request hook registration is not active')
 			self.request_hook_registrations.remove(registration)
+			self.logger.debug('Request hooks removed: extension=%s', type(registration.owner).__qualname__)
 		return
 
 	def ensure_not_in_hook(self) -> None:
@@ -429,13 +459,15 @@ class Application:
 		hooks: Sequence[Callable[..., object]],
 		*args: object,
 	) -> None:
-		for hook in hooks:
+		for index, hook in enumerate(hooks):
+			self.logger.debug('Application lifecycle hook starting: index=%s hook=%s', index, type(hook).__qualname__)
 			result = self.invoke_hook(
 				hook,
 				*args,
 			)
 			if result is not None:
 				raise TypeError('Lifecycle hooks must return None')
+			self.logger.debug('Application lifecycle hook completed: index=%s', index)
 		return
 
 	def invoke_hook(
@@ -469,6 +501,12 @@ class Application:
 			properties.url,
 			handler,
 		))
+		self.logger.debug(
+			'Handler registered: method=%s route=%s handler=%s',
+			properties.method,
+			ascii(properties.url[:256]),
+			handler.__module__ + '.' + handler.__qualname__,
+		)
 		return
 
 	def load(
@@ -481,6 +519,7 @@ class Application:
 			mod=mod,
 			path=path,
 		):
+			self.logger.debug('Module loaded: module=%s', module.__name__)
 			for value in vars(module).values():
 				if (
 					isinstance(value, type)
@@ -497,32 +536,45 @@ class Application:
 		request: Request,
 	) -> Optional[Response]:
 		self.ensure_not_in_hook()
+		self.logger.debug('Application request received: request_id=%s method=%s', request.id, ascii(request.method[:32]))
+		request_id = request.id
 
 		def dispatch() -> Optional[Response]:
 			if request.method == 'OPTIONS' and request.uri == '*':
+				self.logger.debug('OPTIONS wildcard selected: request_id=%s', request.id)
 				return RunOptions().run(
 					request,
 					self.router,
 				)
 			matches = self.router.matches(request.path)
 			if not matches:
+				self.logger.debug('Route not found: request_id=%s', request.id)
 				raise ClientError(
 					'No matching route',
 					status=404,
 				)
 			if request.method == 'OPTIONS' and 'OPTIONS' not in matches:
+				self.logger.debug('Automatic OPTIONS selected: request_id=%s', request.id)
 				return RunOptions().run(
 					request,
 					self.router,
 				)
 			if request.method not in matches:
+				self.logger.debug('Method not allowed: request_id=%s', request.id)
 				raise ClientError(
 					'Method not allowed',
 					status=405,
 				)
+			route, parameters = matches[request.method]
+			self.logger.debug(
+				'Route selected: request_id=%s method=%s route=%s handler=%s',
+				request.id,
+				ascii(request.method[:32]),
+				ascii(route.url[:256]),
+				route.object.__module__ + '.' + route.object.__qualname__,
+			)
 			if (request.reader.chunked or request.reader.remaining) and request.format is None:
 				raise ClientError('Content-Type is required for requests with a body')
-			route, parameters = matches[request.method]
 			if (request.reader.chunked or request.reader.remaining) and route.object.properties.body is None:
 				raise ClientError(
 					'No body reader is configured for this handler',
@@ -545,16 +597,24 @@ class Application:
 		previous_request = getattr(self.hook_context, 'request', None)
 		self.hook_context.request = request
 		try:
-			for hook in request_hooks:
+			for index, hook in enumerate(request_hooks):
+				previous_id = request.id
+				self.logger.debug('Application request hook starting: request_id=%s index=%s hook=%s', request.id, index, type(hook).__qualname__)
 				request = self.invoke_hook(
 					hook,
 					request,
 				)
 				if not isinstance(request, Request):
 					raise TypeError('ApplicationRequest hooks must return a Request')
+				self.logger.debug('Application request hook completed: request_id=%s index=%s', request.id, index)
+				if previous_id != request.id:
+					self.logger.debug('Request replaced: previous_request_id=%s request_id=%s', previous_id, request.id)
+			self.logger.debug('Application dispatch starting: request_id=%s', request.id)
 			response = dispatch()
-			for hook in response_hooks:
+			self.logger.debug('Application dispatch completed: request_id=%s', request.id)
+			for index, hook in enumerate(response_hooks):
 				previous = response
+				self.logger.debug('Application response hook starting: request_id=%s index=%s hook=%s', request.id, index, type(hook).__qualname__)
 				response = self.invoke_hook(
 					hook,
 					request,
@@ -564,9 +624,26 @@ class Application:
 					raise TypeError('ApplicationRequestResponse hooks must return a Response or None')
 				if previous is None and response is not None:
 					raise TypeError('ApplicationRequestResponse hooks cannot replace direct output')
+				self.logger.debug('Application response hook completed: request_id=%s index=%s', request.id, index)
+			self.logger.debug(
+				'Application response provided: request_id=%s mode=%s',
+				request.id,
+				'returned' if response is not None else 'direct',
+			)
 			return response
 		except Exception as error:
-			for hook in error_hooks:
+			self.logger.debug(
+				'Application request failed: request_id=%s error_type=%s',
+				request_id,
+				type(error).__qualname__,
+			)
+			for index, hook in enumerate(error_hooks):
+				self.logger.debug(
+					'Application error hook starting: request_id=%s index=%s hook=%s',
+					request.id if isinstance(request, Request) else request_id,
+					index,
+					type(hook).__qualname__,
+				)
 				result = self.invoke_hook(
 					hook,
 					request,
@@ -574,6 +651,7 @@ class Application:
 				)
 				if result is not None:
 					raise TypeError('ApplicationRequestError hooks must return None')
+				self.logger.debug('Application error hook completed: request_id=%s index=%s', request_id, index)
 			raise
 		finally:
 			self.hook_context.request = previous_request

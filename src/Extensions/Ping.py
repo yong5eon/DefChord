@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import (
 	Optional,
 	Sequence,
@@ -28,6 +29,8 @@ __all__ = (
 
 class Ping(Extension):
 	"""시작 시 연결한 Application의 현재 실행 상태를 응답한다."""
+
+	logger = getLogger('DefEssential.Extensions.Ping')
 
 	def __init__(
 		self,
@@ -83,6 +86,7 @@ class Ping(Extension):
 		request: Request,
 	) -> Response:
 		running = self.application.running
+		self.logger.debug('Application state observed: request_id=%s running=%s', request.id, running)
 		return ResponseJSON(
 			{'status': 'running' if running else 'stopped'},
 			status=200 if running else 503,

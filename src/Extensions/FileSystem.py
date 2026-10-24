@@ -71,6 +71,8 @@ class FileSystemRoute(Route):
 class FileSystem(Extension):
 	"""주입된 연결에서 요청 파일을 응답한다."""
 
+	logger = getLogger('DefEssential.Extensions.FileSystem')
+
 	def __init__(
 		self,
 		path: str,
@@ -133,13 +135,17 @@ class FileSystem(Extension):
 						method=method,
 					),
 				)
+			self.logger.debug('FileSystem connecting')
 			self.connection.connect()
+			self.logger.debug('FileSystem connected')
 			super().startup(application)
 		except Exception:
 			try:
+				self.logger.debug('FileSystem rolling back')
 				self.connection.close()
+				self.logger.debug('FileSystem rolled back')
 			except Exception:
-				getLogger('DefEssential.Extensions.FileSystem').exception('시작 실패 후 연결 정리에 실패했습니다')
+				self.logger.exception('시작 실패 후 연결 정리에 실패했습니다')
 			raise
 		return
 
@@ -150,11 +156,13 @@ class FileSystem(Extension):
 		except Exception as caught:
 			error = caught
 		try:
+			self.logger.debug('FileSystem closing')
 			self.connection.close()
+			self.logger.debug('FileSystem closed')
 		except Exception:
 			if error is None:
 				raise
-			getLogger('DefEssential.Extensions.FileSystem').exception('사용자 훅 실패 후 연결 정리에 실패했습니다')
+			self.logger.exception('사용자 훅 실패 후 연결 정리에 실패했습니다')
 		if error is not None:
 			raise error
 		return
@@ -164,6 +172,7 @@ class FileSystem(Extension):
 		request: Request,
 	) -> ResponseFile:
 		path = request.parameters['path']
+		self.logger.debug('File response preparing: request_id=%s', request.id)
 		try:
 			format, encoding = self.connection.type(path)
 			file = self.connection.open(
@@ -176,7 +185,9 @@ class FileSystem(Extension):
 			IsADirectoryError,
 			PermissionError,
 		) as error:
+			self.logger.debug('File response rejected: request_id=%s error_type=%s', request.id, type(error).__name__)
 			raise file_error(error) from error
+		self.logger.debug('File response prepared: request_id=%s', request.id)
 		return ResponseFile(
 			file,
 			format=format,

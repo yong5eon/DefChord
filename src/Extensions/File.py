@@ -1,4 +1,5 @@
 from pathlib import Path
+from logging import getLogger
 from typing import (
 	Optional,
 	Sequence,
@@ -28,6 +29,8 @@ __all__ = (
 
 class File(Extension):
 	"""고정 HTTP 경로에 파일과 인스턴스별 사용자 훅을 연결한다."""
+
+	logger = getLogger('DefEssential.Extensions.File')
 
 	def __init__(
 		self,
@@ -86,4 +89,7 @@ class File(Extension):
 		self,
 		request: Request,
 	) -> ResponseFile:
-		return ResponseFile(self.file)
+		self.logger.debug('File response preparing: request_id=%s', request.id)
+		response = ResponseFile(self.file)
+		self.logger.debug('File response prepared: request_id=%s', request.id)
+		return response

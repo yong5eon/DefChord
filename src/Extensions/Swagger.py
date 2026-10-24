@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import (
 	Optional,
 	Sequence,
@@ -28,6 +29,8 @@ __all__ = (
 
 class Swagger(Extension):
 	"""명시적인 같은 출처 명세 경로를 Swagger UI에 연결한다."""
+
+	logger = getLogger('DefEssential.Extensions.Swagger')
 
 	def __init__(
 		self,
@@ -96,7 +99,8 @@ class Swagger(Extension):
 		self,
 		request: Request,
 	) -> Response:
-		return page(
+		self.logger.debug('Swagger page preparing: request_id=%s', request.id)
+		response = page(
 			'Swagger',
 			self.title,
 			self.description,
@@ -109,3 +113,5 @@ class Swagger(Extension):
 				"connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
 			),
 		)
+		self.logger.debug('Swagger page prepared: request_id=%s', request.id)
+		return response
