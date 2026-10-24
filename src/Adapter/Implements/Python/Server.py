@@ -66,21 +66,20 @@ class Server(
 		self,
 		poll_interval: float = 0.5,
 	) -> None:
+		host = self.server_address[0]
+		if not isinstance(host, str):
+			raise TypeError('HTTP listen address must be a string')
+		startup(
+			self.application,
+			'Python',
+			host,
+			self.server_port,
+		)
 		self.app.start()
 		try:
-			host = self.server_address[0]
-			if not isinstance(host, str):
-				raise TypeError('HTTP listen address must be a string')
-			startup(
-				self.application,
-				'Python',
-				host,
-				self.server_port,
-			)
-			try:
-				super().serve_forever(poll_interval=poll_interval)
-			except KeyboardInterrupt:
-				getLogger('DefEssential.Server').info('Shutdown requested by keyboard interrupt')
+			super().serve_forever(poll_interval=poll_interval)
+		except KeyboardInterrupt:
+			getLogger('DefEssential.Server').info('Shutdown requested by keyboard interrupt')
 		finally:
 			self.app.stop()
 		return
