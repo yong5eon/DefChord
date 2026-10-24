@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from DefEssential import (
 	Body,
 	Content,
@@ -6,6 +8,9 @@ from DefEssential import (
 	QueryString,
 	Request,
 	RequestRunner,
+	RequestRunnerRequest,
+	RequestRunnerRequestError,
+	RequestRunnerRequestResponse,
 	Response,
 	ResponseSpecification,
 )
@@ -182,6 +187,63 @@ CALCULATION_RESPONSE = ResponseSpecification(
 )
 
 
+class RequestLog(RequestRunnerRequest):
+	"""검증된 요청의 핸들러 실행 진입을 기록한다."""
+
+	def __call__(
+		self,
+		request: Request,
+	) -> Request:
+		getLogger('Sample.Requests').info(
+			'요청 훅: id=%s method=%s uri=%s',
+			request.id,
+			request.method,
+			request.uri,
+		)
+		return request
+
+
+class ResponseLog(RequestRunnerRequestResponse):
+	"""반환 응답의 전송 전 후처리 시점을 기록한다."""
+
+	def __call__(
+		self,
+		request: Request,
+		response: Response,
+	) -> Response:
+		getLogger('Sample.Requests').info(
+			'응답 훅: id=%s method=%s uri=%s status=%s (헤더 전송 전)',
+			request.id,
+			request.method,
+			request.uri,
+			response.status,
+		)
+		return response
+
+
+class ErrorLog(RequestRunnerRequestError):
+	"""검증 및 핸들러 실행 오류를 예외 정보와 함께 기록한다."""
+
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> None:
+		getLogger('Sample.Requests').error(
+			'오류 훅: id=%s method=%s uri=%s error=%s',
+			request.id,
+			request.method,
+			request.uri,
+			error,
+			exc_info=(
+				type(error),
+				error,
+				error.__traceback__,
+			),
+		)
+		return
+
+
 def result(
 	request: Request,
 ) -> ResponseJSON:
@@ -223,6 +285,9 @@ class RunGet(
 	summary='Validate path and query values and calculate the result',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
+	on_request=RequestLog(),
+	on_request_response=ResponseLog(),
+	on_request_error=ErrorLog(),
 ):
 	def run(
 		self,
@@ -241,6 +306,9 @@ class RunPost(
 	summary='Calculate the result by adding JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
+	on_request=RequestLog(),
+	on_request_response=ResponseLog(),
+	on_request_error=ErrorLog(),
 ):
 	def run(
 		self,
@@ -259,6 +327,9 @@ class RunPut(
 	summary='Calculate the result by multiplying JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
+	on_request=RequestLog(),
+	on_request_response=ResponseLog(),
+	on_request_error=ErrorLog(),
 ):
 	def run(
 		self,
@@ -277,6 +348,9 @@ class RunDelete(
 	summary='Calculate the result by subtracting JSON body values',
 	response=CALCULATION_RESPONSE,
 	tags='RequestRunner',
+	on_request=RequestLog(),
+	on_request_response=ResponseLog(),
+	on_request_error=ErrorLog(),
 ):
 	def run(
 		self,
@@ -305,6 +379,9 @@ class RunUpload(
 	),
 	summary='Return a binary upload in the specified format',
 	tags='RequestRunner',
+	on_request=RequestLog(),
+	on_request_response=ResponseLog(),
+	on_request_error=ErrorLog(),
 ):
 	def run(
 		self,

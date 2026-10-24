@@ -1,3 +1,4 @@
+from logging import getLogger
 from random import randrange
 from time import sleep
 
@@ -5,6 +6,10 @@ from DefEssential import (
 	Body,
 	Request,
 	RequestRunner,
+	RequestRunnerRequest,
+	RequestRunnerRequestError,
+	RequestRunnerRequestResponse,
+	Response,
 )
 from DefEssential.IO.Readers import (
 	ChunkedStreamContentReader,
@@ -18,12 +23,76 @@ from DefEssential.IO.Writers import (
 )
 
 
+class StreamingRequestLog(RequestRunnerRequest):
+	"""본문 처리 후 핸들러 실행 직전에 요청을 기록한다."""
+
+	def __call__(
+		self,
+		request: Request,
+	) -> Request:
+		getLogger('Sample.Streaming').info(
+			'요청 훅: id=%s method=%s uri=%s',
+			request.id,
+			request.method,
+			request.uri,
+		)
+		return request
+
+
+class StreamingResponseHeaders(RequestRunnerRequestResponse):
+	"""스트림 begin 시 헤더 전송 전에 응답을 수정한다."""
+
+	def __call__(
+		self,
+		request: Request,
+		response: Response,
+	) -> Response:
+		response.header(
+			'X-Request-ID',
+			request.id,
+		)
+		getLogger('Sample.Streaming').info(
+			'응답 훅: id=%s method=%s uri=%s status=%s (헤더 전송 전)',
+			request.id,
+			request.method,
+			request.uri,
+			response.status,
+		)
+		return response
+
+
+class StreamingErrorLog(RequestRunnerRequestError):
+	"""스트리밍 실행 오류를 요청 식별자와 예외 정보로 기록한다."""
+
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> None:
+		getLogger('Sample.Streaming').error(
+			'오류 훅: id=%s method=%s uri=%s error=%s',
+			request.id,
+			request.method,
+			request.uri,
+			error,
+			exc_info=(
+				type(error),
+				error,
+				error.__traceback__,
+			),
+		)
+		return
+
+
 class RunStreamIn(
 	RequestRunner,
 	method='PUT',
 	url='/api/run/stream',
 	body=Body(StreamContentReader()),
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	def run(
 		self,
@@ -46,6 +115,9 @@ class RunChunkedStreamIn(
 	url='/api/run/stream/chunked',
 	body=Body(ChunkedStreamContentReader()),
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	def run(
 		self,
@@ -67,6 +139,9 @@ class RunStreamOut(
 	method='GET',
 	url='/api/run/stream',
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	def run(
 		self,
@@ -90,6 +165,9 @@ class RunChunkedStreamOut(
 	method='GET',
 	url='/api/run/stream/chunked',
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	def run(
 		self,
@@ -112,6 +190,9 @@ class RunServerSentEvent(
 	method='GET',
 	url='/api/run/stream/sse',
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	def run(
 		self,
@@ -135,6 +216,9 @@ class RunWebSocket(
 	method='GET',
 	url='/api/run/ws',
 	tags='Streaming',
+	on_request=StreamingRequestLog(),
+	on_request_response=StreamingResponseHeaders(),
+	on_request_error=StreamingErrorLog(),
 ):
 	"""받은 text·binary 메시지를 그대로 돌려보낸다."""
 
