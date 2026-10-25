@@ -22,7 +22,10 @@ from weakref import ref
 from .Error import ClientError
 from .RequestRunner import RequestRunner
 from .Request import Request
-from .Response import Response
+from .Response import (
+	Response,
+	close_bodies,
+)
 from .Route import Route
 from .Router import Router
 from .Runners import RunRequest
@@ -88,7 +91,7 @@ class ApplicationRequestError(ABC):
 		self,
 		request: Request,
 		error: Exception,
-	) -> None:
+	) -> Optional[Response]:
 		raise NotImplementedError
 
 
@@ -614,16 +617,43 @@ class Application:
 			self.logger.debug('Application dispatch completed: request_id=%s', request.id)
 			for index, hook in enumerate(response_hooks):
 				previous = response
+				previous_body = previous.body if previous is not None else None
 				self.logger.debug('Application response hook starting: request_id=%s index=%s hook=%s', request.id, index, type(hook).__qualname__)
-				response = self.invoke_hook(
-					hook,
-					request,
-					response,
-				)
-				if response is not None and not isinstance(response, Response):
-					raise TypeError('ApplicationRequestResponse hooks must return a Response or None')
-				if previous is None and response is not None:
-					raise TypeError('ApplicationRequestResponse hooks cannot replace direct output')
+				try:
+					result = self.invoke_hook(
+						hook,
+						request,
+						response,
+					)
+					if result is not None and not isinstance(result, Response):
+						raise TypeError('ApplicationRequestResponse hooks must return a Response or None')
+					if previous is None and result is not None:
+						raise TypeError('ApplicationRequestResponse hooks cannot replace direct output')
+				except Exception:
+					if previous is not None:
+						close_bodies(
+							previous_body,
+							previous.body,
+							preserve_error=True,
+						)
+					raise
+				response = result
+				if previous is not None:
+					try:
+						close_bodies(*(
+							body for body in (
+								previous_body,
+								previous.body,
+							)
+							if response is None or body is not response.body
+						))
+					except Exception:
+						if response is not None:
+							close_bodies(
+								response.body,
+								preserve_error=True,
+							)
+						raise
 				self.logger.debug('Application response hook completed: request_id=%s index=%s', request.id, index)
 			self.logger.debug(
 				'Application response provided: request_id=%s mode=%s',
@@ -649,8 +679,17 @@ class Application:
 					request,
 					error,
 				)
+				if result is not None and not isinstance(result, Response):
+					raise TypeError('ApplicationRequestError hooks must return a Response or None')
 				if result is not None:
-					raise TypeError('ApplicationRequestError hooks must return None')
+					writer = request.response_writer if isinstance(request, Request) else None
+					if writer is not None and writer.started:
+						close_bodies(
+							result.body,
+							preserve_error=True,
+						)
+						raise RuntimeError('Cannot return a Response after starting direct output')
+					return result
 				self.logger.debug('Application error hook completed: request_id=%s index=%s', request_id, index)
 			raise
 		finally:

@@ -66,7 +66,7 @@ class RequestRunnerRequestError(ABC):
 		self,
 		request: Request,
 		error: Exception,
-	) -> None:
+	) -> Optional[Response]:
 		raise NotImplementedError
 
 
