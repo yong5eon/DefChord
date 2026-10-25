@@ -470,6 +470,74 @@ class ExtensionHookTests(TestCase):
 		self.assertIsInstance(caught.exception.__context__, ValueError)
 		return
 
+	def test_error_hook_response_skips_extension_hooks_and_continues_outward(self):
+		events = []
+		response = Response(status=503, body=b'extension recovery')
+
+		class ErrorHook(ExtensionRequestError):
+			def __init__(self, result):
+				self.result = result
+				return
+
+			def __call__(self, req, error):
+				events.append('extension-error')
+				return self.result
+
+		class ExtensionResponse(ExtensionRequestResponse):
+			def __call__(self, req, current):
+				raise AssertionError('확장 응답 훅 재실행')
+
+		class ApplicationResponse(ApplicationRequestResponse):
+			def __call__(self, req, current):
+				events.append('application-response')
+				return current
+
+		class Failing(Echo):
+			def __call__(self, req):
+				raise ValueError('extension failed')
+
+		extension = Failing(
+			on_request_error=(
+				ErrorHook(None),
+				ErrorHook(response),
+				ErrorHook(self.fail),
+			),
+			on_request_response=ExtensionResponse(),
+		)
+		app = Application(
+			exts=(extension,),
+			on_request_response=ApplicationResponse(),
+		)
+		app.start()
+		self.addCleanup(app.stop)
+		result = app(request('/extension'))
+		self.assertIs(result, response)
+		self.assertEqual(events, ['extension-error', 'extension-error', 'application-response'])
+		return
+
+	def test_extension_error_response_cannot_replace_started_direct_output(self):
+		body = BytesIO(b'recovery body')
+		response = Response(status=503, body=body)
+		writer = ResponseWriter(lambda current, chunked: None, BytesIO())
+
+		class ErrorHook(ExtensionRequestError):
+			def __call__(self, req, error):
+				return response
+
+		class Failing(Echo):
+			def __call__(self, req):
+				req.writer.begin(Response(status=202))
+				raise ValueError('direct output failed')
+
+		app = self.start(Failing(on_request_error=ErrorHook()))
+		req = request('/extension')
+		req.response_writer = writer
+		with self.assertRaisesRegex(RuntimeError, 'starting direct output'):
+			app(req)
+		self.assertEqual(writer.status, 202)
+		self.assertTrue(body.closed)
+		return
+
 	def test_invalid_results_are_observed_inside_extension_boundary(self):
 		errors = []
 

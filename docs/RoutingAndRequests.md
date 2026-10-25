@@ -324,4 +324,4 @@ flowchart TD
   I -. 훅 실패 .-> Z
 ```
 
-요청 전체의 애플리케이션·확장·handler 훅 실행 순서는 [애플리케이션 생명주기](./LifecycleAndErrors.md)를 참고하세요.
+요청 전체의 애플리케이션·확장·handler 요청·응답 훅 순서는 [애플리케이션 생명주기](./Lifecycle.md)를, 오류 응답의 흐름은 [오류 처리](./ErrorHandling.md)를 참고하세요.

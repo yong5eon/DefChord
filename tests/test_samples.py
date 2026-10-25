@@ -117,6 +117,14 @@ class SampleTests(TestCase):
 			self.assertNotIn(".text('curl.exe ", text)
 		return
 
+	def test_request_runner_error_hook_returns_custom_sample_response(self):
+		with running(create_application()) as address:
+			status, headers, data = self.call(address, 'GET', '/api/run/error')
+		self.assertEqual(status, 418)
+		self.assertEqual(data, b'Handled by RequestRunner error hook.')
+		self.assertEqual(headers['Content-Type'], 'text/plain; charset=utf-8')
+		return
+
 	def test_request_runner_form_defaults_and_validation_over_http(self):
 		parser = RequestRunnerForms()
 		parser.feed((SAMPLE / 'res' / 'html' / 'welcome.html').read_text(encoding='utf-8'))

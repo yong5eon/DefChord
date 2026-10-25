@@ -7,7 +7,10 @@ from typing import (
 from ..Extension import Extension
 from ..Request import Request
 from ..RequestRunner import RequestRunner
-from ..Response import Response
+from ..Response import (
+	Response,
+	close_bodies,
+)
 from .RunFactory import RunFactory
 
 __all__ = (
@@ -75,8 +78,18 @@ def run_extension(
 		logger.debug('Extension failed: request_id=%s extension=%s error_type=%s', request.id, type(extension).__qualname__, type(error).__qualname__)
 		for index, hook in enumerate(extension.request_error_hooks):
 			logger.debug('Extension error hook starting: request_id=%s index=%s hook=%s', request.id, index, type(hook).__qualname__)
-			if hook(request, error) is not None:
-				raise TypeError('ExtensionRequestError hooks must return None')
+			response = hook(request, error)
+			if response is not None and not isinstance(response, Response):
+				raise TypeError('ExtensionRequestError hooks must return a Response or None')
+			if response is not None:
+				writer = request.response_writer
+				if writer is not None and writer.started:
+					close_bodies(
+						response.body,
+						preserve_error=True,
+					)
+					raise RuntimeError('Cannot return a Response after starting direct output')
+				return response
 			logger.debug('Extension error hook completed: request_id=%s index=%s', request.id, index)
 		raise
 

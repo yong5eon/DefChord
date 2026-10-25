@@ -21,6 +21,7 @@ from DefEssential import (
 	RequestRunnerRequestResponse,
 )
 from DefEssential.IO.ResponseWriter import ResponseWriter
+from DefEssential.Adapter.RequestHandler import handle_request
 
 
 class Lifecycle(Extension):
@@ -325,6 +326,96 @@ class ApplicationHookTests(TestCase):
 		with self.assertRaisesRegex(RuntimeError, 'error hook failed') as raised:
 			app(request())
 		self.assertIsInstance(raised.exception.__context__, ValueError)
+		return
+
+	def test_application_error_response_stops_hooks_and_does_not_repeat_response_hooks(self):
+		events = []
+		error = ValueError('response hook failed')
+		response = Response(status=503, body=b'application recovery')
+		original_body = BytesIO(b'original')
+
+		class ResponseHook(ApplicationRequestResponse):
+			def __call__(self, req, result):
+				events.append('response')
+				raise error
+
+		class ErrorHook(ApplicationRequestError):
+			def __init__(self, result):
+				self.result = result
+				return
+
+			def __call__(self, req, caught):
+				events.append('error')
+				return self.result
+
+		class Handler(RequestRunner, method='GET', url='/hook'):
+			def run(self, req):
+				return Response(body=original_body)
+
+		app = Application(
+			on_request_response=ResponseHook(),
+			on_request_error=(
+				ErrorHook(None),
+				ErrorHook(response),
+				ErrorHook(self.fail),
+			),
+		)
+		app.add(Handler)
+		result = app(request())
+		self.assertIs(result, response)
+		self.assertEqual(events, ['response', 'error', 'error'])
+		self.assertTrue(original_body.closed)
+		return
+
+	def test_adapter_transmits_application_error_response(self):
+		response = Response(status=418, body=b'application error')
+
+		class RequestHook(ApplicationRequest):
+			def __call__(self, req):
+				raise ValueError('request failed')
+
+		class ErrorHook(ApplicationRequestError):
+			def __call__(self, req, error):
+				return response
+
+		app = Application(
+			on_request=RequestHook(),
+			on_request_error=ErrorHook(),
+		)
+		output = BytesIO()
+		writer = ResponseWriter(lambda current, chunked: None, output)
+		handle_request(
+			app,
+			lambda: request(writer=writer),
+			writer,
+		)
+		self.assertEqual(writer.status, 418)
+		self.assertEqual(output.getvalue(), b'application error')
+		return
+
+	def test_application_error_response_cannot_replace_started_direct_output(self):
+		body = BytesIO(b'recovery body')
+		response = Response(status=503, body=body)
+		writer = ResponseWriter(lambda current, chunked: None, BytesIO())
+
+		class RequestHook(ApplicationRequest):
+			def __call__(self, req):
+				req.writer.begin(Response(status=202))
+				raise ValueError('direct output failed')
+
+		class ErrorHook(ApplicationRequestError):
+			def __call__(self, req, error):
+				return response
+
+		app = Application(
+			on_request=RequestHook(),
+			on_request_error=ErrorHook(),
+		)
+		with self.assertRaisesRegex(RuntimeError, 'starting direct output') as caught:
+			app(request(writer=writer))
+		self.assertIsInstance(caught.exception.__context__, ValueError)
+		self.assertEqual(writer.status, 202)
+		self.assertTrue(body.closed)
 		return
 
 	def test_route_errors_reach_application_error_hooks(self):

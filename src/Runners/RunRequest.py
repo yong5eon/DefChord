@@ -189,8 +189,18 @@ class RunRequest:
 					index,
 					type(hook).__qualname__,
 				)
-				if hook(request, error) is not None:
-					raise TypeError('RequestRunnerRequestError hooks must return None')
+				response = hook(request, error)
+				if response is not None and not isinstance(response, Response):
+					raise TypeError('RequestRunnerRequestError hooks must return a Response or None')
+				if response is not None:
+					active_writer = request.response_writer
+					if active_writer is not None and active_writer.started:
+						close_bodies(
+							response.body,
+							preserve_error=True,
+						)
+						raise RuntimeError('Cannot return a Response after starting direct output')
+					return response
 				self.logger.debug('Error hook completed: request_id=%s index=%s', request.id, index)
 			raise
 		finally:

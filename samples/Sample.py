@@ -72,6 +72,7 @@ from samples.runners.ContentValidation import (
 )
 from samples.runners.Requests import (
 	RunDelete,
+	RunHandledError,
 	RunGet,
 	RunPost,
 	RunPut,
@@ -273,6 +274,7 @@ def create_application() -> Application:
 	app.add(RunPost)
 	app.add(RunPut)
 	app.add(RunDelete)
+	app.add(RunHandledError)
 	app.add(RunUpload)
 	app.add(RunStreamIn)
 	app.add(RunStreamOut)
