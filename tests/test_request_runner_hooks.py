@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 from io import BytesIO
 from threading import Barrier
+from typing import Optional, get_type_hints
 from unittest import TestCase
 
 from DefEssential import (
@@ -152,6 +153,12 @@ class RequestRunnerHookTests(TestCase):
 			):
 				self.assertIs(getattr(module, contract.__name__), contract)
 				self.assertIn(contract.__name__, module.__all__)
+				if contract in (
+					ApplicationRequestError,
+					ExtensionRequestError,
+					RequestRunnerRequestError,
+				):
+					self.assertEqual(get_type_hints(contract.__call__)['return'], Optional[Response])
 			for name in (
 				'RequestFilter',
 				'ResponseFilter',
@@ -459,9 +466,10 @@ class RequestRunnerHookTests(TestCase):
 		return
 
 	def test_error_hook_failure_preserves_chain_and_stops(self):
-		for invalid_return in (
+		for hook_result in (
 			False,
 			True,
+			object(),
 		):
 			error = ValueError('처리 실패')
 			hook_error = RuntimeError('오류 훅 실패')
@@ -475,8 +483,8 @@ class RequestRunnerHookTests(TestCase):
 				caught,
 			):
 				seen.append(caught)
-				if invalid_return:
-					return Response()
+				if hook_result is not None:
+					return hook_result
 				raise hook_error
 
 			runner = handler(
@@ -486,10 +494,135 @@ class RequestRunnerHookTests(TestCase):
 					ErrorHook(lambda req, error: self.fail('후속 오류 훅 실행')),
 				),
 			)
-			with self.assertRaises(TypeError if invalid_return else RuntimeError) as caught:
+			with self.assertRaises(TypeError if hook_result is not None else RuntimeError) as caught:
 				RunRequest(runner).run(request())
 			self.assertIs(caught.exception.__context__, error)
 			self.assertEqual(seen, [error])
+		return
+
+	def test_error_hooks_return_first_response_and_skip_normal_response_hooks(self):
+		events = []
+		error = ValueError('요청 실패')
+		response = Response(status=503, body=b'recovered')
+
+		def fail(req):
+			raise error
+
+		class HandlerError(RequestRunnerRequestError):
+			def __call__(self, req, caught):
+				events.append('handled')
+				return response
+
+		runner = handler(
+			fail,
+			on_request_response=ResponseHook(lambda req, value: events.append('response') or value),
+			on_request_error=(
+				ErrorHook(lambda req, caught: events.append('observe') or None),
+				HandlerError(),
+				ErrorHook(lambda req, caught: self.fail('후속 오류 훅 실행')),
+			),
+		)
+		result = RunRequest(runner).run(request())
+		self.assertIs(result, response)
+		self.assertEqual(events, ['observe', 'handled'])
+		return
+
+	def test_adapter_transmits_request_runner_error_response(self):
+		response = Response(status=422, body=b'custom error')
+
+		def fail(req):
+			raise ValueError('request failed')
+
+		runner = handler(
+			fail,
+			on_request_error=ErrorHook(lambda req, error: response),
+		)
+		app = Application()
+		app.add(runner)
+		output = BytesIO()
+		writer = ResponseWriter(lambda current, chunked: None, output)
+		handle_request(
+			app,
+			lambda: request(writer=writer),
+			writer,
+		)
+		self.assertEqual(writer.status, 422)
+		self.assertEqual(output.getvalue(), b'custom error')
+		return
+
+	def test_error_response_cannot_replace_started_direct_output(self):
+		body = TrackedBody()
+		response = Response(status=503, body=body)
+		writer = ResponseWriter(lambda current, chunked: None, BytesIO())
+
+		def fail(req):
+			req.writer.begin(Response(status=202))
+			raise ValueError('direct output failed')
+
+		runner = handler(
+			fail,
+			on_request_error=ErrorHook(lambda req, error: response),
+		)
+		with self.assertRaisesRegex(RuntimeError, 'starting direct output') as caught:
+			RunRequest(runner).run(request(writer=writer))
+		self.assertIsInstance(caught.exception.__context__, ValueError)
+		self.assertEqual(writer.status, 202)
+		self.assertEqual(body.closes, 1)
+		return
+
+	def test_outer_response_failure_uses_outer_error_hooks_only(self):
+		events = []
+		original_error = ValueError('runner failed')
+		outer_error = RuntimeError('application response failed')
+		runner_response = Response(status=409, body=b'runner recovery')
+		application_response = Response(status=503, body=b'application recovery')
+
+		def fail(req):
+			raise original_error
+
+		class RunnerError(RequestRunnerRequestError):
+			def __call__(self, req, caught):
+				events.append('runner-error')
+				return runner_response
+
+		class ApplicationResponse(ApplicationRequestResponse):
+			def __call__(self, req, current):
+				events.append('application-response')
+				raise outer_error
+
+		class ApplicationError(ApplicationRequestError):
+			def __init__(self, result):
+				self.result = result
+				return
+
+			def __call__(self, req, caught):
+				events.append('application-error')
+				return self.result
+
+		runner = handler(
+			fail,
+			on_request_response=ResponseHook(
+				lambda req, current: self.fail('처리된 오류의 runner 응답 훅 재실행')
+			),
+			on_request_error=RunnerError(),
+		)
+		app = Application(
+			on_request_response=ApplicationResponse(),
+			on_request_error=(
+				ApplicationError(None),
+				ApplicationError(application_response),
+				ApplicationError(self.fail),
+			),
+		)
+		app.add(runner)
+		result = app(request())
+		self.assertIs(result, application_response)
+		self.assertEqual(events, [
+			'runner-error',
+			'application-response',
+			'application-error',
+			'application-error',
+		])
 		return
 
 	def test_response_replacement_and_body_ownership(self):
