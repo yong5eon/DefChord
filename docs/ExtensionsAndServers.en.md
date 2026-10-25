@@ -95,4 +95,4 @@ flowchart TD
   F --> G[Server stops]
 ```
 
-See [Application lifecycle](./LifecycleAndErrors.en.md) for hook arguments, request/response/error ordering, and exception behavior.
+See [Application lifecycle](./Lifecycle.en.md) for lifecycle and normal request/response hooks, and [Error handling](./ErrorHandling.en.md) for error hooks and exceptions.

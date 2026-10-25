@@ -116,6 +116,8 @@ python samples/Sample.py
 
 샘플은 여러 route, 요청 validator, 응답, extension, 스트리밍 및 WebSocket 동작을 조합합니다. 기본 Python server가 사용하는 주소와 필요한 샘플 리소스는 실행 결과와 코드에서 확인하세요.
 
+오류 훅이 사용자 정의 응답을 반환하는 예제는 서버 실행 후 `GET http://127.0.0.1:8000/api/run/error`로 확인할 수 있습니다. 이 route는 의도적으로 `418` 오류를 발생시키고 `RequestRunner` 오류 훅에서 `Handled by RequestRunner error hook.` 응답으로 처리합니다.
+
 변경 후 저장소 테스트는 editable 설치 후 실행합니다.
 
 ```shell

@@ -24,7 +24,7 @@ flowchart LR
   E[Extensions] --> A
 ```
 
-`Application` owns routes and extensions. For each request it creates a handler instance, validates input, then calls `run(request)`. Application and extension hooks handle cross-cutting startup/cleanup, request preprocessing/postprocessing, and error observation; `RequestRunner` hooks handle route-specific behavior.
+`Application` owns routes and extensions. For each request it creates a handler instance, validates input, then calls `run(request)`. Application and extension hooks handle cross-cutting startup/cleanup and request/response processing; `RequestRunner` hooks handle route-specific behavior. The separate Error Handling guide explains how to build error responses.
 
 ## Learning path
 
@@ -32,7 +32,8 @@ flowchart LR
 2. Learn routing, request validation, authentication, Origin, and ordinary JSON/text/file responses in [Routes, Requests, and Responses](./RoutingAndRequests.en.md).
 3. Learn the four ordinary/chunked streaming input and output modes, SSE, and WebSocket in [Streaming and WebSockets](./StreamingAndWebSockets.en.md).
 4. Explore health checks, metrics, OpenAPI, file serving, and server adapters in [Extensions and servers](./ExtensionsAndServers.en.md).
-5. Understand startup, cleanup, request, response, and error hooks in [Application lifecycle and error handling](./LifecycleAndErrors.en.md).
+5. Learn startup, cleanup, and normal request/response hook timing in [Application lifecycle](./Lifecycle.en.md).
+6. See [Error handling](./ErrorHandling.en.md) for error-hook return contracts and layered recovery.
 
 ## Guides
 
@@ -40,7 +41,8 @@ flowchart LR
 - [Routes, Requests, and Responses](./RoutingAndRequests.en.md): methods and paths, input validation, body readers, authentication, Origin, ordinary responses, and files
 - [Streaming and WebSockets](./StreamingAndWebSockets.en.md): four streaming input/output modes, Server-Sent Events, and WebSocket
 - [Extensions and server adapters](./ExtensionsAndServers.en.md): built-in extensions, handler module loading, and Python/Gunicorn/Uvicorn
-- [Application lifecycle and error handling](./LifecycleAndErrors.en.md): hook scopes, execution order, cleanup, and error propagation
+- [Application lifecycle](./Lifecycle.en.md): application and extension startup/cleanup, and normal request/response hook scopes and order
+- [Error handling](./ErrorHandling.en.md): `Optional[Response]` error-hook contracts, exception propagation, and operational constraints
 
 ## Further resources
 

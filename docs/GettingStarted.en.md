@@ -116,6 +116,8 @@ python samples/Sample.py
 
 The sample combines routes, request validators, responses, extensions, streaming, and WebSocket behavior. Check the sample code and output for the built-in Python server address and required sample resources.
 
+To see an error hook return a custom response, start the server and request `GET http://127.0.0.1:8000/api/run/error`. This route deliberately raises a `418` error and handles it in a `RequestRunner` error hook with the response body `Handled by RequestRunner error hook.`.
+
 Run the repository tests after installing the checkout in editable mode:
 
 ```shell

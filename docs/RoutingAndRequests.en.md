@@ -324,4 +324,4 @@ flowchart TD
   I -. Hook failure .-> Z
 ```
 
-For application, extension, and handler hook order across a full request, see [Application lifecycle](./LifecycleAndErrors.en.md).
+For application, extension, and handler request/response hook order, see [Application lifecycle](./Lifecycle.en.md). For error-response flow, see [Error handling](./ErrorHandling.en.md).

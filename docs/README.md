@@ -24,7 +24,7 @@ flowchart LR
   E[Extensions] --> A
 ```
 
-`Application`은 routes와 extensions를 소유합니다. 각 요청에서 handler 인스턴스를 생성하고 검증한 뒤 `run(request)`를 호출합니다. 요청 전체의 시작·정리, 공통 전처리·후처리, 오류 관찰은 application/extension 훅으로, route별 동작은 `RequestRunner` 훅으로 분리할 수 있습니다.
+`Application`은 routes와 extensions를 소유합니다. 각 요청에서 handler 인스턴스를 생성하고 검증한 뒤 `run(request)`를 호출합니다. 요청 전체의 시작·정리와 공통 전처리·후처리는 application/extension 훅으로, route별 동작은 `RequestRunner` 훅으로 분리할 수 있습니다. 오류 응답을 구성하는 방법은 별도 오류 처리 매뉴얼에서 설명합니다.
 
 ## 학습 순서
 
@@ -32,7 +32,8 @@ flowchart LR
 2. 경로 매칭, 요청 검증, 인증·Origin부터 일반 JSON·텍스트·파일 응답까지는 [라우트와 요청, 응답](./RoutingAndRequests.md)을 참고하세요.
 3. 일반·chunked 스트리밍 입력과 출력, SSE, WebSocket은 [스트리밍 처리와 WebSocket](./StreamingAndWebSockets.md)에서 다룹니다.
 4. Health check, Metrics, OpenAPI, 파일 제공 및 서버 adapter는 [확장과 서버 어댑터](./ExtensionsAndServers.md)를 확인하세요.
-5. startup·cleanup·request·response·error 훅의 시점은 [애플리케이션 생명주기와 오류 처리](./LifecycleAndErrors.md)를 참고하세요.
+5. startup·cleanup과 정상 요청·응답 훅의 시점은 [애플리케이션 생명주기](./Lifecycle.md)를 참고하세요.
+6. 오류 훅의 반환 계약과 계층별 복구 흐름은 [오류 처리](./ErrorHandling.md)에서 확인하세요.
 
 ## 매뉴얼 목록
 
@@ -40,7 +41,8 @@ flowchart LR
 - [라우트와 요청, 응답](./RoutingAndRequests.md): HTTP 메서드·경로, 입력 검증, 본문 리더, 인증·Origin, 일반 응답 및 파일 응답
 - [스트리밍 처리와 WebSocket](./StreamingAndWebSockets.md): 스트리밍 입력·출력 4가지 방식, Server-Sent Events, WebSocket
 - [확장과 서버 어댑터](./ExtensionsAndServers.md): 기본 확장, handler 모듈 로딩, Python·Gunicorn·Uvicorn 선택
-- [애플리케이션 생명주기와 오류 처리](./LifecycleAndErrors.md): 훅 범위와 실행 순서, 정리 및 오류 전파
+- [애플리케이션 생명주기](./Lifecycle.md): application과 extension의 시작·정리, 정상 요청·응답 훅의 범위와 순서
+- [오류 처리](./ErrorHandling.md): 오류 훅의 `Optional[Response]` 계약, 예외 전파와 운영상 제약
 
 ## 추가 자료
 
