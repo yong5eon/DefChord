@@ -1,7 +1,9 @@
 from logging import getLogger
+from typing import Optional
 
 from DefEssential import (
 	Body,
+	ClientError,
 	Content,
 	Headers,
 	Parameters,
@@ -233,6 +235,29 @@ class ErrorLog(RequestRunnerRequestError):
 		return
 
 
+class HandleSampleError(RequestRunnerRequestError):
+	"""Return a route-specific response for the deliberate sample error."""
+
+	def __call__(
+		self,
+		request: Request,
+		error: Exception,
+	) -> Optional[Response]:
+		getLogger('Sample.Requests').debug(
+			'오류 응답 훅: id=%s error_type=%s',
+			request.id,
+			type(error).__name__,
+		)
+		if isinstance(error, ClientError) and error.status == 418:
+			return Response(
+				status=418,
+				body=b'Handled by RequestRunner error hook.',
+				format='text/plain',
+				charset='utf-8',
+			)
+		return None
+
+
 def result(
 	request: Request,
 ) -> ResponseJSON:
@@ -380,4 +405,26 @@ class RunUpload(
 			body=request.body,
 			format=request.header('Content-Format'),
 			charset=request.header('Content-Charset'),
+		)
+
+
+class RunHandledError(
+	RequestRunner,
+	method='GET',
+	url='/api/run/error',
+	summary='Demonstrate a custom response returned by a RequestRunner error hook',
+	tags='RequestRunner',
+	on_request_error=HandleSampleError(),
+):
+	def run(
+		self,
+		request: Request,
+	) -> Response:
+		getLogger('Sample.Requests').debug(
+			'오류 응답 샘플 실행: id=%s',
+			request.id,
+		)
+		raise ClientError(
+			'Deliberate sample error',
+			status=418,
 		)
