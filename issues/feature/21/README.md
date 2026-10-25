@@ -1,10 +1,10 @@
 # 오류 응답 처리 개선
 
-## 현재 문제 분석
+## 구현 전 문제 분석
 
 DefEssential은 예외를 처리하지 않는 상태는 아니다. 요청 처리 과정에서 오류를 관찰하는 훅과, 훅이 처리하지 못한 예외를 HTTP 응답으로 바꾸는 서버 adapter의 기본 동작이 이미 있다. 문제는 애플리케이션·확장·라우트가 오류 상황에 맞는 사용자 정의 `Response`를 반환할 수 없다는 점이다.
 
-### 현재 동작
+### 구현 전 기준 동작
 
 - `RequestRunner`는 Origin·인증·요청 데이터 검증, handler 생성, 요청 훅, `run()`, 응답 훅과 CORS 처리 중 발생한 `Exception`을 `RequestRunnerRequestError`에 전달한다. 오류 훅의 반환 계약은 `None`이며, 훅을 실행한 뒤 원래 예외를 다시 발생시킨다.
 - `Extension`은 확장의 요청 훅, `__call__()` 및 응답 훅에서 발생한 `Exception`을 `ExtensionRequestError`에 전달한다. 이 훅도 `None`을 반환해야 하며, 예외는 다시 발생한다.
@@ -77,9 +77,39 @@ DefEssential은 예외를 처리하지 않는 상태는 아니다. 요청 처리
 - 서버 adapter는 미처리 오류를 HTTP 응답으로 변환한다.
 - 현재 매뉴얼은 오류 훅이 관찰 전용이고 예외가 계속 전파된다고 설명한다.
 
-세부 동작의 근거는 [오류 훅 계약](../../../src/RequestRunner.py), [Extension 계약](../../../src/Extension.py), [Application 계약](../../../src/Application.py), [adapter의 오류 응답 처리](../../../src/Adapter/RequestHandler.py)와 현재 [생명주기·오류 매뉴얼](../../../docs/LifecycleAndErrors.md)에서 확인할 수 있다. 별도 생명주기·오류 처리 매뉴얼의 분리와 파일명 변경은 구현 계획에 포함한다.
+세부 동작의 근거는 [오류 훅 계약](../../../src/RequestRunner.py), [Extension 계약](../../../src/Extension.py), [Application 계약](../../../src/Application.py), [adapter의 오류 응답 처리](../../../src/Adapter/RequestHandler.py)와 [생명주기 매뉴얼](../../../docs/Lifecycle.md), [오류 처리 매뉴얼](../../../docs/ErrorHandling.md)에서 확인할 수 있다.
 
 ## 이슈 문서
 
 - 요구사항: [REQUIREMENTS.md](./REQUIREMENTS.md)
 - 작업 계획: [PLAN.md](./PLAN.md)
+- 구현 기록: [IMPLEMENTS.md](./IMPLEMENTS.md)
+- 변경 로그: [CHANGELOG.md](./CHANGELOG.md)
+- 최신 작업 히스토리: [002.오류응답샘플.md](./tasks/002.오류응답샘플.md)
+
+## 이슈 원문과 작업 메타데이터
+
+- 원본 시스템·저장소: GitHub, `yong5eon/DefEssential`
+- 원본 이슈: [#21 오류처리](https://github.com/yong5eon/DefEssential/issues/21)
+- 원본 유형 및 적용 레이블: `feature` (`feature` 레이블 적용 확인)
+- 원본 상태: open
+- 작업 대상: `C:\Works\DefStream\DefEssential`
+- 작업 브랜치: `feature/21`
+- 병합 대상 브랜치: 미확인
+- 이슈 기록 위치: `issues/feature/21/`
+
+### 원문 본문
+
+```text
+### 해결하려는 문제
+
+- RequestRunner 에서 예외 발생 시 응답을 요구사항에 맞게 처리 하는 과정이 없음
+- RequestRunner 혹은 Extension 에서 예외 발생 시 응답을 요구사항에 맞게 처리 하는 과정이 없음
+- Application 에서 예외 발생 시 응답을 요구사항에 맞게 처리 하는 과정이 없음
+
+### 제안하는 해결 방법
+
+- RequestRunner 의 에러 훅 변경
+- Entension 의 에러 훅 변경
+- Application 의 에러 훅 추가
+```
