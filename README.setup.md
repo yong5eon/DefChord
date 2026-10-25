@@ -1,6 +1,10 @@
 # DefEssential
 
-DefEssential is a synchronous Python web application framework for handling HTTP requests with ordinary Python methods. It provides route declarations, request validation, response helpers, streaming APIs, lifecycle hooks, and optional extensions without requiring `async` / `await`.
+The Modern Synchronous Python Web Application Framework
+
+**Just def.**<br>
+**Let web apps do the work.**<br>
+**You don't need to await this.**
 
 ## Requirements
 

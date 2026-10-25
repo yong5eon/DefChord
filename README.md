@@ -1,6 +1,6 @@
 # DefEssential
 
-동기식 Python 웹 애플리케이션 프레임워크
+The Modern Synchronous Python Web Application Framework
 
 **Just def.**<br>
 **Let web apps do the work.**<br>
