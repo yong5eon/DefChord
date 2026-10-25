@@ -1,6 +1,6 @@
 # DefEssential
 
-The modern synchronous Python web application framework
+The Modern Synchronous Python Web Application Framework
 
 **Just def.**<br>
 **Let web apps do the work.**<br>
