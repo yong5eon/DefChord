@@ -12,7 +12,7 @@
 - 변경 대상 저장소는 `DefEssential`이며 작업 브랜치는 `feature/21`이다.
 - 구현과 검증은 요구사항의 인수 기준을 기준으로 진행한다. 미확인 동작을 편의상 기본값으로 정하지 않는다.
 - 병합 대상 브랜치는 현재 확인되지 않았으며 이 계획에서 추정하거나 변경하지 않는다.
-- 아래 단계와 검증은 계획이며, 수행 결과는 구현 후 이슈 실행 기록에 기록한다.
+- 아래 단계와 검증은 계획이며, 실제 수행 결과는 이슈 실행 기록에 반영한다.
 
 ## 작업 단계
 
@@ -101,15 +101,13 @@
 
 ### 실행 명령
 
-변경 전 기준 테스트와 변경 후 회귀 테스트:
+저장소 루트에서 프로젝트를 editable 설치한 환경으로 focused 회귀 테스트를 실행한다. 테스트 파일은 Python 패키지로 구성되어 있지 않으므로 `unittest discover`에 파일 패턴을 지정한다.
 
 ```powershell
-python -m unittest `
-  tests.test_request_runner_hooks `
-  tests.test_extension_hooks `
-  tests.test_application_hooks `
-  tests.test_transport_conformance `
-  tests.test_writers
+python -m pip install -e .
+python -m unittest discover -s tests -p 'test_*hooks.py'
+python -m unittest discover -s tests -p 'test_transport_conformance.py'
+python -m unittest discover -s tests -p 'test_writers.py'
 ```
 
 단위·통합 테스트가 통과하면 저장소 전체 테스트를 실행한다.
@@ -130,8 +128,16 @@ python -m unittest discover -s tests
 
 ## 완료 확인
 
-- [ ] [REQUIREMENTS.md](./REQUIREMENTS.md)의 모든 인수 기준을 구현 및 검증 결과와 대조한다.
-- [ ] 위에 명시한 테스트 명령의 실제 결과와 미실행 검증을 실행 기록에 남긴다.
-- [ ] 두 언어의 매뉴얼, 테스트, 공개 API와 구현 동작이 서로 일치하는지 확인한다.
-- [ ] 변경 목록에 무관한 파일, 사용자 데이터 또는 임시 산출물이 섞이지 않았는지 확인한다.
-- [ ] 미충족 기준이나 제한사항이 있으면 완료로 표현하지 않고 이유와 후속 작업을 기록한다.
+- [x] [REQUIREMENTS.md](./REQUIREMENTS.md)의 인수 기준을 구현 및 검증 결과와 대조한다.
+- [x] 테스트 명령의 실제 결과와 미실행 검증을 실행 기록에 남긴다.
+- [x] 두 언어의 매뉴얼, 테스트, 공개 API와 구현 동작을 대조한다.
+- [x] 변경 목록에 무관한 파일, 사용자 데이터 또는 임시 산출물이 섞이지 않았는지 확인한다.
+- [x] 미충족 인수 기준이 없음을 확인하고, 미실행 검증 및 제한사항을 기록한다.
+
+## 실행 결과
+
+- RequestRunner, Extension, Application 오류 훅의 `Optional[Response]` 반환과 최초 응답 채택을 구현했다. 전부 `None`인 경우의 전파, 오류 훅 예외·잘못된 반환값의 실패 전파는 유지했다.
+- 오류 응답은 같은 계층의 응답 훅을 재실행하지 않고 바깥 계층의 정상 응답 처리로 전달한다. 이미 시작된 writer의 응답 교체를 차단하고 오류 응답 본문을 정리한다.
+- 오류 처리 한국어·영어 상세 매뉴얼을 분리 작성하고, 기존 생명주기 문서를 `Lifecycle.md`로 분리·변경했으며 관련 링크를 갱신했다.
+- 최종 전체 테스트: `python -m unittest discover -s tests` — 252개 통과, 15개 건너뜀.
+- 상세 변경과 검증 결과: [IMPLEMENTS.md](./IMPLEMENTS.md), [작업 히스토리](./tasks/001.오류응답구현.md).
