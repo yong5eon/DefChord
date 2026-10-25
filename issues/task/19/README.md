@@ -8,6 +8,7 @@
 | 저장소 | `yong5eon/DefEssential` |
 | 원본 이슈 | [#19](https://github.com/yong5eon/DefEssential/issues/19) |
 | 상태 | Open |
+| 로컬 진행 상태 | 완료 |
 | 유형·레이블 | 작업 (`task`, 원본에 적용됨) |
 | 담당자 | `yong5eon` |
 | 생성·갱신 | 2026-10-25 |
@@ -42,5 +43,7 @@ _No response_
 
 - [요구사항 명세서](./REQUIREMENTS.md)
 - [작업 계획](./PLAN.md)
-- 구현 및 검증 기록: 작성 전
-- 변경 로그: 작성 전
+- [상세 매뉴얼](../../../docs/README.md)
+- [구현 및 검증 기록](./IMPLEMENTS.md)
+- [변경 로그](./CHANGELOG.md)
+- 최신 작업 기록: [라우트 응답 훅 예제 추가](./tasks/006.응답훅예제.md)
