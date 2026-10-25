@@ -2,28 +2,24 @@
 
 The Modern Synchronous Python Web Application Framework
 
-**Just def.**<br>
-**Let web apps do the work.**<br>
-**You don't need to await this.**
-
-## Requirements
-
-- Python 3.9 or later
+DefEssential is a synchronous Python web framework for handling HTTP requests with ordinary methods. Python 3.9 or later is required.
 
 ## Installation
 
-```bash
-pip install DefEssential
+```shell
+python -m pip install DefEssential
 ```
 
-The package includes a built-in Python HTTP server. Optional extras provide additional server adapters:
+The built-in Python HTTP server requires no additional server dependency. Optional extras provide Gunicorn and Uvicorn adapters:
 
-```bash
-pip install "DefEssential[Gunicorn]"
-pip install "DefEssential[Uvicorn]"
+```shell
+python -m pip install "DefEssential[Gunicorn]"
+python -m pip install "DefEssential[Uvicorn]"
 ```
 
 ## Quick start
+
+Save this example as `app.py` and run `python app.py`.
 
 ```python
 from DefEssential import Application, Request, RequestRunner
@@ -41,11 +37,7 @@ application.add(Hello)
 Server('127.0.0.1', 8000, application).run()
 ```
 
-The handler declares an HTTP method and path on its `RequestRunner` class. The application registers the handler, and the server runs the application. A `GET /hello` request returns a plain-text response.
-
-## Request handling
-
-Define handlers as `RequestRunner` subclasses and implement `run()` with synchronous Python code. Configure path, query, header, and body validation in the class declaration. The framework also provides JSON, text, and file responses, direct streaming, Server-Sent Events, WebSocket support, and extensions for status checks, metrics, OpenAPI specifications, Swagger UI, and file serving.
+The server listens on `127.0.0.1:8000`. A `GET /hello` request returns `Hello, world!`.
 
 ## License
 
