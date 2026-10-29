@@ -24,11 +24,14 @@ python -m pip install DefEssential
 ```
 
 Install an extra only when using the corresponding Gunicorn or Uvicorn adapter.
+The core contains neither adapter's code. Each extra installs a separate, same-version implementation distribution and its dependencies.
 
 ```shell
 python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
+
+See [installation isolation, development and distribution](./docs/Packaging.en.md) for migration from the integrated distribution and editable development.
 
 ## Quick start
 

@@ -21,6 +21,8 @@ python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
 
+선택하지 않은 어댑터 코드는 설치하지 않습니다. 기존 환경 전환과 editable 개발은 [설치 격리와 개발·배포](./Packaging.md)를 참고하세요.
+
 ## 가장 작은 애플리케이션
 
 다음 코드를 `app.py`로 저장합니다.
@@ -125,4 +127,4 @@ python -m pip install -e .
 python -m unittest discover -s tests
 ```
 
-Python 환경에 프로젝트가 이미 설치되어 있다면 editable 설치는 한 번만 수행하면 됩니다. Gunicorn·Uvicorn 전용 테스트나 실행은 해당 extra와 서버의 플랫폼 조건을 따릅니다.
+위 설치 명령은 코어만 남기므로 선택 어댑터도 개발하려면 `python -m pip install -e . --config-settings EXTRAS=Gunicorn,Uvicorn`을 사용하세요. 기존 파일 수정은 바로 반영되며 새 파일·패키지 구성 변경 후에는 원하는 목록으로 재설치합니다. 전환 절차는 [설치 격리와 개발·배포](./Packaging.md)를 참고하세요. Gunicorn·Uvicorn 전용 테스트나 실행은 서버의 플랫폼 조건을 따릅니다.

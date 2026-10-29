@@ -37,6 +37,7 @@ flowchart LR
 
 ## Guides
 
+- [Installation isolation, development and distribution](./Packaging.en.md): optional implementation files, migration, editable installation and multi-distribution builds
 - [Installation and your first application](./GettingStarted.en.md): installation, core components, server startup, and verification
 - [Routes, Requests, and Responses](./RoutingAndRequests.en.md): methods and paths, input validation, body readers, authentication, Origin, ordinary responses, and files
 - [Streaming and WebSockets](./StreamingAndWebSockets.en.md): four streaming input/output modes, Server-Sent Events, and WebSocket

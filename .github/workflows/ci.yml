@@ -76,7 +76,7 @@ jobs:
           changed = check_output(
               [
                   'git', 'diff', '--name-only', '--no-renames', base, environ['GITHUB_SHA'],
-                  '--', 'src/', 'setup.py', 'setup.cfg', 'pyproject.toml', 'MANIFEST.in',
+                  '--', 'src/', 'setup.py', 'setup.cfg', 'pyproject.toml', 'MANIFEST.in', 'scripts/',
               ],
               text=True,
           ).strip()
@@ -210,7 +210,7 @@ jobs:
               summary.write(f'## DefEssential {version}\n\nSource: `{environ["GITHUB_SHA"]}`\n')
           PY
       - name: Install build tools
-        run: python -m pip install --upgrade build twine wheel
+        run: python -m pip install --upgrade "pip>=23" build twine wheel "setuptools>=77" "setuptools-scm>=8,<10"
       - name: Build source distribution and wheel
         env:
           RELEASE_BUILD: ${{ needs.changes.outputs.release }}
@@ -219,15 +219,19 @@ jobs:
         run: |
           if [ "$RELEASE_BUILD" = "true" ]; then
             if [ "$NEW_VERSION" = "true" ]; then
-              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python -m build --outdir dist
+              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python scripts/build_distributions.py
             else
-              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python -m build --wheel --outdir dist
+              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python scripts/build_distributions.py --wheel
             fi
             python -m wheel tags --build "$WHEEL_BUILD" --remove dist/*.whl
           else
-            python -m build --outdir dist
+            python scripts/build_distributions.py
           fi
           python -m twine check --strict dist/*
+      - name: Verify installation isolation and editable development
+        run: python scripts/check_distributions.py --editable
+      - name: Test release preparation
+        run: python -m unittest discover -s scripts/tests -t scripts -p 'test_*.py'
       - name: Normalize source archive timestamps
         run: |
           python - <<'PY'
@@ -309,59 +313,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.changes.outputs.version }}
           WHEEL_BUILD: ${{ needs.changes.outputs.build }}
           NEW_VERSION: ${{ needs.changes.outputs.new_version }}
-        run: |
-          python - <<'PY'
-          from email.parser import BytesParser
-          from hashlib import sha256
-          from json import load
-          from os import environ
-          from pathlib import Path
-          from shutil import copy2
-          from urllib.error import HTTPError
-          from urllib.request import urlopen
-          from zipfile import ZipFile
-
-          wheels = list(Path('dist').glob('*.whl'))
-          sources = list(Path('dist').glob('*.tar.gz'))
-          expected_sources = 1 if environ['NEW_VERSION'] == 'true' else 0
-          if len(wheels) != 1 or len(sources) != expected_sources:
-              raise ValueError('Unexpected wheel/source distribution count for the release plan')
-          if wheels[0].name.split('-')[2] != environ['WHEEL_BUILD']:
-              raise ValueError('Wheel build tag does not match the release plan')
-          with ZipFile(wheels[0]) as archive:
-              metadata_path, = (name for name in archive.namelist() if name.endswith('.dist-info/METADATA'))
-              metadata = BytesParser().parsebytes(archive.read(metadata_path))
-          project = 'DefEssential'
-          if metadata['Name'] != project:
-              raise ValueError(f'Unexpected distribution: {metadata["Name"]}')
-          version = metadata['Version']
-          expected_version = environ['RELEASE_VERSION']
-          if version != expected_version:
-              raise ValueError(f'Expected {expected_version}, got {version}')
-          try:
-              with urlopen(f'https://pypi.org/pypi/{project}/{version}/json', timeout=30) as response:
-                  release = load(response)
-          except HTTPError as error:
-              if error.code != 404:
-                  raise
-              published = {}
-          else:
-              published = {file['filename']: file['digests']['sha256'] for file in release['urls']}
-          if environ['NEW_VERSION'] != 'true' and not published:
-              raise RuntimeError('Cannot rebuild a version that has not been published on PyPI')
-          upload = Path('upload')
-          upload.mkdir()
-          for path in [*wheels, *sources]:
-              if path.name in published:
-                  if sha256(path.read_bytes()).hexdigest() != published[path.name]:
-                      raise RuntimeError(f'Published file differs; refusing to overwrite {path.name}')
-                  print(f'Already published: {path.name}')
-              else:
-                  copy2(path, upload / path.name)
-          with Path(environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as output:
-              output.write(f'publish={str(any(upload.iterdir())).lower()}\n')
-              output.write(f'version={version}\n')
-          PY
+        run: python release-source/scripts/prepare_upload.py
       - name: Record verified release tag
         env:
           VERSION: ${{ needs.changes.outputs.tag }}
@@ -395,7 +347,12 @@ jobs:
             echo "::error::Configure PYPI_API_TOKEN in the pypi environment or repository Actions secrets."
             exit 1
           fi
-          python -m twine upload --non-interactive upload/*
+          if compgen -G "upload/implementations/*" > /dev/null; then
+            python -m twine upload --non-interactive upload/implementations/*
+          fi
+          if compgen -G "upload/core/*" > /dev/null; then
+            python -m twine upload --non-interactive upload/core/*
+          fi
       - name: Publish GitHub Release with verified distributions
         env:
           GH_TOKEN: ${{ github.token }}
