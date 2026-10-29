@@ -77,6 +77,8 @@ python -m twine check --strict dist/*
 
 각 sdist에는 `.distribution-target`이 포함되어, 별도의 환경변수 없이 `python -m build`로 재빌드해도 같은 배포물을 만듭니다. sdist의 대상을 바꾸는 것은 허용하지 않습니다.
 
+빌드에 필요한 보조 소스의 sdist 포함 목록은 `setup.py`의 `TargetEggInfo.find_sources()`에서 관리합니다. 별도의 `MANIFEST.in`은 사용하지 않으며, 이 목록은 일반 wheel에 보조 스크립트를 설치하는 설정이 아닙니다.
+
 sdist는 공통 소스 트리를 포함합니다. 선택하지 않은 구현체의 파일을 제외하는 경계는 빌드된 wheel과 최종 설치 파일이며, sdist 원본 소스의 배포까지 분리하는 구조는 아닙니다.
 
 CI는 지원 Python별 빌드·설치 검사를 수행하며, 릴리즈에서는 모든 배포물의 이름·버전·빌드 번호를 확인하고 구현체를 먼저, 코어를 나중에 게시합니다. 게시 권한과 PyPI 토큰은 모든 배포 이름을 지원해야 합니다. 로컬 빌드는 게시를 수행하지 않습니다.

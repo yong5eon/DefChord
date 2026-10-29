@@ -10,6 +10,8 @@
 
 ## 개발·CI·배포 준비
 
+소스 배포의 보조 파일 목록은 후속 요청에 따라 `MANIFEST.in` 대신 `setup.py`의 `TargetEggInfo.find_sources()`에서 관리한다. 기본 수집 결과를 확장하고 `SOURCES.txt`에 반영하며 일반 wheel 파일 구성은 유지한다.
+
 `TargetEditableWheel`은 가상환경별 선택 링크 트리와 경로 기반 `.pth`를 사용한다. `scripts/editable_view.py`는 설치 메타데이터로 코어·선택 구현체만 연결하며 제거·소스 교체·동시 시작을 처리한다. 부모 API와 선택 격리를 유지하고 IDE가 같은 파일 트리를 탐색하게 한다. 직접 정션을 만들 필요가 없다.
 
 후속 요구에 따라 editable은 `scripts/build_backend.py`의 `EXTRAS` 설정으로 한 번에 갱신하는 단일 코어 배포물로 전환했다. `pip install -e .`은 코어만, `--config-settings EXTRAS=Gunicorn,Uvicorn`은 지정 목록으로 교체한다. 외부 의존성은 선택 코드와 함께 선언하되 자동 삭제하지 않는다. 일반 배포 분리와 extras는 유지하며 최초 전환 시 기존 별도 구현체 배포물은 제거해야 한다.
@@ -30,3 +32,4 @@
 4. [릴리즈 테스트 디렉터리 분리](./implements/1793296500294.md)
 5. [선택 링크 트리 기반 editable 구성](./implements/1793299630934.md)
 6. [EXTRAS 기반 단일 editable 설치](./implements/1793301537857.md)
+7. [소스 배포 포함 목록의 setup.py 통합](./implements/1793302547667.md)
