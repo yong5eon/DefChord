@@ -33,3 +33,4 @@
 5. [선택 링크 트리 기반 editable 구성](./implements/1793299630934.md)
 6. [EXTRAS 기반 단일 editable 설치](./implements/1793301537857.md)
 7. [소스 배포 포함 목록의 setup.py 통합](./implements/1793302547667.md)
+8. [CI에서 발견한 어댑터 테스트 계약 정정](./implements/1793303776533.md)
