@@ -31,7 +31,7 @@ python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
 
-기존 통합 배포에서 전환하거나 소스를 editable 설치하려면 [설치 격리와 개발·배포](./docs/Packaging.md)를 참고하세요.
+소스 코드를 수정하고 싶다면 [설치 격리와 개발·배포](./docs/Packaging.md)를 참고하세요.
 
 ## 빠른 시작
 

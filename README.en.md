@@ -31,7 +31,7 @@ python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
 
-See [installation isolation, development and distribution](./docs/Packaging.en.md) for migration from the integrated distribution and editable development.
+To modify the source code, see [installation isolation, development and distribution](./docs/Packaging.en.md).
 
 ## Quick start
 

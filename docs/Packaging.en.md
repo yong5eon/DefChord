@@ -15,54 +15,42 @@ flowchart LR
   C --> D["uvicorn · a2wsgi"]
 ```
 
-## Migrate an existing environment
+## When you want to modify the source code
 
-Installing over the old integrated distribution can create overlapping file ownership. Prefer a new virtual environment. Otherwise remove the old distributions first and select the extras you use:
+To fix or add features, use a development installation. An **editable installation** connects Python to your local source code so it can use that code directly.
 
-```shell
-python -m pip uninstall DefEssential DefEssential-Gunicorn DefEssential-Uvicorn
-python -m pip install "DefEssential[Uvicorn]"
-python -m pip check
-```
-
-To roll back, first remove the new distributions, then reinstall the explicit integrated version previously used.
-
-## Local editable development
-
-Run these commands from the repository root in a development virtual environment. No manually created junctions or symbolic links are needed. Every invocation refreshes metadata and links from the current local sources.
+Download the repository, activate a development virtual environment, and run the following command from the top-level folder containing `setup.py`. Here, `.` means the current folder and `-e` means an editable installation. You need pip 23 or later.
 
 ```shell
 python -m pip install -e .
 ```
 
-Omitting the option clears the previous selection and leaves only the core. Select implementations with `EXTRAS`; the commands are identical on Windows and POSIX shells:
+This connects only the common code and built-in Python server. To also work on the Uvicorn or Gunicorn adapters, list their names in `EXTRAS`. The following commands are separate examples: the first selects Uvicorn only, and the second selects both adapters.
 
 ```shell
 python -m pip install -e . --config-settings EXTRAS=Uvicorn
 python -m pip install -e . --config-settings EXTRAS=Gunicorn,Uvicorn
 ```
 
-Each command replaces, rather than accumulates, the selection. Names are case-insensitive; unknown names fail. Editable installs ignore a leftover `DEF_BUILD_TARGET`. They do not fetch remote source changes, force dependency upgrades, or uninstall external libraries removed from the selection.
+Each run replaces the selection. For example, running with `EXTRAS=Uvicorn` after selecting both adapters removes the Gunicorn code from the development environment. Running without `EXTRAS` leaves only the common code and built-in Python server. Names are case-insensitive; unknown names produce an error. Required external libraries are installed, but libraries for deselected adapters are not automatically removed.
 
-When switching from an older split editable or regular installation, remove the old distributions once before reinstalling. The new editable core distribution owns all selected code and must not coexist with standalone implementation distributions:
+### Try your changes
 
-```shell
-python -m pip uninstall DefEssential DefEssential-Gunicorn DefEssential-Uvicorn
-python -m pip install -e . --config-settings EXTRAS=Gunicorn,Uvicorn
-python -m pip check
-```
+1. Edit the code under `src/DefEssential/`.
+2. Start your application or tests again in the same virtual environment to check the result. Code in an already running program is not automatically reloaded.
+3. If you add files or change the installation configuration, repeat the installation command with the desired `EXTRAS`.
 
-Editable installs link only core and installed implementation files under the environment's `site-packages/__editable_defessential_view/` and expose that directory through a path-based `.pth`. IDEs can traverse the same tree without import hooks. Python checks installed metadata and link state at startup and updates the tree when necessary. Different environments sharing one source tree keep independent selections.
+The command connects the sources already on your computer. It does not fetch remote changes or force upgrades of external libraries. To select source code, use `--config-settings EXTRAS=Uvicorn` as shown above, not `pip install -e ".[Uvicorn]"`.
 
-No separate core-first installation is needed. After adding files or changing package configuration, repeat the command with the desired `EXTRAS`. The managed link tree no longer depends on `build/`. Windows uses file symlinks when permitted and hard links otherwise; hard links require the sources and environment to be on the same volume.
+### How the development connection works
 
-Standard extras in `pip install -e ".[Uvicorn]"` select external dependencies only. Use `--config-settings EXTRAS=Uvicorn` to select implementation code. Regular `pip install "DefEssential[Uvicorn]"` still installs a separate implementation wheel.
+Only selected code is connected to the environment, and your IDE can find it too. Connections are managed automatically; you do not need to create links or add IDE search paths. Restart the language server if the IDE does not find the installed code right away. Multiple environments sharing the same sources keep their selections separate.
 
-Restart the language server after migration. No IDE-specific search paths or diagnostic suppression are needed. Regular wheels do not contain the link-management code. The local backend declared in `pyproject.toml` handles `EXTRAS` in editable hooks without invoking pip recursively or directly modifying the environment.
+Refresh keeps unchanged file connections and atomically replaces each changed connection. It removes only deselected managed files and preserves other files such as `.DS_Store`. Switching all files simultaneously is not guaranteed.
+
+On Windows, hard links are used if symbolic-link permissions are unavailable. In that case, keep the sources and virtual environment on the same drive. This connection management applies only to development installations, not regular wheel installations.
 
 ## Build and validate
-
-One `src` and one `setup.py` serve all distributions. `DEF_BUILD_TARGET` accepts `core`, `Gunicorn` or `Uvicorn`, defaults to `core`, and rejects unknown values.
 
 Build and validate all distributions from the repository root:
 
