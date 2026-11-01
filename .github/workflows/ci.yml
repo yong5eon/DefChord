@@ -76,7 +76,7 @@ jobs:
           changed = check_output(
               [
                   'git', 'diff', '--name-only', '--no-renames', base, environ['GITHUB_SHA'],
-                  '--', 'src/', 'setup.py', 'setup.cfg', 'pyproject.toml', 'MANIFEST.in', 'scripts/',
+                  '--', 'src/', 'setup.py', 'setup.cfg', 'pyproject.toml', 'MANIFEST.in', '.dev/scripts/', '.github/scripts/*.py',
               ],
               text=True,
           ).strip()
@@ -171,12 +171,15 @@ jobs:
   test:
     name: Test Python ${{ matrix.python }}
     needs: changes
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        include:
+          - python: '3.9'
+            os: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -219,19 +222,21 @@ jobs:
         run: |
           if [ "$RELEASE_BUILD" = "true" ]; then
             if [ "$NEW_VERSION" = "true" ]; then
-              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python scripts/build_distributions.py
+              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python .github/scripts/build_distributions.py
             else
-              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python scripts/build_distributions.py --wheel
+              SETUPTOOLS_SCM_PRETEND_VERSION="$RELEASE_VERSION" python .github/scripts/build_distributions.py --wheel
             fi
             python -m wheel tags --build "$WHEEL_BUILD" --remove dist/*.whl
           else
-            python scripts/build_distributions.py
+            python .github/scripts/build_distributions.py
           fi
           python -m twine check --strict dist/*
       - name: Verify installation isolation and editable development
-        run: python scripts/check_distributions.py --editable
+        run: python .github/scripts/check_distributions.py --editable
       - name: Test release preparation
-        run: python -m unittest discover -s scripts/tests -t scripts -p 'test_*.py'
+        run: |
+          python -m unittest discover -s .dev/scripts/tests -t .dev/scripts -p 'test_*.py'
+          python -m unittest discover -s .github/scripts/tests -t .github/scripts -p 'test_*.py'
       - name: Normalize source archive timestamps
         run: |
           python - <<'PY'
@@ -313,7 +318,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.changes.outputs.version }}
           WHEEL_BUILD: ${{ needs.changes.outputs.build }}
           NEW_VERSION: ${{ needs.changes.outputs.new_version }}
-        run: python release-source/scripts/prepare_upload.py
+        run: python release-source/.github/scripts/prepare_upload.py
       - name: Record verified release tag
         env:
           VERSION: ${{ needs.changes.outputs.tag }}
