@@ -1,10 +1,10 @@
-# DefEssential 상세 매뉴얼
+# DefChord 상세 매뉴얼
 
 [English](./README.en.md)
 
-## DefEssential이란?
+## DefChord란?
 
-DefEssential은 일반 Python 메서드로 HTTP 요청을 처리하는 동기식 웹 프레임워크입니다. `RequestRunner`에 메서드와 경로를 선언하고 `Application`에 등록하면, 선택한 server adapter가 받은 요청을 해당 handler로 전달합니다. 코루틴의 `async def`나 `await` 없이 요청 검증, 응답 반환, 스트리밍 및 WebSocket 처리를 구성할 수 있습니다.
+DefChord는 일반 Python 메서드로 HTTP 요청을 처리하는 동기식 웹 프레임워크입니다. `RequestRunner`에 메서드와 경로를 선언하고 `Application`에 등록하면, 선택한 server adapter가 받은 요청을 해당 handler로 전달합니다. 코루틴의 `async def`나 `await` 없이 요청 검증, 응답 반환, 스트리밍 및 WebSocket 처리를 구성할 수 있습니다.
 
 라우팅과 입력 검증은 애플리케이션 로직과 별도로 선언합니다. 경로 매개변수, 쿼리 문자열, 헤더와 요청 본문은 검증기와 콘텐츠 리더를 통해 변환할 수 있고, 응답은 일반 객체 또는 직접 출력 스트림으로 제공됩니다. 기본 Python 서버가 포함되며 Gunicorn과 Uvicorn adapter는 선택형 extra로 설치합니다.
 

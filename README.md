@@ -1,14 +1,14 @@
-# DefEssential
+# DefChord
 
 The Modern Synchronous Python Web Application Framework
 
 **Just def.**<br>
-**Let web apps do the work.**<br>
+**Define your code. Compose your chord.**<br>
 **You don't need to await this.**
 
 [English](./README.en.md)
 
-DefEssential은 일반 Python 메서드로 HTTP 요청을 처리하는 동기식 웹 프레임워크입니다. `async` / `await` 없이 라우트, 요청 검증, 응답과 확장 기능을 구성할 수 있습니다.
+DefChord는 일반 Python 메서드로 HTTP 요청을 처리하는 동기식 웹 프레임워크입니다. `async` / `await` 없이 라우트, 요청 검증, 응답과 확장 기능을 구성할 수 있습니다.
 
 - 경로·쿼리·헤더·본문 입력 검증
 - JSON·텍스트·파일 응답, 스트리밍, Server-Sent Events와 WebSocket
@@ -20,15 +20,15 @@ DefEssential은 일반 Python 메서드로 HTTP 요청을 처리하는 동기식
 Python 3.9 이상이 필요합니다. 기본 서버는 추가 서버 의존성 없이 설치됩니다.
 
 ```shell
-python -m pip install DefEssential
+python -m pip install DefChord
 ```
 
 Gunicorn 또는 Uvicorn 어댑터를 사용할 때만 해당 extra를 설치합니다.
 기본 배포물에는 두 어댑터 코드가 없으며, extra가 동일 버전의 별도 구현체 패키지와 의존성을 설치합니다.
 
 ```shell
-python -m pip install "DefEssential[Gunicorn]"
-python -m pip install "DefEssential[Uvicorn]"
+python -m pip install "DefChord[Gunicorn]"
+python -m pip install "DefChord[Uvicorn]"
 ```
 
 소스 코드를 수정하고 싶다면 [설치 격리와 개발·배포](./docs/Packaging.md)를 참고하세요.
@@ -36,9 +36,9 @@ python -m pip install "DefEssential[Uvicorn]"
 ## 빠른 시작
 
 ```python
-from DefEssential import Application, Request, RequestRunner
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Responses import ResponseText
+from DefChord import Application, Request, RequestRunner
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Responses import ResponseText
 
 
 class Hello(RequestRunner, method='GET', url='/hello'):
@@ -56,6 +56,6 @@ Server('127.0.0.1', 8000, application).run()
 ## 문서와 릴리즈
 
 - [상세 매뉴얼 (한국어)](./docs/README.md)
-- [릴리즈와 변경 내역](https://github.com/yong5eon/DefEssential/releases)
+- [릴리즈와 변경 내역](https://github.com/yong5eon/DefChord/releases)
 
 라이선스 조건은 저장소의 `LICENSE` 파일을 확인하세요.

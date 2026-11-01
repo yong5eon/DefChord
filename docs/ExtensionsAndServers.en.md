@@ -23,8 +23,8 @@ Pass an ordered sequence of extension instances through `Application(exts=(...))
 Register only the extensions the application needs:
 
 ```python
-from DefEssential import Application
-from DefEssential.Extensions import (
+from DefChord import Application
+from DefChord.Extensions import (
   Metrics,
   Ping,
   Specifications,
@@ -49,7 +49,7 @@ An extension instance can belong to only one `Application`. Do not share an inst
 `Application.load(mod=...)` or `Application.load(path=...)` finds and registers concrete `RequestRunner` subclasses in loaded modules. This separates handler definitions from application setup.
 
 ```python
-from DefEssential import Application
+from DefChord import Application
 
 
 application = Application()
@@ -63,7 +63,7 @@ The module must be importable at runtime, and each discovered handler must have 
 The built-in Python adapter works without an external server package:
 
 ```python
-from DefEssential.Adapter.Implements.Python import Server
+from DefChord.Adapter.Implements.Python import Server
 
 server = Server('127.0.0.1', 8000, application)
 server.run()
@@ -72,8 +72,8 @@ server.run()
 | Adapter | Install | Behavior and considerations |
 | --- | --- | --- |
 | Python | Default install | Uses the standard library threaded HTTP server; suitable for development and basic use |
-| Gunicorn | `DefEssential[Gunicorn]` | POSIX only. Cannot run on Windows; use Linux or WSL |
-| Uvicorn | `DefEssential[Uvicorn]` | Runs the synchronous app through the `a2wsgi` boundary. Application instances require `workers=1`, `reload=False` |
+| Gunicorn | `DefChord[Gunicorn]` | POSIX only. Cannot run on Windows; use Linux or WSL |
+| Uvicorn | `DefChord[Uvicorn]` | Runs the synchronous app through the `a2wsgi` boundary. Application instances require `workers=1`, `reload=False` |
 
 The Gunicorn adapter accepts `host`, `port`, `workers`, `worker_class`, and additional Gunicorn options. It raises an error when run on Windows, so do not try to run it in native Windows.
 

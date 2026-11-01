@@ -21,7 +21,7 @@ __all__ = (
 class Server(ServerAdapter):
 	"""Start and stop the application in each Gunicorn worker."""
 
-	logger = getLogger('DefEssential.Server')
+	logger = getLogger('DefChord.Server')
 
 	def __init__(
 		self,

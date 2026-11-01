@@ -20,7 +20,7 @@ __all__ = (
 class RunRequest:
 	"""Manage validation, handler execution, response processing, and error observation."""
 
-	logger = getLogger('DefEssential.RequestRunner')
+	logger = getLogger('DefChord.RequestRunner')
 
 	def __init__(
 		self,

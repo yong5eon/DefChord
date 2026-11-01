@@ -14,7 +14,7 @@ Swagger 확장은 `Swagger('/swagger', spec_uri='/api/doc')`처럼 명세 URI를
 
 Status 확장도 `Status('/status', metrics_uri='/metrics')`처럼 동일 출처의 메트릭 URI를 필수로 지정하며, `Metrics`를 직접 참조하거나 자동 탐색하지 않는다. Status는 HTML만 제공하고 브라우저가 지정한 URI에 `Accept: application/json`으로 요청한다. Metrics는 해당 헤더가 있으면 JSON 스냅샷을, 그 외에는 기존 Prometheus 텍스트를 반환한다.
 
-DefEssential를 설치했거나 개발용 import 경로가 연결된 환경에서 DefEssential 프로젝트 디렉터리를 기준으로 실행한다.
+DefChord를 설치했거나 개발용 import 경로가 연결된 환경에서 DefChord 프로젝트 디렉터리를 기준으로 실행한다.
 
 ```powershell
 python samples\Sample.py
@@ -22,7 +22,7 @@ python samples\Sample.py
 
 브라우저에서 `http://127.0.0.1:8000/`에 접속한다. 기본 로깅을 사용하며 `Ctrl+C`로 종료한다. 스크립트를 실행하면 애플리케이션과 라우트·파일 연결을 생성한다. 샘플 리소스 경로는 실행 디렉터리가 아닌 소스 위치를 기준으로 계산한다.
 
-샘플은 `DefEssential.Adapter.Implements.Python.Server`의 `run()`으로 실행한다. `Ctrl+C`로 서버 실행 루프를 중단하면 traceback 없이 확장을 역순으로 종료하고 수신 소켓을 닫는다. 정리 중 발생한 오류는 숨기지 않는다. 실행 중인 요청 스레드는 기존 daemon 정책을 따르며, 무한 스트림의 완료를 기다리는 종료 방식은 아니다.
+샘플은 `DefChord.Adapter.Implements.Python.Server`의 `run()`으로 실행한다. `Ctrl+C`로 서버 실행 루프를 중단하면 traceback 없이 확장을 역순으로 종료하고 수신 소켓을 닫는다. 정리 중 발생한 오류는 숨기지 않는다. 실행 중인 요청 스레드는 기존 daemon 정책을 따르며, 무한 스트림의 완료를 기다리는 종료 방식은 아니다.
 
 시작 출력의 `Applications` 목록과 개수는 확장 라우트를 제외한 `RequestRunner` 등록만 대상으로 한다. 표시 이름은 클래스 선언의 `name=`으로 지정할 수 있다. 예를 들어 `class RunExample(RequestRunner, method='GET', url='/example', name='Example')`처럼 선언한다. 생략하면 기존 클래스 이름을 표시한다. `File`, `FileSystem`을 포함한 확장은 `Extensions` 목록에만 확장 클래스 이름과 호스트 없는 등록 경로로 표시한다.
 

@@ -101,7 +101,7 @@ def extension_hooks(
 class Extension(ABC):
 	"""Provide per-instance user hooks and startup, request, and cleanup contracts."""
 
-	logger = getLogger('DefEssential.Extension')
+	logger = getLogger('DefChord.Extension')
 
 	def __init__(
 		self,

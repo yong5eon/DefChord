@@ -1,19 +1,19 @@
-# DefEssential #17 요구사항 명세서
+# DefChord #17 요구사항 명세서
 
 ## 목적과 근거
 
-- 근거 이슈: [#17](https://github.com/yong5eon/DefEssential/issues/17), [이슈 기록](./README.md)
+- 근거 이슈: [#17](https://github.com/yong5eon/DefChord/issues/17), [이슈 기록](./README.md)
 - 작업 브랜치: `task/17`
-- 대상: [CI 워크플로](../../../.github/workflows/ci.yml) 및 DefEssential에 적용할 프로젝트별 세부 지침
+- 대상: [CI 워크플로](../../../.github/workflows/ci.yml) 및 DefChord에 적용할 프로젝트별 세부 지침
 
-공통 지침의 문서 역할 구분에 맞게 CI가 릴리즈 변경 로그를 찾는 파일명을 변경하고, DefEssential에 필요한 프로젝트별 세부 지침을 추가한다.
+공통 지침의 문서 역할 구분에 맞게 CI가 릴리즈 변경 로그를 찾는 파일명을 변경하고, DefChord에 필요한 프로젝트별 세부 지침을 추가한다.
 
 ## 범위
 
 ### 포함
 
 - CI에서 릴리즈용 이슈 변경 로그의 경로를 `issues/{branch}/CHANGELOG.md`로 변경한다.
-- DefEssential의 루트 README와 상세 매뉴얼 각각에 대한 프로젝트별 세부 지침을 추가한다.
+- DefChord의 루트 README와 상세 매뉴얼 각각에 대한 프로젝트별 세부 지침을 추가한다.
 
 ### 제외
 

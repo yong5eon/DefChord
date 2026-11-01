@@ -2,7 +2,7 @@
 
 ## 이슈 정보
 
-- 원본 이슈: [#23](https://github.com/yong5eon/DefEssential/issues/23) (GitHub Issues, 열림)
+- 원본 이슈: [#23](https://github.com/yong5eon/DefChord/issues/23) (GitHub Issues, 열림)
 - 유형 및 레이블: 작업 (`task` 레이블 적용됨)
 - 작업 브랜치: `task/23`
 - 병합 대상 브랜치: `master`

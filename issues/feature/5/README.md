@@ -31,7 +31,7 @@
 | 별도 `bind/route/routes` 계약 | `startup(application)`에서 연결·등록 |
 | Extension의 `onRequest/onResponse` 필터 | `on_request/on_request_response` 훅 |
 | FileSystem 요청 필터의 튜플 반환 | Request 반환 |
-| `DefEssential.FileSystemRoute` import | `DefEssential.Extensions.FileSystem`에서 import |
+| `DefChord.FileSystemRoute` import | `DefChord.Extensions.FileSystem`에서 import |
 | 명세 호출 시 Application 전달 | 시작 단계에서 연결한 뒤 `spec.document()` 호출 |
 
 공개 ExtensionFactory는 제공하지 않는다. 내부 RunExtensionFactory는 RequestRunner 어댑터 생성기로 유지한다. 일반 RequestRunner 필터 제거는 이번 변경에 포함하지 않는다.

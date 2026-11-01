@@ -1,33 +1,33 @@
-# DefEssential
+# DefChord
 
 The Modern Synchronous Python Web Application Framework
 
-DefEssential is a synchronous Python web framework for handling HTTP requests with ordinary methods. Python 3.9 or later is required.
+DefChord is a synchronous Python web framework for handling HTTP requests with ordinary methods. Python 3.9 or later is required.
 
 ## Installation
 
 ```shell
-python -m pip install DefEssential
+python -m pip install DefChord
 ```
 
 The built-in Python HTTP server requires no additional server dependency. Optional extras provide Gunicorn and Uvicorn adapters:
 The core excludes their implementation files; each extra installs a separate, same-version adapter distribution and its dependencies.
 
 ```shell
-python -m pip install "DefEssential[Gunicorn]"
-python -m pip install "DefEssential[Uvicorn]"
+python -m pip install "DefChord[Gunicorn]"
+python -m pip install "DefChord[Uvicorn]"
 ```
 
-When migrating from an older integrated installation, uninstall DefEssential and any installed adapter distributions before reinstalling with the desired extras. Omitting an extra later does not remove an already installed adapter.
+Install the desired adapter extra when needed. Omitting an extra later does not remove an already installed adapter.
 
 ## Quick start
 
 Save this example as `app.py` and run `python app.py`.
 
 ```python
-from DefEssential import Application, Request, RequestRunner
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Responses import ResponseText
+from DefChord import Application, Request, RequestRunner
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Responses import ResponseText
 
 
 class Hello(RequestRunner, method='GET', url='/hello'):

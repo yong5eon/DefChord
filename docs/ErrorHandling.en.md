@@ -57,7 +57,7 @@ If there are no error hooks, or all hooks in the applicable scopes return `None`
 
 | Propagated exception | Default response |
 | --- | --- |
-| A DefEssential `Error` subclass | The exception's HTTP status, headers, and reason body |
+| A DefChord `Error` subclass | The exception's HTTP status, headers, and reason body |
 | Any other exception | Generic `500 Internal Server Error`; exception details are not exposed to the client |
 
 `Error`, `ClientError`, and `ServerError` represent an HTTP status and error reason. If a user error hook returns a `Response`, that hook determines its status, headers, and body; the adapter does not replace it with a default error response.
@@ -70,7 +70,7 @@ The following example logs unexpected server exceptions and handles them with a 
 from logging import getLogger
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
   Application,
   ApplicationRequestError,
   ClientError,
@@ -123,7 +123,7 @@ For a policy that applies to only one route, configure `on_request_error` on tha
 ```python
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
   Application,
   ClientError,
   Request,

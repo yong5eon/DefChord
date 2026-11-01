@@ -2,7 +2,7 @@
 
 ## 구현 전 문제 분석
 
-DefEssential은 예외를 처리하지 않는 상태는 아니다. 요청 처리 과정에서 오류를 관찰하는 훅과, 훅이 처리하지 못한 예외를 HTTP 응답으로 바꾸는 서버 adapter의 기본 동작이 이미 있다. 문제는 애플리케이션·확장·라우트가 오류 상황에 맞는 사용자 정의 `Response`를 반환할 수 없다는 점이다.
+DefChord은 예외를 처리하지 않는 상태는 아니다. 요청 처리 과정에서 오류를 관찰하는 훅과, 훅이 처리하지 못한 예외를 HTTP 응답으로 바꾸는 서버 adapter의 기본 동작이 이미 있다. 문제는 애플리케이션·확장·라우트가 오류 상황에 맞는 사용자 정의 `Response`를 반환할 수 없다는 점이다.
 
 ### 구현 전 기준 동작
 
@@ -89,11 +89,11 @@ DefEssential은 예외를 처리하지 않는 상태는 아니다. 요청 처리
 
 ## 이슈 원문과 작업 메타데이터
 
-- 원본 시스템·저장소: GitHub, `yong5eon/DefEssential`
-- 원본 이슈: [#21 오류처리](https://github.com/yong5eon/DefEssential/issues/21)
+- 원본 시스템·저장소: GitHub, `yong5eon/DefChord`
+- 원본 이슈: [#21 오류처리](https://github.com/yong5eon/DefChord/issues/21)
 - 원본 유형 및 적용 레이블: `feature` (`feature` 레이블 적용 확인)
 - 원본 상태: open
-- 작업 대상: `C:\Works\DefStream\DefEssential`
+- 작업 대상: `C:\Works\DefStream\DefChord`
 - 작업 브랜치: `feature/21`
 - 병합 대상 브랜치: 미확인
 - 이슈 기록 위치: `issues/feature/21/`

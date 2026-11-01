@@ -99,7 +99,7 @@
 
 1. 신규 Application 훅 테스트를 우선 실행한다.
 2. [서버 테스트](../../../tests/test_server.py), [Extension 테스트](../../../tests/test_extensions.py), [공개 API 테스트](../../../tests/test_exports.py)를 함께 실행한다.
-3. 위 선택 테스트가 통과하면 DefEssential 전체 테스트를 실행해 기존 동작 회귀 여부를 확인한다.
+3. 위 선택 테스트가 통과하면 DefChord 전체 테스트를 실행해 기존 동작 회귀 여부를 확인한다.
 4. 실제 검증 명령은 저장소에서 사용하는 테스트 실행 설정을 확인한 뒤 선택 테스트와 전체 테스트에 동일한 runner를 사용한다.
 
 ## 6. 완료 조건

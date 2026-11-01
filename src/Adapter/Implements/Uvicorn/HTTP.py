@@ -157,7 +157,7 @@ class Middleware:
 		self.application = WSGIApplication(application)
 		self.executor = ThreadPoolExecutor(
 			max_workers=workers,
-			thread_name_prefix='DefEssential.Uvicorn',
+			thread_name_prefix='DefChord.Uvicorn',
 		)
 		self.queue_size = queue_size
 		return

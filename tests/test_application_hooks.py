@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import Any
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationCleanup,
 	ApplicationRequest,
@@ -20,8 +20,8 @@ from DefEssential import (
 	Response,
 	RequestRunnerRequestResponse,
 )
-from DefEssential.IO.ResponseWriter import ResponseWriter
-from DefEssential.Adapter.RequestHandler import handle_request
+from DefChord.IO.ResponseWriter import ResponseWriter
+from DefChord.Adapter.RequestHandler import handle_request
 
 
 class Lifecycle(Extension):
@@ -186,7 +186,7 @@ class ApplicationHookTests(TestCase):
 		)
 		app.start()
 		events.clear()
-		with self.assertLogs('DefEssential.Application', level='ERROR'):
+		with self.assertLogs('DefChord.Application', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, '/last'):
 				app.stop()
 		self.assertFalse(app.running)

@@ -2,12 +2,12 @@ from http.client import HTTPConnection
 from threading import Event
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	RequestRunner,
 	Response,
 )
-from DefEssential.IO.Writers import ServerSentEvents
+from DefChord.IO.Writers import ServerSentEvents
 from test_server import running
 
 
@@ -146,7 +146,7 @@ class SSETests(TestCase):
 		app = Application()
 		app.add(Events)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'DefChord.Server',
 			level='ERROR',
 		) as logged:
 			with running(app) as address:

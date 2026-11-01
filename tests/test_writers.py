@@ -13,7 +13,7 @@ from struct import pack
 from threading import Event
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationRequest,
 	ApplicationRequestError,
@@ -26,12 +26,12 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.IO.RequestReader import ClientDisconnected
-from DefEssential.IO.Writers import (
+from DefChord.IO.RequestReader import ClientDisconnected
+from DefChord.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEvents,
 	ServerSentEventsWriter,
@@ -400,7 +400,7 @@ class DirectServerTests(TestCase):
 		app = Application()
 		app.add(Direct)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'DefChord.Server',
 			level='ERROR',
 		):
 			with running(app) as address:
@@ -470,7 +470,7 @@ class DirectServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Events)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'DefChord.Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:
@@ -501,7 +501,7 @@ class DirectServerTests(TestCase):
 					release.set()
 					client.close()
 		self.assertIn(
-			'WARNING:DefEssential.Server:Client disconnected',
+			'WARNING:DefChord.Server:Client disconnected',
 			'\n'.join(logged.output),
 		)
 		self.assertTrue(all(record.exc_info is None for record in logged.records))
@@ -539,7 +539,7 @@ class DirectServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Upload)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'DefChord.Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:
@@ -789,7 +789,7 @@ class DirectServerTests(TestCase):
 		)
 		app.add(Output)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'DefChord.Server',
 			level='WARNING',
 		) as logged:
 			with running(app) as address:
@@ -838,7 +838,7 @@ class DirectServerTests(TestCase):
 				app = Application()
 				app.add(Invalid)
 				with self.assertLogs(
-					'DefEssential.Server',
+					'DefChord.Server',
 					level='ERROR',
 				):
 					with running(app) as address:

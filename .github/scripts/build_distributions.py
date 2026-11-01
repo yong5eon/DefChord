@@ -4,7 +4,7 @@ from pathlib import Path
 from subprocess import run
 from sys import executable
 
-PROJECT = 'DefEssential'
+PROJECT = 'DefChord'
 IMPLEMENTATIONS = {
 	'Gunicorn': 'Adapter.Implements.Gunicorn',
 	'Uvicorn': 'Adapter.Implements.Uvicorn',

@@ -20,5 +20,5 @@
 
 ## 진행 상태
 
-- 파일 적용, 문서 반입, 테스트 검증, 커밋·푸시 완료. push로 PR [#24](https://github.com/yong5eon/DefEssential/pull/24)가 자동 생성되어 PR 생성 워크플로의 실전 동작을 확인했다.
+- 파일 적용, 문서 반입, 테스트 검증, 커밋·푸시 완료. push로 PR [#24](https://github.com/yong5eon/DefChord/pull/24)가 자동 생성되어 PR 생성 워크플로의 실전 동작을 확인했다.
 - 남은 항목: PR 리뷰·병합, 기본 브랜치 병합 후 리뷰 이슈 등록 워크플로 실전 시험.

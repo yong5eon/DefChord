@@ -33,7 +33,7 @@ from unittest import (
 	skipUnless,
 )
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationCleanup,
 	ApplicationRequestError,
@@ -43,12 +43,12 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.IO.WebSocket import WebSocket
-from DefEssential.IO.Writers import (
+from DefChord.IO.WebSocket import WebSocket
+from DefChord.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEventsWriter,
 	StreamWriter,
@@ -248,7 +248,7 @@ def run_server(
 	):
 		application.add(handler)
 	if adapter == 'Python':
-		from DefEssential.Adapter.Implements.Python import Server
+		from DefChord.Adapter.Implements.Python import Server
 
 		Server(
 			'127.0.0.1',
@@ -256,7 +256,7 @@ def run_server(
 			application,
 		).run()
 	elif adapter == 'Uvicorn':
-		from DefEssential.Adapter.Implements.Uvicorn import Server
+		from DefChord.Adapter.Implements.Uvicorn import Server
 
 		Server(
 			'127.0.0.1',
@@ -265,7 +265,7 @@ def run_server(
 			log_level='warning',
 		).run()
 	else:
-		from DefEssential.Adapter.Implements.Gunicorn import Server
+		from DefChord.Adapter.Implements.Gunicorn import Server
 
 		Server(
 			'127.0.0.1',
@@ -286,16 +286,16 @@ class TransportConformanceTests(TestCase):
 		adapter,
 		worker,
 	):
-		from DefEssential import __file__ as package_file
+		from DefChord import __file__ as package_file
 
 		script = '''
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
 source, tests, adapter, port, directory, worker = sys.argv[1:]
-spec = spec_from_file_location('DefEssential', Path(source) / '__init__.py')
+spec = spec_from_file_location('DefChord', Path(source) / '__init__.py')
 module = module_from_spec(spec)
-sys.modules['DefEssential'] = module
+sys.modules['DefChord'] = module
 spec.loader.exec_module(module)
 sys.path.insert(0, tests)
 from test_transport_conformance import run_server

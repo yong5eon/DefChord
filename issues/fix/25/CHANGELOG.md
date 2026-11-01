@@ -16,10 +16,10 @@
 
 ## 설치 방식
 
-기본 `DefEssential` 설치에는 공통 API와 기본 Python 서버만 포함됩니다. Gunicorn/Uvicorn 어댑터는 선택한 extra에 해당하는 별도 배포물로 설치되며 기존 import 경로를 유지합니다.
+기본 `DefChord` 설치에는 공통 API와 기본 Python 서버만 포함됩니다. Gunicorn/Uvicorn 어댑터는 선택한 extra에 해당하는 별도 배포물로 설치되며 기존 import 경로를 유지합니다.
 
 ```shell
-python -m pip install "DefEssential[Uvicorn]"
+python -m pip install "DefChord[Uvicorn]"
 ```
 
 코어와 구현체는 동일 버전을 사용합니다. 나중에 extra를 생략해도 이미 설치된 어댑터가 자동 제거되지는 않습니다.

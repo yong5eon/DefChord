@@ -4,9 +4,9 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 원본 이슈 | [#19](https://github.com/yong5eon/DefEssential/issues/19) |
+| 원본 이슈 | [#19](https://github.com/yong5eon/DefChord/issues/19) |
 | 관련 요구사항 | [REQUIREMENTS.md](./REQUIREMENTS.md) |
-| 대상 저장소 | `yong5eon/DefEssential` |
+| 대상 저장소 | `yong5eon/DefChord` |
 | 작업 브랜치 | `task/19` |
 | 분기 기준 | `master` |
 | 병합 대상 브랜치 | 미지정 |

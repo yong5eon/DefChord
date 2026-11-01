@@ -1,4 +1,4 @@
-# DefEssential #17 구현 및 검증 기록
+# DefChord #17 구현 및 검증 기록
 
 ## 구현 내용
 
@@ -17,8 +17,8 @@
 | CI 내장 Python 스크립트 구문 컴파일 | 통과 |
 | README 지침 frontmatter 확인 | `instructions/README.instructions.md`는 루트 README, `instructions/DOCS.instructions.md`는 `docs/**/*.md`에 적용 |
 | `.github/instructions` 정션 확인 | 루트 `instructions/`를 가리키며 두 지침 파일이 링크 경로에서 확인됨 |
-| DefEssential `git diff --check` | 통과 |
+| DefChord `git diff --check` | 통과 |
 
-DefEssential 저장소에는 릴리즈 경로를 검증하는 별도의 워크플로 테스트가 없어, 실제 워크플로의 입력 경로와 내장 Python 스크립트를 확인했다.
+DefChord 저장소에는 릴리즈 경로를 검증하는 별도의 워크플로 테스트가 없어, 실제 워크플로의 입력 경로와 내장 Python 스크립트를 확인했다.
 
 Windows 디렉터리 정션은 Git에서 일반 디렉터리처럼 취급되어 링크 자체가 저장소에 기록되지 않는다. 따라서 정션은 현재 작업 환경에서만 만들었으며 새 체크아웃에서는 필요 시 다시 생성해야 한다.

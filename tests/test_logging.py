@@ -28,7 +28,7 @@ from unittest.mock import (
 	patch,
 )
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationRequest,
 	Extension,
@@ -40,14 +40,14 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Adapter.Implements.Gunicorn import Server as GunicornServer
-from DefEssential.Adapter.Implements.Python.Server import (
+from DefChord.Adapter.Implements.Gunicorn import Server as GunicornServer
+from DefChord.Adapter.Implements.Python.Server import (
 	Server,
 	ServerRequestHandler,
 )
-from DefEssential.Adapter.Implements.Uvicorn import Server as UvicornServer
-from DefEssential.Adapter.RequestHandler import handle_request
-from DefEssential.Extensions import (
+from DefChord.Adapter.Implements.Uvicorn import Server as UvicornServer
+from DefChord.Adapter.RequestHandler import handle_request
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 	Metrics,
@@ -56,11 +56,11 @@ from DefEssential.Extensions import (
 	Status,
 	Swagger,
 )
-from DefEssential.Runners.RunRequest import RunRequest
-from DefEssential.IO.RequestReader import ClientDisconnected
-from DefEssential.IO.WebSocket import WebSocket
-from DefEssential.IO.WebSocket.WebSocketError import WebSocketError
-from DefEssential.IO.WebSocket.WebSocketFrame import WebSocketFrame
+from DefChord.Runners.RunRequest import RunRequest
+from DefChord.IO.RequestReader import ClientDisconnected
+from DefChord.IO.WebSocket import WebSocket
+from DefChord.IO.WebSocket.WebSocketError import WebSocketError
+from DefChord.IO.WebSocket.WebSocketFrame import WebSocketFrame
 from test_server import running
 
 
@@ -172,7 +172,7 @@ class LoggingTests(TestCase):
 			),
 		):
 			with self.subTest(cls=cls):
-				self.assertEqual(cls.logger.name, 'DefEssential.' + name)
+				self.assertEqual(cls.logger.name, 'DefChord.' + name)
 
 		class CustomApplication(Application):
 			pass
@@ -209,7 +209,7 @@ class LoggingTests(TestCase):
 			tuple(Application.logger.handlers),
 			Application.logger.propagate,
 		))
-		with self.assertLogs('DefEssential.Application', level=INFO) as logs:
+		with self.assertLogs('DefChord.Application', level=INFO) as logs:
 			app.start()
 			app.stop()
 			app.stop()
@@ -230,7 +230,7 @@ class LoggingTests(TestCase):
 				raise ValueError('private-error')
 
 		value = request('/failure')
-		with self.assertLogs('DefEssential.RequestRunner', level=DEBUG) as logs:
+		with self.assertLogs('DefChord.RequestRunner', level=DEBUG) as logs:
 			with self.assertRaisesRegex(ValueError, 'private-error'):
 				RunRequest(Failure).run(value)
 		messages = '\n'.join(logs.output)
@@ -248,7 +248,7 @@ class LoggingTests(TestCase):
 		app = Application()
 		app.add(Echo)
 		value = request()
-		with self.assertLogs('DefEssential', level=DEBUG) as logs:
+		with self.assertLogs('DefChord', level=DEBUG) as logs:
 			transmit(app, value)
 		messages = '\n'.join(logs.output)
 		for event in (
@@ -324,7 +324,7 @@ class LoggingTests(TestCase):
 		app = Application(on_request=replacement)
 		app.add(Hooked)
 		value = request()
-		with self.assertLogs('DefEssential', level=DEBUG) as logs:
+		with self.assertLogs('DefChord', level=DEBUG) as logs:
 			transmit(app, value)
 		messages = '\n'.join(logs.output)
 		self.assertIn('runner.request_hook.0', messages)
@@ -361,11 +361,11 @@ class LoggingTests(TestCase):
 		app = Application()
 		app.add(Failure)
 		value = request()
-		with self.assertLogs('DefEssential', level=DEBUG) as logs:
+		with self.assertLogs('DefChord', level=DEBUG) as logs:
 			transmit(app, value)
 		errors = [record for record in logs.records if record.levelno == ERROR]
 		self.assertEqual(len(errors), 1)
-		self.assertEqual(errors[0].name, 'DefEssential.Server')
+		self.assertEqual(errors[0].name, 'DefChord.Server')
 		self.assertIsNotNone(errors[0].exc_info)
 		self.assertTrue(any(
 			'Runner failed' in record.getMessage() and 'phase=runner.run' in record.getMessage()
@@ -390,7 +390,7 @@ class LoggingTests(TestCase):
 			),
 		):
 			with self.subTest(status=status):
-				with self.assertLogs('DefEssential', level=DEBUG) as logs:
+				with self.assertLogs('DefChord', level=DEBUG) as logs:
 					transmit(app, value)
 				self.assertFalse(any(record.levelno >= WARNING for record in logs.records))
 				self.assertIn('status=' + str(status), '\n'.join(logs.output))
@@ -436,7 +436,7 @@ class LoggingTests(TestCase):
 				app = Application()
 				app.add(Stream)
 				value = request()
-				with self.assertLogs('DefEssential', level=DEBUG) as logs:
+				with self.assertLogs('DefChord', level=DEBUG) as logs:
 					with self.assertRaises(type(exception)):
 						transmit(app, value)
 				problems = [record for record in logs.records if record.levelno >= WARNING]
@@ -471,7 +471,7 @@ class LoggingTests(TestCase):
 
 		app = Application()
 		app.add(Stream)
-		with self.assertLogs('DefEssential', level=DEBUG) as logs:
+		with self.assertLogs('DefChord', level=DEBUG) as logs:
 			transmit(app, request())
 		self.assertIn('outcome=completed', '\n'.join(logs.output))
 		errors = [record for record in logs.records if record.levelno == ERROR]
@@ -480,9 +480,9 @@ class LoggingTests(TestCase):
 		return
 
 	def test_monotonic_duration_and_unavailable_status(self):
-		module = import_module('DefEssential.Adapter.RequestHandler')
+		module = import_module('DefChord.Adapter.RequestHandler')
 		with patch.object(module, 'monotonic', side_effect=(10.0, 12.5)):
-			with self.assertLogs('DefEssential.Server', level=INFO) as logs:
+			with self.assertLogs('DefChord.Server', level=INFO) as logs:
 				value = request()
 				with self.assertRaises(ClientDisconnected):
 					handle_request(
@@ -524,7 +524,7 @@ class LoggingTests(TestCase):
 			request('/sample/secret-a'),
 			request('/other/secret-b'),
 		)
-		with self.assertLogs('DefEssential', level=DEBUG) as logs:
+		with self.assertLogs('DefChord', level=DEBUG) as logs:
 			with ThreadPoolExecutor(max_workers=2) as executor:
 				list(executor.map(lambda value: transmit(app, value), values))
 		summaries = [record.getMessage() for record in logs.records if 'HTTP transmission result' in record.getMessage()]
@@ -541,7 +541,7 @@ class LoggingTests(TestCase):
 			'/' + '\x00' * 1000,
 		):
 			with self.subTest(path=path):
-				with self.assertLogs('DefEssential', level=DEBUG) as logs:
+				with self.assertLogs('DefChord', level=DEBUG) as logs:
 					transmit(Application(), request(path))
 				self.assertIn('status=404', '\n'.join(logs.output))
 				for record in logs.records:
@@ -576,7 +576,7 @@ class LoggingTests(TestCase):
 		outer = Application()
 		outer.add(Outer)
 		value = request()
-		with self.assertLogs('DefEssential.Server', level=INFO) as logs:
+		with self.assertLogs('DefChord.Server', level=INFO) as logs:
 			transmit(outer, value)
 		self.assertEqual(len(logs.records), 1)
 		self.assertIn('request_id=' + value.id, logs.records[0].getMessage())
@@ -586,7 +586,7 @@ class LoggingTests(TestCase):
 	def test_python_server_reports_actual_port_and_one_safe_summary(self):
 		app = Application()
 		app.add(Echo)
-		with redirect_stdout(StringIO()), self.assertLogs('DefEssential.Server', level=INFO) as logs:
+		with redirect_stdout(StringIO()), self.assertLogs('DefChord.Server', level=INFO) as logs:
 			with running(app) as address:
 				connection = HTTPConnection(*address, timeout=3)
 				try:
@@ -605,7 +605,7 @@ class LoggingTests(TestCase):
 
 	def test_python_bind_failure_is_logged_once_without_false_readiness(self):
 		with patch('http.server.ThreadingHTTPServer.server_bind', side_effect=OSError('bind failed')):
-			with self.assertLogs('DefEssential.Server', level=DEBUG) as logs:
+			with self.assertLogs('DefChord.Server', level=DEBUG) as logs:
 				with self.assertRaisesRegex(OSError, 'bind failed'):
 					Server('127.0.0.1', 0, Application())
 		self.assertEqual(len(logs.records), 1)
@@ -620,7 +620,7 @@ class LoggingTests(TestCase):
 		app.add(Echo)
 		value = request()
 		value.body = body
-		with self.assertLogs('DefEssential', level=INFO) as logs:
+		with self.assertLogs('DefChord', level=INFO) as logs:
 			transmit(app, value)
 		body.read.assert_not_called()
 		body.__repr__.assert_not_called()
@@ -685,7 +685,7 @@ class LoggingTests(TestCase):
 				app = Application()
 				app.add(Output)
 				value = request('/', method=method)
-				with self.assertLogs('DefEssential.Server', level=INFO) as logs:
+				with self.assertLogs('DefChord.Server', level=INFO) as logs:
 					transmit(app, value)
 				self.assertEqual(len(logs.records), 1)
 				self.assertIn('status=' + str(status) + ' outcome=completed', logs.records[0].getMessage())
@@ -713,7 +713,7 @@ class LoggingTests(TestCase):
 			ERROR,
 		):
 			with self.subTest(level=level):
-				with self.assertLogs('DefEssential', level=level) as logs:
+				with self.assertLogs('DefChord', level=level) as logs:
 					transmit(app, request('/'))
 				self.assertEqual(sum(record.levelno == ERROR for record in logs.records), 1)
 				self.assertTrue(all(record.levelno >= level for record in logs.records))
@@ -730,7 +730,7 @@ class LoggingTests(TestCase):
 		value = request('/')
 		socket = WebSocket(value, limit=16)
 		with patch.object(socket.handshake, 'response', return_value=Response(status=101)):
-			with self.assertLogs('DefEssential.IO.WebSocket', level=DEBUG) as logs:
+			with self.assertLogs('DefChord.IO.WebSocket', level=DEBUG) as logs:
 				socket.accept()
 				socket.send('private-message')
 				socket.receive_close(WebSocketFrame(
@@ -743,7 +743,7 @@ class LoggingTests(TestCase):
 		other = WebSocket(request('/'), limit=16)
 		with patch.object(other.handshake, 'response', return_value=Response(status=101)):
 			other.accept()
-		with self.assertLogs('DefEssential.IO.WebSocket', level=DEBUG) as logs:
+		with self.assertLogs('DefChord.IO.WebSocket', level=DEBUG) as logs:
 			other.fail(WebSocketError(1002, 'private-protocol-reason'))
 		self.assertEqual(logs.records[0].levelno, WARNING)
 		self.assertIn('code=1002', logs.records[0].getMessage())
@@ -755,16 +755,16 @@ class LoggingTests(TestCase):
 		code = (
 			'from importlib.util import module_from_spec, spec_from_file_location\n'
 			'import logging, sys\n'
-			'spec = spec_from_file_location("DefEssential", sys.argv[1])\n'
+			'spec = spec_from_file_location("DefChord", sys.argv[1])\n'
 			'module = module_from_spec(spec)\n'
-			'sys.modules["DefEssential"] = module\n'
+			'sys.modules["DefChord"] = module\n'
 			'spec.loader.exec_module(module)\n'
 			'app = module.Application()\n'
 			'app.start()\n'
 			'app.stop()\n'
 			'assert not logging.getLogger().handlers\n'
-			'assert not logging.getLogger("DefEssential").handlers\n'
-			'logging.getLogger("DefEssential").warning("last-resort-probe")\n'
+			'assert not logging.getLogger("DefChord").handlers\n'
+			'logging.getLogger("DefChord").warning("last-resort-probe")\n'
 		)
 		result = run(
 			[
@@ -803,10 +803,10 @@ class LoggingTests(TestCase):
 			for name in (
 				'Sample',
 				'Sample.Child',
-				'DefEssential',
-				'DefEssential.Child',
+				'DefChord',
+				'DefChord.Child',
 				'SampleExtra',
-				'DefEssentialExtra',
+				'DefChordExtra',
 				'External.Library',
 			):
 				getLogger(name).info('source=%s', name)
@@ -814,13 +814,13 @@ class LoggingTests(TestCase):
 			for name in (
 				'Sample',
 				'Sample.Child',
-				'DefEssential',
-				'DefEssential.Child',
+				'DefChord',
+				'DefChord.Child',
 			):
 				self.assertIn(name + ' source=' + name, text)
 			for name in (
 				'SampleExtra',
-				'DefEssentialExtra',
+				'DefChordExtra',
 				'External.Library',
 			):
 				self.assertNotIn(name, text)

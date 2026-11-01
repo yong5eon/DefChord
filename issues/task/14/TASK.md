@@ -1,8 +1,8 @@
-# DefEssential 문서 현지화 작업 기록
+# DefChord 문서 현지화 작업 기록
 
 ## 목적
 
-[요구사항 명세서](./REQUIREMENTS.md)와 [작업 계획서](./PLAN.md)에 따라 DefEssential의 사용자 문서를 현지화하고, Python 코드 설명 문구를 영어로 정리했다.
+[요구사항 명세서](./REQUIREMENTS.md)와 [작업 계획서](./PLAN.md)에 따라 DefChord의 사용자 문서를 현지화하고, Python 코드 설명 문구를 영어로 정리했다.
 
 ## 수행 내용
 

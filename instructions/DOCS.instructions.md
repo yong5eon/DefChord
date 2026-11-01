@@ -1,9 +1,9 @@
 ---
-description: "DefEssential 상세 매뉴얼 작성 지침"
+description: "DefChord 상세 매뉴얼 작성 지침"
 applyTo: "docs/**/*.md"
 ---
 
-# DefEssential 상세 매뉴얼 작성 지침
+# DefChord 상세 매뉴얼 작성 지침
 
 ## 디렉터리와 진입 문서
 
@@ -30,7 +30,7 @@ applyTo: "docs/**/*.md"
 
 ## 기술 내용의 정확성
 
-- 내용은 DefEssential의 공개 API, 구현된 동작과 지원되는 설정에 근거한다.
+- 내용은 DefChord의 공개 API, 구현된 동작과 지원되는 설정에 근거한다.
 - 라우트와 RequestRunner, 요청 데이터 검증, Body·콘텐츠 리더, 응답·스트리밍, Server-Sent Events, WebSocket, 확장과 서버 어댑터, 생명주기 훅 안내는 해당 기능의 실제 계약을 확인해 작성한다.
 - 설정 예시와 코드 샘플은 현재 API와 호환되어야 한다. 외부 서버나 서비스가 필요한 절차에는 요구 사항과 실행 조건을 설명한다.
 - 지원 여부가 확인되지 않은 기능, 보장되지 않는 동작, 실제 수행하지 않은 검증을 사실처럼 작성하지 않는다.

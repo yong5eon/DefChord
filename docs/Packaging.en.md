@@ -4,13 +4,15 @@
 
 ## Installed files
 
-`DefEssential` contains only the core and built-in Python server. The `Gunicorn` and `Uvicorn` extras install the same-version `DefEssential-Gunicorn` and `DefEssential-Uvicorn` distributions and their external dependencies. Existing Python import paths remain unchanged.
+`DefChord` contains only the core and built-in Python server. The `Gunicorn` and `Uvicorn` extras install the same-version `DefChord-Gunicorn` and `DefChord-Uvicorn` distributions and their external dependencies.
+
+Metrics use the `defchord_*` names, and OpenAPI vendor extensions use the `x-defchord-*` keys.
 
 In a new environment, unselected adapter files are absent. Omitting an extra later does not remove an installed adapter; explicitly uninstall its implementation distribution when no longer needed.
 
 ```mermaid
 flowchart LR
-  A["Install DefEssential[Uvicorn]"] --> B["Core and Python server"]
+  A["Install DefChord[Uvicorn]"] --> B["Core and Python server"]
   A --> C["Same-version Uvicorn implementation"]
   C --> D["uvicorn · a2wsgi"]
 ```

@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from http.client import HTTPConnection
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ClientError,
 	ExtensionRequest,
@@ -13,13 +13,13 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Responses import ResponseFile
-from DefEssential.Responses.ResponseFile import FileBody
-from DefEssential.Extensions import (
+from DefChord.Responses import ResponseFile
+from DefChord.Responses.ResponseFile import FileBody
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 )
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )

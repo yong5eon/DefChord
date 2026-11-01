@@ -4,7 +4,7 @@
 
 ## 설치 파일의 배포 경계
 
-`setup.py`는 단일 `src`에서 `DEF_BUILD_TARGET`에 따라 코어, `DefEssential-Gunicorn`, `DefEssential-Uvicorn`을 만든다. 코어는 공통 코드와 기본 Python 서버를 유지하고 두 선택 어댑터를 제외한다. 각 구현체는 기존 import 경로의 자기 하위 파일만 소유한다. 부모 패키지의 `__init__.py`는 코어만 소유한다.
+`setup.py`는 단일 `src`에서 `DEF_BUILD_TARGET`에 따라 코어, `DefChord-Gunicorn`, `DefChord-Uvicorn`을 만든다. 코어는 공통 코드와 기본 Python 서버를 유지하고 두 선택 어댑터를 제외한다. 각 구현체는 기존 import 경로의 자기 하위 파일만 소유한다. 부모 패키지의 `__init__.py`는 코어만 소유한다.
 
 코어 extras는 동일 버전 구현체 배포물에, 구현체는 동일 버전 코어와 기존 외부 의존성에 연결된다. 설치 시 extras를 감지하거나 import만 차단하는 방식이 아니다. sdist는 공통 소스 트리를 담으며, 선택 파일의 격리 경계는 wheel과 최종 설치 파일이다.
 

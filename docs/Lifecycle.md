@@ -4,7 +4,7 @@
 
 [English](./Lifecycle.en.md)
 
-DefEssential은 애플리케이션과 확장의 시작·정리, 요청 전처리, 응답 후처리를 위한 훅을 제공합니다. 훅은 지정된 시점에 사용자 코드를 실행하는 명시적 계약이며, 하나의 훅 또는 순서가 있는 훅 시퀀스를 등록할 수 있습니다.
+DefChord는 애플리케이션과 확장의 시작·정리, 요청 전처리, 응답 후처리를 위한 훅을 제공합니다. 훅은 지정된 시점에 사용자 코드를 실행하는 명시적 계약이며, 하나의 훅 또는 순서가 있는 훅 시퀀스를 등록할 수 있습니다.
 
 ## 애플리케이션과 확장 생명주기
 
@@ -20,7 +20,7 @@ DefEssential은 애플리케이션과 확장의 시작·정리, 요청 전처리
 ```python
 from logging import getLogger
 
-from DefEssential import (
+from DefChord import (
   Application,
   ApplicationCleanup,
   ApplicationStartup,
@@ -97,13 +97,13 @@ sequenceDiagram
 ```python
 from logging import getLogger
 
-from DefEssential import (
+from DefChord import (
   Request,
   RequestRunner,
   RequestRunnerRequest,
   RequestRunnerRequestResponse,
 )
-from DefEssential.Responses import ResponseText
+from DefChord.Responses import ResponseText
 
 
 class RequestLog(RequestRunnerRequest):

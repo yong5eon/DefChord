@@ -13,7 +13,7 @@ from unittest.mock import (
 	patch,
 )
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationRequest,
 	ApplicationRequestResponse,
@@ -27,7 +27,7 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Extensions import (
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 	MetricsCollector,
@@ -37,8 +37,8 @@ from DefEssential.Extensions import (
 	Status,
 	Swagger,
 )
-from DefEssential.Extensions.FileSystem import FileSystemRoute
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+from DefChord.Extensions.FileSystem import FileSystemRoute
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )
@@ -370,7 +370,7 @@ class BuiltinExtensionTests(TestCase):
 		connection.connect.side_effect = ValueError('connect failed')
 		connection.close.side_effect = RuntimeError('close failed')
 		app = Application(exts=(FileSystem('/files', connection),))
-		with self.assertLogs('DefEssential.Extensions.FileSystem', level='ERROR'):
+		with self.assertLogs('DefChord.Extensions.FileSystem', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, 'connect failed'):
 				app.start()
 		connection.close.assert_called_once()

@@ -11,24 +11,24 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	RequestRunner,
 	Response,
 )
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Startup import (
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Startup import (
 	LOGO,
 	colorize_logo,
 	startup,
 	supports_color,
 )
-from DefEssential.Extensions import (
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 	Ping,
 )
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )

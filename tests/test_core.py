@@ -3,7 +3,7 @@ from sys import modules
 from types import ModuleType
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ClientError,
 	Error,
@@ -16,11 +16,11 @@ from DefEssential import (
 	RequestRunnerRequestResponse,
 	ServerError,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ChunkedStream,
 	TextContentReader,
 )
-from DefEssential.IO.RequestReader import ClientDisconnected
+from DefChord.IO.RequestReader import ClientDisconnected
 
 
 def request(
@@ -238,9 +238,9 @@ class CoreTests(TestCase):
 		return
 
 	def test_module_load_is_independent_and_idempotent(self):
-		module = ModuleType('defessential_test_handlers')
+		module = ModuleType('defchord_test_handlers')
 		exec(
-			'from DefEssential import RequestRunner, Response\n'
+			'from DefChord import RequestRunner, Response\n'
 			'class Sample(RequestRunner, method="GET", url="/sample"):\n'
 			'\tdef run(self, request):\n'
 			'\t\treturn Response(body=b"loaded")\n',

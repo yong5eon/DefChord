@@ -287,40 +287,40 @@ class MetricsCollector:
 	) -> str:
 		snapshot = self.snapshot()
 		lines = [
-			'# HELP defessential_application_running Application lifecycle is running; not an external heartbeat.',
-			'# TYPE defessential_application_running gauge',
-			f'defessential_application_running {int(snapshot["running"])}',
-			'# HELP defessential_application_uptime_seconds Seconds since application startup.',
-			'# TYPE defessential_application_uptime_seconds gauge',
-			f'defessential_application_uptime_seconds {snapshot["uptime"]}',
-			'# HELP defessential_requests_active Requests being processed by the Application.',
-			'# TYPE defessential_requests_active gauge',
-			'# HELP defessential_requests_total Completed Application requests by outcome.',
-			'# TYPE defessential_requests_total counter',
-			'# HELP defessential_request_duration_seconds Application processing duration; excludes response transfer.',
-			'# TYPE defessential_request_duration_seconds summary',
-			'# TYPE defessential_request_oldest_active_seconds gauge',
-			'# TYPE defessential_requests_window gauge',
-			'# TYPE defessential_request_window_duration_seconds_sum gauge',
-			'# TYPE defessential_request_window_duration_seconds_max gauge',
+			'# HELP defchord_application_running Application lifecycle is running; not an external heartbeat.',
+			'# TYPE defchord_application_running gauge',
+			f'defchord_application_running {int(snapshot["running"])}',
+			'# HELP defchord_application_uptime_seconds Seconds since application startup.',
+			'# TYPE defchord_application_uptime_seconds gauge',
+			f'defchord_application_uptime_seconds {snapshot["uptime"]}',
+			'# HELP defchord_requests_active Requests being processed by the Application.',
+			'# TYPE defchord_requests_active gauge',
+			'# HELP defchord_requests_total Completed Application requests by outcome.',
+			'# TYPE defchord_requests_total counter',
+			'# HELP defchord_request_duration_seconds Application processing duration; excludes response transfer.',
+			'# TYPE defchord_request_duration_seconds summary',
+			'# TYPE defchord_request_oldest_active_seconds gauge',
+			'# TYPE defchord_requests_window gauge',
+			'# TYPE defchord_request_window_duration_seconds_sum gauge',
+			'# TYPE defchord_request_window_duration_seconds_max gauge',
 		]
 		for key, stats in snapshot['requests'].items():
 			tags = 'route="' + label(key) + '"'
 			lines.extend((
-				f'defessential_requests_active{{{tags}}} {stats["active"]}',
-				f'defessential_requests_total{{{tags},outcome="success"}} {stats["success"]}',
-				f'defessential_requests_total{{{tags},outcome="failure"}} {stats["failure"]}',
-				f'defessential_request_duration_seconds_count{{{tags}}} {stats["success"] + stats["failure"]}',
-				f'defessential_request_duration_seconds_sum{{{tags}}} {stats["duration"]}',
-				f'defessential_request_oldest_active_seconds{{{tags}}} {stats["oldest_active"]}',
+				f'defchord_requests_active{{{tags}}} {stats["active"]}',
+				f'defchord_requests_total{{{tags},outcome="success"}} {stats["success"]}',
+				f'defchord_requests_total{{{tags},outcome="failure"}} {stats["failure"]}',
+				f'defchord_request_duration_seconds_count{{{tags}}} {stats["success"] + stats["failure"]}',
+				f'defchord_request_duration_seconds_sum{{{tags}}} {stats["duration"]}',
+				f'defchord_request_oldest_active_seconds{{{tags}}} {stats["oldest_active"]}',
 			))
 			for seconds, window in stats['windows'].items():
 				window_tags = tags + ',window_seconds="' + seconds + '"'
 				lines.extend((
-					f'defessential_requests_window{{{window_tags},outcome="success"}} {window["success"]}',
-					f'defessential_requests_window{{{window_tags},outcome="failure"}} {window["failure"]}',
-					f'defessential_request_window_duration_seconds_sum{{{window_tags}}} {window["duration"]}',
-					f'defessential_request_window_duration_seconds_max{{{window_tags}}} {window["max_duration"]}',
+					f'defchord_requests_window{{{window_tags},outcome="success"}} {window["success"]}',
+					f'defchord_requests_window{{{window_tags},outcome="failure"}} {window["failure"]}',
+					f'defchord_request_window_duration_seconds_sum{{{window_tags}}} {window["duration"]}',
+					f'defchord_request_window_duration_seconds_max{{{window_tags}}} {window["max_duration"]}',
 				))
 		return '\n'.join(lines) + '\n'
 
@@ -394,7 +394,7 @@ class ObserveError(ApplicationRequestError):
 class Metrics(Extension):
 	"""Observe all application requests and expose metrics as JSON or Prometheus."""
 
-	logger = getLogger('DefEssential.Extensions.Metrics')
+	logger = getLogger('DefChord.Extensions.Metrics')
 
 	def __init__(
 		self,

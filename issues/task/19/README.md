@@ -5,8 +5,8 @@
 | 항목 | 내용 |
 | --- | --- |
 | 출처 | GitHub Issues |
-| 저장소 | `yong5eon/DefEssential` |
-| 원본 이슈 | [#19](https://github.com/yong5eon/DefEssential/issues/19) |
+| 저장소 | `yong5eon/DefChord` |
+| 원본 이슈 | [#19](https://github.com/yong5eon/DefChord/issues/19) |
 | 상태 | Open |
 | 로컬 진행 상태 | 완료 |
 | 유형·레이블 | 작업 (`task`, 원본에 적용됨) |

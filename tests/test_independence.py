@@ -22,20 +22,20 @@ class RejectExternal(MetaPathFinder):
 
 sys.meta_path.insert(0, RejectExternal())
 source = Path(sys.argv[1])
-spec = spec_from_file_location('DefEssential', source / '__init__.py')
+spec = spec_from_file_location('DefChord', source / '__init__.py')
 module = module_from_spec(spec)
-sys.modules['DefEssential'] = module
+sys.modules['DefChord'] = module
 spec.loader.exec_module(module)
-from DefEssential import Application, Request, RequestRunner, Response
-from DefEssential.Adapter.Implements.Python import Server as PythonServer
-from DefEssential.Adapter.Implements.Gunicorn import Server as GunicornServer
-from DefEssential.Adapter.Implements.Uvicorn import Server as UvicornServer
-from DefEssential.IO.Readers import StreamContentReader
-from DefEssential.IO.Writers import ChunkedStreamWriter, ServerSentEventsWriter
-from DefEssential.Credentials import OAuth2AuthorizationCode
-from DefEssential.Responses import ResponseFile, ResponseJSON, ResponseText
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection
-from DefEssential.Extensions import (
+from DefChord import Application, Request, RequestRunner, Response
+from DefChord.Adapter.Implements.Python import Server as PythonServer
+from DefChord.Adapter.Implements.Gunicorn import Server as GunicornServer
+from DefChord.Adapter.Implements.Uvicorn import Server as UvicornServer
+from DefChord.IO.Readers import StreamContentReader
+from DefChord.IO.Writers import ChunkedStreamWriter, ServerSentEventsWriter
+from DefChord.Credentials import OAuth2AuthorizationCode
+from DefChord.Responses import ResponseFile, ResponseJSON, ResponseText
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import Configuration, Connection
+from DefChord.Extensions import (
 	Metrics,
 	Status,
 	Specifications,
