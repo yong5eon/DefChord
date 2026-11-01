@@ -32,6 +32,7 @@ The Modern Synchronous Python Web Application Framework
 - 공개 import 경로와 서버 어댑터 구현체 패키지 등 연관 이름 변경
 - 패키징 설정, 빌드·배포·검증 스크립트와 테스트의 관련 참조 갱신
 - 한국어·영어 README, 패키지 소개 문서, 상세 문서와 샘플의 이름·설치 명령·import 예제 갱신
+- 서버 시작 배너의 워드마크와 슬로건을 DefChord 브랜드에 맞게 갱신
 - 기존 동기식 요청 처리, 공개 기능과 서버 어댑터의 선택 설치 동작 유지
 
 ### 구현 전 확인 사항
@@ -45,6 +46,7 @@ The Modern Synchronous Python Web Application Framework
 - 선택형 서버 어댑터의 패키지 이름·의존성·import 경로 일치 확인
 - 관련 테스트와 배포물 검증으로 기존 동작 유지 확인
 - 한국어·영어 문서의 주요 내용과 코드 예제가 실제 변경 결과와 일치
+- 서버 시작 배너가 DefChord 워드마크와 확정 슬로건을 표시하고 색상 출력 동작을 유지
 - 현재 소스·문서·작업 기록과 생성 산출물이 현행 제품 식별자를 사용
 
 ## 확정된 결정 및 실제 상태
@@ -58,7 +60,7 @@ The Modern Synchronous Python Web Application Framework
 - [요구사항](./REQUIREMENTS.md)
 - [계획](./PLAN.md)
 - [구현 요약](./IMPLEMENTS.md)
-- [최신 구현 기록](./implements/1793542993332.md)
+- [최신 구현 기록](./implements/1793546326099.md)
 - [작업 결과](./TASKS.md)
-- [최신 작업 기록](./tasks/1793544105753.md)
+- [최신 작업 기록](./tasks/1793546326100.md)
 - [변경 로그](./CHANGELOG.md)

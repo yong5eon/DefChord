@@ -10,14 +10,16 @@ __all__ = (
 )
 
 
+# Coder Mini Style
+# https://patorjk.com/software/taag/#p=display&f=Coder+Mini&t=DefChord&x=none&v=4&h=4&w=80&we=false
 LOGO = r"""
-▄▄▄▄▄▄           ▄▄ ▄▄▄▄▄▄▄                              ▄▄       ▄▄
-███▀▀██▄        ██  ███▀▀▀▀                          ██  ▀▀       ██
-███  ███ ▄█▀█▄ ▀██▀ █████   ▄██▀▀ ▄██▀▀ ▄█▀█▄ ████▄ ▀██▀ ██  ▀▀█▄ ██
-███  ███ ██▄█▀  ██  ███     ▀▀██▄ ▀▀██▄ ██▄█▀ ██ ██  ██  ██ ▄█▀██ ██
-██████▀  ▀█▄▄▄  ██  ███████ ▀███▀ ▀███▀ ▀█▄▄▄ ██ ██  ██  ██ ▀█▄██ ██
+▄▄▄▄▄▄           ▄▄  ▄▄▄▄▄▄▄ ▄▄                   ▄▄
+███▀▀██▄        ██  ███▀▀▀▀▀ ██                   ██
+███  ███ ▄█▀█▄ ▀██▀ ███      ████▄ ▄███▄ ████▄ ▄████
+███  ███ ██▄█▀  ██  ███      ██ ██ ██ ██ ██ ▀▀ ██ ██
+██████▀  ▀█▄▄▄  ██  ▀███████ ██ ██ ▀███▀ ██    ▀████
 
-Just def. Let web apps do the work. You don't need to await this.
+Just def. Define your code. Compose your chord. You don't need to await this.
 """
 
 
