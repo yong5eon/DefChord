@@ -1,5 +1,7 @@
 # 구현 결과
 
+최신 리뷰에 따라 변경 링크 교체 전에 해당 bytecode를 정리하고 설치 검사의 프로젝트 배포물을 로컬 wheel로 고정했다. [수정 기록](./implements/1793518878749.md).
+
 ## 설치 파일의 배포 경계
 
 `setup.py`는 단일 `src`에서 `DEF_BUILD_TARGET`에 따라 코어, `DefEssential-Gunicorn`, `DefEssential-Uvicorn`을 만든다. 코어는 공통 코드와 기본 Python 서버를 유지하고 두 선택 어댑터를 제외한다. 각 구현체는 기존 import 경로의 자기 하위 파일만 소유한다. 부모 패키지의 `__init__.py`는 코어만 소유한다.
@@ -42,3 +44,4 @@
 10. [부분 갱신 실패 후 관리 파일 복구](./implements/1793329241418.md)
 11. [워크플로 스크립트와 테스트 위치 정리](./implements/1793516005513.md)
 12. [개발용 설치 코드와 테스트 숨김 경로 이동](./implements/1793516879579.md)
+13. [실패 후 bytecode 재사용과 검증 wheel 선택 수정](./implements/1793518878749.md)
