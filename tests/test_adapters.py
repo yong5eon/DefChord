@@ -3,6 +3,7 @@ from contextlib import (
 	redirect_stdout,
 )
 from http.client import HTTPConnection
+from importlib import import_module
 from importlib.util import find_spec
 from inspect import isabstract
 from io import (
@@ -626,7 +627,11 @@ class UvicornTests(TestCase):
 	def test_startup_output_failure_does_not_start_application(self):
 		lifecycle = Lifecycle()
 		application = Application(exts=(lifecycle,))
-		with patch('DefEssential.Adapter.Implements.Uvicorn.Server.startup', side_effect=OSError('output failed')):
+		with patch.object(
+			import_module('DefEssential.Adapter.Implements.Uvicorn.Server'),
+			'startup',
+			side_effect=OSError('output failed'),
+		):
 			with patch('uvicorn.Server.run') as run:
 				with self.assertRaisesRegex(OSError, 'output failed'):
 					UvicornServer('127.0.0.1', 8000, application).run()
@@ -870,7 +875,7 @@ else:
 					self.assertEqual(text.count('\nStarting\n'), 1)
 					self.assertEqual(text.count('  Server: Gunicorn\n'), 1)
 					self.assertEqual(text.count(f'Listen: http://127.0.0.1:{port}'), 1)
-					self.assertEqual(text.count('Lifecycle: /lifecycle'), 1)
+					self.assertEqual(text.count('    - Lifecycle\n'), 1)
 					self.assertNotIn('PID:', text)
 					for sequence in by_worker.values():
 						self.assertEqual(sequence, [

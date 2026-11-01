@@ -1,0 +1,47 @@
+# 구현 결과
+
+최신 리뷰에 따라 변경 링크 교체 전에 해당 bytecode를 정리하고 설치 검사의 프로젝트 배포물을 로컬 wheel로 고정했다. [수정 기록](./implements/1793518878749.md).
+
+## 설치 파일의 배포 경계
+
+`setup.py`는 단일 `src`에서 `DEF_BUILD_TARGET`에 따라 코어, `DefEssential-Gunicorn`, `DefEssential-Uvicorn`을 만든다. 코어는 공통 코드와 기본 Python 서버를 유지하고 두 선택 어댑터를 제외한다. 각 구현체는 기존 import 경로의 자기 하위 파일만 소유한다. 부모 패키지의 `__init__.py`는 코어만 소유한다.
+
+코어 extras는 동일 버전 구현체 배포물에, 구현체는 동일 버전 코어와 기존 외부 의존성에 연결된다. 설치 시 extras를 감지하거나 import만 차단하는 방식이 아니다. sdist는 공통 소스 트리를 담으며, 선택 파일의 격리 경계는 wheel과 최종 설치 파일이다.
+
+`TargetBuild`와 `TargetEggInfo`는 대상별 빌드·메타데이터 경로를 분리한다. `TargetEggInfo`는 pip가 지정한 메타데이터 출력 경로를 덮어쓰지 않는다. `TargetSdist`는 `.distribution-target`을 보존하고, 알 수 없는 대상과 sdist 대상 변경을 거부한다.
+
+## 개발·CI·배포 준비
+
+소스 배포의 보조 파일 목록은 후속 요청에 따라 `MANIFEST.in` 대신 `setup.py`의 `TargetEggInfo.find_sources()`에서 관리한다. 기본 수집 결과를 확장하고 `SOURCES.txt`에 반영하며 일반 wheel 파일 구성은 유지한다.
+
+`TargetEditableWheel`은 가상환경별 선택 링크 트리와 경로 기반 `.pth`를 사용한다. `.dev/scripts/editable_view.py`는 설치 메타데이터로 코어·선택 구현체만 연결하며 제거·소스 교체·동시 시작을 처리한다. 부모 API와 선택 격리를 유지하고 IDE가 같은 파일 트리를 탐색하게 한다. 직접 정션을 만들 필요가 없다.
+
+후속 요구에 따라 editable은 `.github/scripts/build_backend.py`의 `EXTRAS` 설정으로 한 번에 갱신하는 단일 코어 배포물로 전환했다. `pip install -e .`은 코어만, `--config-settings EXTRAS=Gunicorn,Uvicorn`은 지정 목록으로 교체한다. 외부 의존성은 선택 코드와 함께 선언하되 자동 삭제하지 않는다. 일반 배포 분리와 extras는 유지하며 최초 전환 시 기존 별도 구현체 배포물은 제거해야 한다.
+
+`.github/scripts/build_distributions.py`는 한 버전으로 세 배포물을 순차 빌드한다. `.github/scripts/check_distributions.py`는 설치 격리·파일 소유권·독립 재빌드·설치 수명주기·editable 동작을 검사한다. `.github/scripts/prepare_upload.py`는 이름·버전·빌드 번호·기존 파일 해시를 확인하고 구현체와 코어의 게시 준비를 분리한다. CI에 빌드·검사와 구현체 우선 게시 순서를 연결했다.
+
+한국어·영어 README와 [Packaging 매뉴얼](../../../docs/Packaging.md)에 설치·전환·개발·배포 방법을 반영했다. 실제 게시는 하지 않았다.
+
+## 검증과 기록
+
+후속 리뷰의 부분 추가 실패는 링크 변경 전 소유 정보 기록으로 수정했다. 새로 추가한 파일을 추적하여 다음 코어 선택에서 제거하거나 같은 선택으로 재시도할 수 있게 했다. [상세 구현](./implements/1793329241418.md).
+
+리뷰 후 `refresh()`를 전체 재생성에서 차등 갱신으로 변경했다. 변경 없는 코어 링크를 보존하고 변경 파일만 원자적으로 교체하며 미관리 파일이 있는 디렉터리는 유지한다. 한영 시작 안내의 전체 테스트 설치 명령도 두 어댑터를 선택하도록 정정했다. [상세 구현](./implements/1793327181553.md).
+
+로컬 검증은 [작업 결과](./TASKS.md), 고객 영향은 [변경 로그](./CHANGELOG.md)를 참고한다. 이전 PR CI는 통과했으며 이번 리뷰 수정의 커밋·푸시·원격 CI 및 실제 게시 검증은 남아 있다.
+
+단계별 구현 기록:
+
+1. [대상별 패키징 구성](./implements/1793294516718.md)
+2. [CI와 설치 문서 연결](./implements/1793295445977.md)
+3. [최소 런타임 검증 도구와 격리 범위](./implements/1793295838894.md)
+4. [릴리즈 테스트 디렉터리 분리](./implements/1793296500294.md)
+5. [선택 링크 트리 기반 editable 구성](./implements/1793299630934.md)
+6. [EXTRAS 기반 단일 editable 설치](./implements/1793301537857.md)
+7. [소스 배포 포함 목록의 setup.py 통합](./implements/1793302547667.md)
+8. [CI에서 발견한 어댑터 테스트 계약 정정](./implements/1793303776533.md)
+9. [리뷰에 따른 링크 갱신과 테스트 안내 정정](./implements/1793327181553.md)
+10. [부분 갱신 실패 후 관리 파일 복구](./implements/1793329241418.md)
+11. [워크플로 스크립트와 테스트 위치 정리](./implements/1793516005513.md)
+12. [개발용 설치 코드와 테스트 숨김 경로 이동](./implements/1793516879579.md)
+13. [실패 후 bytecode 재사용과 검증 wheel 선택 수정](./implements/1793518878749.md)

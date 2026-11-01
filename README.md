@@ -24,11 +24,14 @@ python -m pip install DefEssential
 ```
 
 Gunicorn 또는 Uvicorn 어댑터를 사용할 때만 해당 extra를 설치합니다.
+기본 배포물에는 두 어댑터 코드가 없으며, extra가 동일 버전의 별도 구현체 패키지와 의존성을 설치합니다.
 
 ```shell
 python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
+
+소스 코드를 수정하고 싶다면 [설치 격리와 개발·배포](./docs/Packaging.md)를 참고하세요.
 
 ## 빠른 시작
 

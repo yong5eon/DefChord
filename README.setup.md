@@ -11,11 +11,14 @@ python -m pip install DefEssential
 ```
 
 The built-in Python HTTP server requires no additional server dependency. Optional extras provide Gunicorn and Uvicorn adapters:
+The core excludes their implementation files; each extra installs a separate, same-version adapter distribution and its dependencies.
 
 ```shell
 python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
+
+When migrating from an older integrated installation, uninstall DefEssential and any installed adapter distributions before reinstalling with the desired extras. Omitting an extra later does not remove an already installed adapter.
 
 ## Quick start
 

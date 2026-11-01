@@ -21,6 +21,8 @@ python -m pip install "DefEssential[Gunicorn]"
 python -m pip install "DefEssential[Uvicorn]"
 ```
 
+Unselected adapter code is not installed. To modify the source code, see [installation isolation, development and distribution](./Packaging.en.md).
+
 ## The smallest application
 
 Save this as `app.py`:
@@ -121,8 +123,8 @@ To see an error hook return a custom response, start the server and request `GET
 Run the repository tests after installing the checkout in editable mode:
 
 ```shell
-python -m pip install -e .
+python -m pip install -e . --config-settings EXTRAS=Gunicorn,Uvicorn
 python -m unittest discover -s tests
 ```
 
-If the project is already installed in the Python environment, editable installation only needs to be performed once. Gunicorn/Uvicorn-specific execution and tests are subject to their extras and platform requirements.
+The full test suite imports optional adapters, so install both implementations with the command above. Plain `python -m pip install -e .` connects only the common code and built-in Python server. After editing code, run the tests again to check the result. Repeat the installation command with the desired selection after adding files or changing the installation configuration. See [installation isolation, development and distribution](./Packaging.en.md) for development instructions. Gunicorn/Uvicorn-specific execution and tests remain subject to server platform requirements.

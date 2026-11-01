@@ -37,6 +37,7 @@ flowchart LR
 
 ## 매뉴얼 목록
 
+- [설치 격리와 개발·배포](./Packaging.md): 선택 구현체 설치, 소스 코드 직접 수정과 배포 파일 빌드
 - [설치와 첫 애플리케이션](./GettingStarted.md): 설치, 네 가지 핵심 구성 요소, 서버 실행 및 첫 요청 검증
 - [라우트와 요청, 응답](./RoutingAndRequests.md): HTTP 메서드·경로, 입력 검증, 본문 리더, 인증·Origin, 일반 응답 및 파일 응답
 - [스트리밍 처리와 WebSocket](./StreamingAndWebSockets.md): 스트리밍 입력·출력 4가지 방식, Server-Sent Events, WebSocket
