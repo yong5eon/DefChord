@@ -9,10 +9,10 @@
 
 ## 변경
 
-- 클래스별 고정 `logger`와 공통 함수의 모듈 로거를 사용해 `DefChord` 하위 계층으로 기록 책임을 정리했다.
+- 고정 `logger` 이름을 `Application`, `Request`, `Server`, `Extension` 책임 계층으로 정리하고 서버 어댑터·내장 확장·WebSocket은 하위 이름으로 구분했다.
 - 라이브러리는 출력 설정을 하지 않고 사용자 로깅 설정과 기본 전파를 유지한다.
 - [샘플](../../../samples/Sample.py)의 첫 Application 시작 훅에서 콘솔 출력을 설정한다. 같은 핸들러의 중복 등록을 막고 기존 사용자 핸들러는 유지한다.
-- 샘플 핸들러는 `Sample`·`DefChord` 및 하위 계층만 출력한다. 시간·레벨·로거 이름·메시지와 밀리초·레벨별 색상을 표시한다.
+- 샘플 핸들러는 `Sample`과 프레임워크의 새 로거 계층, 기존 WebSocket 로거만 출력한다. 시간·레벨·로거 이름·메시지와 밀리초·레벨별 색상을 표시한다.
 - Application·[일반 요청](../../../samples/runners/Requests.py)·[스트리밍](../../../samples/runners/Streaming.py) 샘플의 훅 관찰 로그를 DEBUG로 구분하고 중복 traceback을 제거했다.
 - Python 기본 HTTP 처리기의 헤더 생성 시점 접근 로그를 DEBUG로 분리했다. INFO 전송 요약은 공통 서버 경계에서 한 번 기록한다.
 

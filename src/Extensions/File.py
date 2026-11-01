@@ -30,7 +30,7 @@ __all__ = (
 class File(Extension):
 	"""Serve a file at a fixed HTTP path with per-instance user hooks."""
 
-	logger = getLogger('DefChord.Extensions.File')
+	logger = getLogger('Extension.File')
 
 	def __init__(
 		self,

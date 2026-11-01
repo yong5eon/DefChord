@@ -120,7 +120,10 @@ class LoggingSetup(ApplicationStartup):
 	def __init__(self) -> None:
 		sources = (
 			Filter('Sample'),
-			Filter('DefChord'),
+			Filter('Application'),
+			Filter('Request'),
+			Filter('Server'),
+			Filter('Extension'),
 		)
 		self.handler = StreamHandler()
 		self.handler.set_name('Sample')

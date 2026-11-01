@@ -394,7 +394,7 @@ class ObserveError(ApplicationRequestError):
 class Metrics(Extension):
 	"""Observe all application requests and expose metrics as JSON or Prometheus."""
 
-	logger = getLogger('DefChord.Extensions.Metrics')
+	logger = getLogger('Extension.Metrics')
 
 	def __init__(
 		self,

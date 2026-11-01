@@ -30,7 +30,7 @@ __all__ = (
 class Status(Extension):
 	"""Provide a status page using an explicitly configured same-origin metrics path."""
 
-	logger = getLogger('DefChord.Extensions.Status')
+	logger = getLogger('Extension.Status')
 
 	def __init__(
 		self,

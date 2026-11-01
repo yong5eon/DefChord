@@ -4,12 +4,12 @@
 
 [로깅 지원 이슈](./ISSUE.md)의 “파편화된 로깅 정리”를 다음 두 요구로 구체화한다.
 
-1. `DefChord`을 최상위 로거 이름으로 사용하여 프레임워크 로그를 계층별로 선택할 수 있게 한다.
+1. `Application`, `Request`, `Server`, `Extension`을 최상위 로거 이름으로 사용하여 책임별로 로그를 선택할 수 있게 한다.
 2. 애플리케이션 시작·종료, 요청 실행, 응답 전송, 확장 및 연결 실패를 추적하는 데 부족한 로그를 추가한다.
 
 이 문서는 현재 소스와 DefStream의 로깅 방식을 분석하고 사용자 확인을 반영한 **구현 기준**이다. 로거 배치, 출력 설정과 레벨별 기록 정책을 소스·샘플·테스트에 반영한다. 실제 검증 결과와 환경 제약은 아래 검증 기록에 구분하여 남긴다.
 
-사용자 후속 의견에 따라 샘플의 출력 설정 위치는 Application 시작 훅으로 정한다. 출력 대상은 `Sample`·`DefChord` 계층만이며, 포맷은 DefStream의 예제와 맞춘다.
+사용자 후속 의견에 따라 샘플의 출력 설정 위치는 Application 시작 훅으로 정한다. 출력 대상은 `Sample`과 프레임워크의 새 로거 계층 및 기존 WebSocket 로거이며, 포맷은 DefStream의 예제와 맞춘다.
 
 ### 1.1. 참고 근거
 
@@ -27,12 +27,12 @@ DefStream 문서의 과거 상태 설명보다 현재 사용 안내와 실제 �
 
 | 현재 상태 | 문제와 개선 방향 |
 | --- | --- |
-| 기존 로거는 이미 `DefChord.Application`, `DefChord.Server`, `DefChord.RequestRunner`, `DefChord.IO.WebSocket`, 일부 `DefChord.Extensions.*` 이름을 사용한다. | 루트 이름이 전혀 없는 문제가 아니다. 기존 이름을 가능한 한 유지하면서 클래스 멤버와 책임 경계를 일관되게 정리한다. |
+| 기존 로거는 `Application`, `Request`, `Server.*`, `Extension.*` 및 `Request.WebSocket` 계층을 사용한다. | 각 책임을 최상위 범주로 나누고 서버 어댑터·확장·WebSocket은 해당 범주의 하위 이름으로 구분한다. |
 | 일부 클래스는 `logger` 멤버를 사용하고, 다른 곳은 오류 처리 중 `getLogger()`를 직접 호출한다. | 클래스의 프레임워크 로그는 명시적 클래스 멤버를 사용하고, 공통 함수는 담당 경계의 명시적 로거로 귀속한다. |
 | Application은 주로 확장 정리 실패를 기록하며 시작·종료 성공, 라우팅, 요청 처리 단계는 충분히 관찰되지 않는다. | 생명주기는 INFO, 등록·라우팅·훅·실행 단계는 DEBUG로 보강한다. |
 | Python 서버의 `log_message()`는 기본 HTTP 처리기의 메시지를 INFO로 출력한다. | 응답 헤더 생성 시점의 접근 기록을 실제 전송 완료로 오인할 수 있다. 공통 전송 결과와 중복되지 않게 정리하고 원시 요청 대상의 노출을 막는다. |
 | 공통 요청 처리기는 예상하지 못한 요청 오류, 연결 단절, 전송·정리 실패를 기록한다. | 요청 식별자, 처리 단계, 응답 상태와 성공·실패의 대응을 보강한다. |
-| 응답 본문 정리 공통 함수는 `DefChord.RequestRunner`를 사용한다. | 기존 귀속을 유지하되 본문 정리 오류와 원래 처리 오류를 서로 다른 사건으로 구분한다. |
+| 응답 본문 정리 공통 함수는 `Request`를 사용한다. | 기존 귀속을 유지하되 본문 정리 오류와 원래 처리 오류를 서로 다른 사건으로 구분한다. |
 | 샘플은 `basicConfig()`와 `Sample` 로그를 사용하며, 요청 훅에서 원시 URI를 출력한다. | 샘플도 출처 필터와 안전한 요청 문맥을 사용하며, 훅 완료와 실제 전송 완료의 의미를 구분해야 한다. |
 | 시작 배너는 별도 `print()`로 출력한다. | DefStream처럼 배너는 유지한다. 로깅 도입을 이유로 배너를 제거하거나 그대로 중복 기록하지 않는다. |
 
@@ -44,7 +44,7 @@ DefStream 문서의 과거 상태 설명보다 현재 사용 안내와 실제 �
 - 라이브러리는 로그만 기록한다. import, 인스턴스 생성, 시작·종료 중 `basicConfig()`, 핸들러, `NullHandler`, 포매터, 필터, 로그 레벨을 임의로 설정하지 않는다.
 - 루트 로거로의 기본 전파를 막지 않는다. 애플리케이션이 이미 설정한 로거·핸들러·레벨·필터를 변경하거나 제거하지 않는다.
 - 미설정 상태의 완전한 무출력은 보장하지 않는다. 핸들러가 없으면 표준 `logging.lastResort`에 의해 WARNING 이상이 stderr에 출력될 수 있다.
-- Gunicorn·Uvicorn 자체 로그의 이름을 바꾸거나 강제로 `DefChord`에 편입하지 않는다. 외부 서버의 로깅 설정은 기존 서버 옵션과 사용자 설정의 책임이다.
+- Gunicorn·Uvicorn 자체 로그는 프레임워크 로거 계층에 강제로 편입하지 않는다. 외부 서버의 로깅 설정은 기존 서버 옵션과 사용자 설정의 책임이다.
 
 ### LOG-02. 포함·제외 범위
 
@@ -63,7 +63,7 @@ DefStream 문서의 과거 상태 설명보다 현재 사용 안내와 실제 �
 
 ### LOG-03. 명명·상속 규칙
 
-- 모든 프레임워크 로거 이름은 `DefChord` 또는 `DefChord.`으로 시작한다. `getLogger(__name__)`로 설치 경로나 사용자 모듈에 따라 이름이 달라지게 하지 않는다.
+- 프레임워크 로거는 `Application`, `Request`, `Server` 또는 `Extension`으로 시작한다. 서버 어댑터, WebSocket, 개별 확장은 해당 범주의 하위 이름을 사용한다. `getLogger(__name__)`로 설치 경로나 사용자 모듈에 따라 이름이 달라지게 하지 않는다.
 - 로깅을 담당하는 클래스는 `logger` 클래스 멤버에 고정 이름을 선언하고 공통 메서드는 `self.logger`를 사용한다.
 - 사용자 하위 클래스는 기반 클래스의 이름을 상속한다. `type(self).__name__`으로 자동 변경하지 않으며, 사용자가 `logger`를 명시적으로 재정의하는 것은 허용한다.
 - 실제 사용자 핸들러는 `모듈명.정규 클래스명`, 확장·훅은 정규 클래스명과 호출 순번으로 구분한다. 사용자 코드가 직접 호출하는 로깅은 변경하지 않는다.
@@ -73,18 +73,18 @@ DefStream 문서의 과거 상태 설명보다 현재 사용 안내와 실제 �
 
 | 대상 | 로거 이름 | 기록 책임 |
 | --- | --- | --- |
-| [Application](../../../src/Application.py) | `DefChord.Application` | 등록·로드, 시작·종료, 확장 연결·정리, 라우팅, Application 훅 |
-| [RunRequest](../../../src/Runners/RunRequest.py) | `DefChord.RequestRunner` | 검증·본문 처리·생성·핸들러 실행·응답 훅의 단계 |
-| [확장 실행 공통 함수](../../../src/Runners/RunExtension.py) | `DefChord.Extension` | 확장 요청·응답·오류 훅과 확장 호출 단계. 모듈의 고정 로거 사용 |
-| [Python 서버와 요청 처리기](../../../src/Adapter/Implements/Python/Server.py), [Gunicorn 서버](../../../src/Adapter/Implements/Gunicorn/Server.py), [Uvicorn 서버](../../../src/Adapter/Implements/Uvicorn/Server.py) | `DefChord.Server` | 서버 생명주기, 어댑터 고유 실패. 이름은 공유하고 `adapter` 문맥으로 구분 |
-| [공통 요청 처리기](../../../src/Adapter/RequestHandler.py) | `DefChord.Server` | HTTP 수신, 응답 전송 결과, 오류 응답 변환·전송·최종 정리. 모듈의 고정 로거 사용 |
-| [WebSocket](../../../src/IO/WebSocket/WebSocket.py) | `DefChord.IO.WebSocket` | 업그레이드, 연결 종료, 프로토콜 위반 |
-| [File](../../../src/Extensions/File.py), [FileSystem](../../../src/Extensions/FileSystem.py), [Ping](../../../src/Extensions/Ping.py), [Metrics](../../../src/Extensions/Metrics.py), [Status](../../../src/Extensions/Status.py), [Specifications](../../../src/Extensions/Specifications.py), [Swagger](../../../src/Extensions/Swagger.py) | `DefChord.Extensions.<클래스명>` | 확장 고유의 자원 연결·문서 생성·집계·렌더링 진단 |
-| [응답 본문 정리 공통 함수](../../../src/Response.py) | `DefChord.RequestRunner` | 기존대로 본문 정리의 추가 실패를 기록. 서버 최종 정리에서 전파된 오류는 공통 요청 처리기가 기록 |
+| [Application](../../../src/Application.py) | `Application` | 등록·로드, 시작·종료, 확장 연결·정리, 라우팅, Application 훅 |
+| [RunRequest](../../../src/Runners/RunRequest.py) | `Request` | 검증·본문 처리·생성·핸들러 실행·응답 훅의 단계 |
+| [확장 실행 공통 함수](../../../src/Runners/RunExtension.py) | `Extension` | 확장 요청·응답·오류 훅과 확장 호출 단계. 모듈의 고정 로거 사용 |
+| [Python 서버](../../../src/Adapter/Implements/Python/Server.py), [Gunicorn 서버](../../../src/Adapter/Implements/Gunicorn/Server.py), [Uvicorn 서버](../../../src/Adapter/Implements/Uvicorn/Server.py) | `Server.Python`, `Server.Gunicorn`, `Server.Uvicorn` | 서버 어댑터별 생명주기와 고유 실패 |
+| [공통 요청 처리기](../../../src/Adapter/RequestHandler.py) | `Server` | HTTP 수신, 응답 전송 결과, 오류 응답 변환·전송·최종 정리. 어댑터별 서버 로그의 부모 계층 |
+| [WebSocket](../../../src/IO/WebSocket/WebSocket.py) | `Request.WebSocket` | 업그레이드, 연결 종료, 프로토콜 위반 |
+| [File](../../../src/Extensions/File.py), [FileSystem](../../../src/Extensions/FileSystem.py), [Ping](../../../src/Extensions/Ping.py), [Metrics](../../../src/Extensions/Metrics.py), [Status](../../../src/Extensions/Status.py), [Specifications](../../../src/Extensions/Specifications.py), [Swagger](../../../src/Extensions/Swagger.py) | `Extension.<클래스명>` | 확장 고유의 자원 연결·문서 생성·집계·렌더링 진단 |
+| [응답 본문 정리 공통 함수](../../../src/Response.py) | `Request` | 기존대로 본문 정리의 추가 실패를 기록. 서버 최종 정리에서 전파된 오류는 공통 요청 처리기가 기록 |
 
 RequestRunner와 Extension의 추상 훅 인터페이스에는 로깅을 위해 별도 동작을 추가하지 않는다. 호출 전후는 실행 주체가 기록한다. 응답 writer·reader, WSGI 전송·Uvicorn 연결 보조 객체의 모든 I/O에 독립 로그를 추가하지 않고, 공통 서버 경계에서 결과를 관찰한다.
 
-`DefChord`로 전체 로그를, `DefChord.Extensions`로 내장 확장 로그를, 구체 이름으로 개별 구성요소를 선택할 수 있어야 한다.
+`Application`, `Request`, `Server`, `Extension`으로 책임별 로그를, 하위 이름으로 개별 서버 어댑터·WebSocket·확장을 선택할 수 있어야 한다.
 
 ## 5. 이벤트와 로그 레벨
 
@@ -189,7 +189,7 @@ RequestRunner와 Extension의 추상 훅 인터페이스에는 로깅을 위해 
 | 요청 실행 중 예상하지 못한 예외, 응답 시작 전 | 공통 요청 처리기 ERROR + traceback. 기존대로 500 응답을 시도 |
 | 응답 시작 이후 실행·본문 소비·전송 실패 | 공통 요청 처리기 ERROR + traceback. 두 번째 오류 응답을 보내지 않음 |
 | 요청·전송 중 연결 단절 | 공통 요청 처리기 WARNING. 내부 오류와 같은 사건으로 중복 ERROR 기록하지 않음 |
-| 공통 처리기에 도달하지 못한 어댑터 내부 실패 | 해당 어댑터의 `DefChord.Server` ERROR + traceback |
+| 공통 처리기에 도달하지 못한 어댑터 내부 실패 | 해당 어댑터의 `Server.Python`, `Server.Gunicorn` 또는 `Server.Uvicorn` ERROR + traceback |
 | Application 시작·종료 실패 | Application ERROR + traceback. 확장 내부의 동일 전파 예외와 중복하지 않음 |
 | 처리 실패 중 추가 자원 정리 실패 | 원래 실패를 보존하는 정리 지점에서 별도의 ERROR + traceback |
 | 직접 호출한 Application·RunRequest의 전파 예외 | DEBUG 단계 관찰 후 기존대로 전파. 최종 ERROR는 외부 호출자 책임 |
@@ -246,7 +246,13 @@ from DefChord import Application, ApplicationStartup
 
 class LoggingSetup(ApplicationStartup):
   def __init__(self) -> None:
-    sources = (Filter('Sample'), Filter('DefChord'))
+    sources = (
+      Filter('Sample'),
+      Filter('Application'),
+      Filter('Request'),
+      Filter('Server'),
+      Filter('Extension'),
+    )
     self.handler = StreamHandler()
     self.handler.set_name('Sample')
     self.handler.setFormatter(Formatter(
@@ -266,7 +272,7 @@ class LoggingSetup(ApplicationStartup):
 app = Application(on_startup=LoggingSetup())
 ```
 
-- 필터는 루트 로거가 아니라 핸들러에 적용한다. `Sample`·`Sample.*`와 `DefChord`·`DefChord.*`만 선택하고 `SampleExtra`, `DefChordExtra`, 외부 라이브러리 로거는 제외한다.
+- 필터는 루트 로거가 아니라 핸들러에 적용한다. `Sample`·`Sample.*`, `Application`·`Application.*`, `Request`·`Request.*`, `Server`·`Server.*`, `Extension`·`Extension.*`만 선택하고 접두어만 같은 로거와 외부 라이브러리 로거는 제외한다.
 - 출력 포맷은 DefStream을 참고하되 최종 샘플 설정인 `%(asctime)s %(levelname)-8s %(name)s %(message)s`를 사용한다. 실제 샘플의 `LoggingFormatter`는 밀리초와 레벨별 색상을 표시한다. 위 예제는 출처 필터와 시작 훅 설정에 집중한 기본 형태다.
 - 위 예제는 독립 실행 애플리케이션용이다. 기존 핸들러를 강제로 제거하거나 `force=True`로 덮어쓰지 않는다. 출처 제한은 샘플이 추가한 핸들러에 대한 보장이며, 다른 기존 핸들러의 출력까지 차단하지 않는다.
 - 동일 Application의 중지 후 재시작에도 같은 설정 훅이 핸들러를 중복 등록하지 않아야 한다. 기존 시작 관찰 훅 등 다른 시작 훅은 출력 설정 훅 뒤에 실행한다.
@@ -285,7 +291,7 @@ app = Application(on_startup=LoggingSetup())
 | --- | --- | --- |
 | AC-01 | import·생성·시작·종료 전후 로깅 설정 비교 | 라이브러리가 핸들러·레벨·필터·전파 설정을 변경하지 않음. NullHandler도 추가하지 않음 |
 | AC-02 | 클래스 멤버, 하위 클래스 상속, 사용자 `logger` 재정의 | 명시된 기본 이름 유지 및 명시적 재정의 적용 |
-| AC-03 | 상위·하위 이름별 핸들러 필터 | `DefChord`, `DefChord.Extensions`, 개별 확장 선택 가능. `DefChordExtra` 제외 |
+| AC-03 | 상위·하위 이름별 핸들러 필터 | `Application`, `Request`, `Server`, `Extension`, 개별 어댑터·확장 선택 가능. `ApplicationExtra` 등 접두어만 같은 이름은 제외 |
 | AC-04 | Application 정상 시작·종료, 중복 종료 | 실제 전환에 대응하는 INFO와 단계 DEBUG. 중복 성공 기록 없음 |
 | AC-05 | 확장 시작 실패·롤백 실패·여러 정리 실패 | 각 독립 실패를 구분하고 원래 예외·정리 순서 보존 |
 | AC-06 | 정상 HTTP 요청, 404·405, 검증 거부, 500 응답 객체 | 요청당 INFO 결과 요약 1회, 올바른 상태, 일반 HTTP 오류의 불필요한 경고 없음 |
@@ -301,7 +307,7 @@ app = Application(on_startup=LoggingSetup())
 | AC-16 | DEBUG 비활성, 감시 가능한 직렬화·본문 객체 | 로그를 위한 고비용 계산·본문 읽기 없음 |
 | AC-17 | Python·Gunicorn·Uvicorn에서 동등 요청 | 프레임워크 로거·결과 의미 일관성, 서버 고유 로그에서 어댑터 구별, 프레임워크 자체 접근 요약 중복 없음 |
 | AC-18 | 포트 0, 서버 시작·바인딩 실패 | 준비 완료는 실제 바인딩 후 실제 포트로 기록. 실패를 정상 시작으로 기록하지 않음 |
-| AC-19 | 샘플 실행 및 설정 없는 별도 프로세스 실행 | Application 첫 시작 훅에서 설정. Sample/DefChord 및 하위 계층만 선택 출력하고 유사 접두 이름·외부 로거는 제외. DefStream과 같은 포맷, 라이브러리 배너 보존, 미설정 lastResort 동작을 임의 차단하지 않음 |
+| AC-19 | 샘플 실행 및 설정 없는 별도 프로세스 실행 | Application 첫 시작 훅에서 설정. Sample, Application, Request, Server, Extension 및 기존 WebSocket 계층만 선택 출력하고 유사 접두 이름·외부 로거는 제외. DefStream과 같은 포맷, 라이브러리 배너 보존, 미설정 lastResort 동작을 임의 차단하지 않음 |
 | AC-20 | Application·RunRequest 직접 실행 | DEBUG 단계와 기존 결과·예외 전파 유지. 서버 전송 완료로 잘못 기록하지 않음 |
 | AC-21 | 샘플 Application 생성·시작·중지·재시작 | 생성만으로 전역 설정을 변경하지 않음. 설정 훅 이후 로그를 수신하며 같은 핸들러가 중복 등록되지 않음. 기존 사용자 핸들러를 제거하지 않음 |
 | AC-22 | DEBUG 수준에서 정상·검증 거부·훅 실패·직접 출력 요청 추적 | 실행한 주요 단계의 진입과 완료/실패가 대응하고 분기·대상 식별 가능. 실패 뒤 성공 완료나 미실행 단계의 실행 기록 없음 |

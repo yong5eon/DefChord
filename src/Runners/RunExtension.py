@@ -17,7 +17,7 @@ __all__ = (
 	'RunExtensionFactory',
 )
 
-logger = getLogger('DefChord.Extension')
+logger = getLogger('Extension')
 
 
 def run_extension(

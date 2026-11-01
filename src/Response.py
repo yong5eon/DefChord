@@ -12,7 +12,7 @@ __all__ = (
 	'Response',
 )
 
-logger = getLogger('DefChord.RequestRunner')
+logger = getLogger('Request')
 
 
 def close_bodies(

@@ -400,7 +400,7 @@ class DirectServerTests(TestCase):
 		app = Application()
 		app.add(Direct)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='ERROR',
 		):
 			with running(app) as address:
@@ -470,7 +470,7 @@ class DirectServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Events)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:
@@ -501,7 +501,7 @@ class DirectServerTests(TestCase):
 					release.set()
 					client.close()
 		self.assertIn(
-			'WARNING:DefChord.Server:Client disconnected',
+			'WARNING:Server:Client disconnected',
 			'\n'.join(logged.output),
 		)
 		self.assertTrue(all(record.exc_info is None for record in logged.records))
@@ -539,7 +539,7 @@ class DirectServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Upload)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:
@@ -789,7 +789,7 @@ class DirectServerTests(TestCase):
 		)
 		app.add(Output)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='WARNING',
 		) as logged:
 			with running(app) as address:
@@ -838,7 +838,7 @@ class DirectServerTests(TestCase):
 				app = Application()
 				app.add(Invalid)
 				with self.assertLogs(
-					'DefChord.Server',
+					'Server',
 					level='ERROR',
 				):
 					with running(app) as address:

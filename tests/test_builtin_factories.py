@@ -370,7 +370,7 @@ class BuiltinExtensionTests(TestCase):
 		connection.connect.side_effect = ValueError('connect failed')
 		connection.close.side_effect = RuntimeError('close failed')
 		app = Application(exts=(FileSystem('/files', connection),))
-		with self.assertLogs('DefChord.Extensions.FileSystem', level='ERROR'):
+		with self.assertLogs('Extension.FileSystem', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, 'connect failed'):
 				app.start()
 		connection.close.assert_called_once()

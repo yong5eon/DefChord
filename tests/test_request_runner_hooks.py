@@ -279,7 +279,7 @@ class RequestRunnerHookTests(TestCase):
 				events.append('constructor')
 				return
 
-		with self.assertLogs('DefChord.RequestRunner', level='DEBUG') as logs:
+		with self.assertLogs('Request', level='DEBUG') as logs:
 			RunRequest(Handler).run(request())
 		messages = '\n'.join(logs.output)
 		for phase in (
@@ -704,7 +704,7 @@ class RequestRunnerHookTests(TestCase):
 			lambda req: Response(body=body),
 			on_request_response=ResponseHook(fail),
 		))
-		with self.assertLogs('DefChord.RequestRunner', level='ERROR'):
+		with self.assertLogs('Request', level='ERROR'):
 			with self.assertRaises(ValueError) as caught:
 				execution.run(request())
 		self.assertIs(caught.exception, original)
@@ -948,7 +948,7 @@ class RequestRunnerHookTests(TestCase):
 			on_request_response=ResponseHook(lambda req, response: events.append('response') or response),
 			on_request_error=ErrorHook(lambda req, error: events.append('error')),
 		))
-		with self.assertLogs('DefChord.Server', level='WARNING'):
+		with self.assertLogs('Server', level='WARNING'):
 			with self.assertRaises(OSError):
 				handle_request(app, lambda: request(writer), writer)
 		self.assertEqual(events, [

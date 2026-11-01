@@ -146,7 +146,7 @@ class SSETests(TestCase):
 		app = Application()
 		app.add(Events)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='ERROR',
 		) as logged:
 			with running(app) as address:

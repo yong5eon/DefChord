@@ -13,7 +13,7 @@ __all__ = (
 	'handle_request',
 )
 
-LOGGER = getLogger('DefChord.Server')
+LOGGER = getLogger('Server')
 
 
 def handle_request(

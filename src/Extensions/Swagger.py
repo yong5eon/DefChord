@@ -30,7 +30,7 @@ __all__ = (
 class Swagger(Extension):
 	"""Connect Swagger UI to an explicitly configured same-origin specification path."""
 
-	logger = getLogger('DefChord.Extensions.Swagger')
+	logger = getLogger('Extension.Swagger')
 
 	def __init__(
 		self,

@@ -59,7 +59,7 @@ __all__ = (
 class Specifications(Extension):
 	"""Convert the current declarations in the shared route list to an OpenAPI 3.1 document."""
 
-	logger = getLogger('DefChord.Extensions.Specifications')
+	logger = getLogger('Extension.Specifications')
 
 	def __init__(
 		self,

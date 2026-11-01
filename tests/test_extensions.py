@@ -538,7 +538,7 @@ class ExtensionTests(TestCase):
 		)
 		app.add(Broken)
 		with redirect_stdout(StringIO()):
-			with self.assertLogs('DefChord.Server', level='ERROR'):
+			with self.assertLogs('Server', level='ERROR'):
 				with running(app) as address:
 					self.assertEqual(self.get(address, '/broken')[2], b'partial')
 					stats = metrics.snapshot()['requests']['GET /broken']

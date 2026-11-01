@@ -104,7 +104,7 @@ class ServerTests(TestCase):
 				side_effect=server_startup,
 			):
 				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
-					with self.assertLogs('DefChord.Server', level='INFO') as logs:
+					with self.assertLogs('Server', level='INFO') as logs:
 						server.run()
 			self.assertFalse(app.running)
 			self.assertEqual(events, [

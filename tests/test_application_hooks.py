@@ -186,7 +186,7 @@ class ApplicationHookTests(TestCase):
 		)
 		app.start()
 		events.clear()
-		with self.assertLogs('DefChord.Application', level='ERROR'):
+		with self.assertLogs('Application', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, '/last'):
 				app.stop()
 		self.assertFalse(app.running)

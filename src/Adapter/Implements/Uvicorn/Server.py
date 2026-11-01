@@ -17,7 +17,7 @@ __all__ = (
 class Server(ServerAdapter):
 	"""Run a synchronous application on Uvicorn through a2wsgi."""
 
-	logger = getLogger('DefChord.Server')
+	logger = getLogger('Server.Uvicorn')
 
 	def __init__(
 		self,

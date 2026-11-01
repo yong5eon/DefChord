@@ -84,7 +84,7 @@ class Connection:
 class WebSocketProtocol(Protocol):
 	"""Run the existing RFC 6455 handler on Uvicorn's upgraded connection."""
 
-	logger = getLogger('DefChord.Server')
+	logger = getLogger('Server.Uvicorn')
 
 	def __init__(
 		self,

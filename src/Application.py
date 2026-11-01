@@ -143,7 +143,7 @@ def application_hooks(
 class Application:
 	"""Own registration state and execute a new handler instance per request."""
 
-	logger = getLogger('DefChord.Application')
+	logger = getLogger('Application')
 
 	def __init__(
 		self,

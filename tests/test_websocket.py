@@ -387,7 +387,7 @@ class WebSocketServerTests(TestCase):
 		):
 			with self.subTest(code=code, frames=frames[0][:2]):
 				with self.assertLogs(
-					'DefChord.IO.WebSocket',
+					'Request.WebSocket',
 					level='WARNING',
 				):
 					with running(echo_application()) as address:
@@ -497,7 +497,7 @@ class WebSocketServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Echo)
 		with self.assertLogs(
-			'DefChord.Server',
+			'Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:

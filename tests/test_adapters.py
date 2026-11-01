@@ -416,7 +416,7 @@ class WSGITests(TestCase):
 
 		application = Application()
 		application.add(Stream)
-		with self.assertLogs('DefChord.Server', level='ERROR'):
+		with self.assertLogs('Server', level='ERROR'):
 			with self.assertRaisesRegex(RuntimeError, 'stream failed'):
 				self.invoke(application)
 		self.assertEqual(closed, [True])
@@ -439,10 +439,16 @@ class WSGITests(TestCase):
 
 @skipUnless(find_spec('uvicorn') and find_spec('a2wsgi'), 'Uvicorn 선택적 의존성 필요')
 class UvicornTests(TestCase):
+	def test_websocket_protocol_uses_uvicorn_logger_namespace(self):
+		from DefChord.Adapter.Implements.Uvicorn.WebSocket import WebSocketProtocol
+
+		self.assertEqual(WebSocketProtocol.logger.name, 'Server.Uvicorn')
+		return
+
 	def test_bind_failure_is_logged_without_false_readiness_and_cleans_up(self):
 		application = Application()
 		with PythonServer('127.0.0.1', 0, Application()) as occupied:
-			with redirect_stdout(StringIO()), self.assertLogs('DefChord.Server', level='DEBUG') as logs:
+			with redirect_stdout(StringIO()), self.assertLogs('Server', level='DEBUG') as logs:
 				with self.assertRaises(SystemExit) as caught:
 					UvicornServer(
 						'127.0.0.1',
@@ -529,7 +535,7 @@ class UvicornTests(TestCase):
 				errors.append(error)
 			return
 
-		with patch('uvicorn.Server', ObservedServer), self.assertLogs('DefChord.Server', level='INFO') as logs:
+		with patch('uvicorn.Server', ObservedServer), self.assertLogs('Server', level='INFO') as logs:
 			thread = Thread(target=run)
 			thread.start()
 			try:

@@ -27,7 +27,7 @@ class WebSocket:
 	called from other threads.
 	"""
 
-	logger = getLogger('DefChord.IO.WebSocket')
+	logger = getLogger('Request.WebSocket')
 
 	def __init__(
 		self,
