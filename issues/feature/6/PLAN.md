@@ -191,7 +191,7 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 ### 검증 결과
 
-Windows의 기존 Python 3.14.5와 editable 설치를 사용했다. 테스트 디렉터리에서 가져온 DefChord이 프로젝트의 소스 진입점을 가리킴을 확인했다. 의존성 추가·재설치 없이 검증했다.
+Windows의 기존 Python 3.14.5와 editable 설치를 사용했다. 테스트 디렉터리에서 가져온 DefChord가 프로젝트의 소스 진입점을 가리킴을 확인했다. 의존성 추가·재설치 없이 검증했다.
 
 | 검증 | 실제 명령·방법 | 결과 |
 | --- | --- | --- |
