@@ -1,4 +1,4 @@
-# DefEssential 문서 현지화 및 Python 설명 문구 영어화
+# DefChord 문서 현지화 및 Python 설명 문구 영어화
 
 ## 작업 목적
 
@@ -15,7 +15,7 @@
 
 ### Python 문구
 
-- 대상은 DefEssential 프로젝트의 관리 대상 Python 파일이다: `src/`, `samples/`, `tests/` 아래의 `.py` 파일과 루트 `setup.py`.
+- 대상은 DefChord 프로젝트의 관리 대상 Python 파일이다: `src/`, `samples/`, `tests/` 아래의 `.py` 파일과 루트 `setup.py`.
 - 대상 파일의 독스트링, 주석, `raise` 문에서 사용자에게 노출되는 예외 메시지를 자연스러운 영어로 작성한다.
 - 식별자, API 이름, 예외 유형, 조건 및 처리 로직은 변경하지 않는다. 번역에 수반되는 메시지 문자열 변경 외의 동작 변경은 이 작업 범위에 포함하지 않는다.
 

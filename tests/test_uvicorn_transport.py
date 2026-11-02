@@ -12,14 +12,14 @@ from unittest import (
 	skipUnless,
 )
 
-from DefEssential.IO.RequestReader import ClientDisconnected
+from DefChord.IO.RequestReader import ClientDisconnected
 
 
 @skipUnless(find_spec('a2wsgi') is not None, 'a2wsgi 필요')
 class InputTests(IsolatedAsyncioTestCase):
 	async def asyncSetUp(self):
-		from DefEssential.Adapter.Implements.Uvicorn.HTTP import Input
-		from DefEssential.Adapter.Implements.Uvicorn.Portal import Portal
+		from DefChord.Adapter.Implements.Uvicorn.HTTP import Input
+		from DefChord.Adapter.Implements.Uvicorn.Portal import Portal
 
 		self.events = Queue()
 		self.portal = Portal(get_running_loop())

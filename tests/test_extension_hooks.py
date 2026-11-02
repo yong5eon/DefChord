@@ -4,7 +4,7 @@ from threading import Event
 from typing import Sequence
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationCleanup,
 	ApplicationRequest,
@@ -24,7 +24,7 @@ from DefEssential import (
 	ResponseWriter,
 	Route,
 )
-from DefEssential.Runners.RunExtension import RunExtensionFactory
+from DefChord.Runners.RunExtension import RunExtensionFactory
 
 from test_features import request
 
@@ -271,7 +271,7 @@ class ExtensionHookTests(TestCase):
 			Echo(('/first',), on_cleanup=ActionCleanup(cleanup_fail)),
 			Echo(('/second',), on_startup=ActionStartup(fail)),
 		))
-		with self.assertLogs('DefEssential.Application', level='ERROR'):
+		with self.assertLogs('Application', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, 'startup failed'):
 				app.start()
 		self.assertEqual(app.router.routes, [])
@@ -294,7 +294,7 @@ class ExtensionHookTests(TestCase):
 			)),
 		))
 		app.start()
-		with self.assertLogs('DefEssential.Application', level='ERROR'):
+		with self.assertLogs('Application', level='ERROR'):
 			with self.assertRaisesRegex(ValueError, 'cleanup failed'):
 				app.stop()
 		self.assertEqual(events, ['last', 'first'])
@@ -760,7 +760,7 @@ class RequestHookRegistrationTests(TestCase):
 		extension = self.instrument([], fail_cleanup=True, explicit_remove=False)
 		app = Application(exts=(extension,))
 		app.start()
-		with self.assertLogs('DefEssential.Application', level='ERROR'):
+		with self.assertLogs('Application', level='ERROR'):
 			with self.assertRaises(ValueError):
 				app.stop()
 		self.assertEqual(app.request_hook_registrations, [])

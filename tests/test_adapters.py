@@ -34,7 +34,7 @@ from unittest import (
 from unittest.mock import patch
 from wsgiref.util import setup_testing_defaults
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	Body,
 	Extension,
@@ -43,12 +43,12 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.Adapter import Server as ServerAdapter
-from DefEssential.Adapter.Implements.Gunicorn import Server as GunicornServer
-from DefEssential.Adapter.Implements.Python import Server as PythonServer
-from DefEssential.Adapter.Implements.Uvicorn import Server as UvicornServer
-from DefEssential.Adapter.WSGI import WSGIApplication
-from DefEssential.IO.Readers import (
+from DefChord.Adapter import Server as ServerAdapter
+from DefChord.Adapter.Implements.Gunicorn import Server as GunicornServer
+from DefChord.Adapter.Implements.Python import Server as PythonServer
+from DefChord.Adapter.Implements.Uvicorn import Server as UvicornServer
+from DefChord.Adapter.WSGI import WSGIApplication
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
@@ -416,7 +416,7 @@ class WSGITests(TestCase):
 
 		application = Application()
 		application.add(Stream)
-		with self.assertLogs('DefEssential.Server', level='ERROR'):
+		with self.assertLogs('Server', level='ERROR'):
 			with self.assertRaisesRegex(RuntimeError, 'stream failed'):
 				self.invoke(application)
 		self.assertEqual(closed, [True])
@@ -439,10 +439,16 @@ class WSGITests(TestCase):
 
 @skipUnless(find_spec('uvicorn') and find_spec('a2wsgi'), 'Uvicorn 선택적 의존성 필요')
 class UvicornTests(TestCase):
+	def test_websocket_protocol_uses_uvicorn_logger_namespace(self):
+		from DefChord.Adapter.Implements.Uvicorn.WebSocket import WebSocketProtocol
+
+		self.assertEqual(WebSocketProtocol.logger.name, 'Server.Uvicorn')
+		return
+
 	def test_bind_failure_is_logged_without_false_readiness_and_cleans_up(self):
 		application = Application()
 		with PythonServer('127.0.0.1', 0, Application()) as occupied:
-			with redirect_stdout(StringIO()), self.assertLogs('DefEssential.Server', level='DEBUG') as logs:
+			with redirect_stdout(StringIO()), self.assertLogs('Server', level='DEBUG') as logs:
 				with self.assertRaises(SystemExit) as caught:
 					UvicornServer(
 						'127.0.0.1',
@@ -529,7 +535,7 @@ class UvicornTests(TestCase):
 				errors.append(error)
 			return
 
-		with patch('uvicorn.Server', ObservedServer), self.assertLogs('DefEssential.Server', level='INFO') as logs:
+		with patch('uvicorn.Server', ObservedServer), self.assertLogs('Server', level='INFO') as logs:
 			thread = Thread(target=run)
 			thread.start()
 			try:
@@ -628,7 +634,7 @@ class UvicornTests(TestCase):
 		lifecycle = Lifecycle()
 		application = Application(exts=(lifecycle,))
 		with patch.object(
-			import_module('DefEssential.Adapter.Implements.Uvicorn.Server'),
+			import_module('DefChord.Adapter.Implements.Uvicorn.Server'),
 			'startup',
 			side_effect=OSError('output failed'),
 		):
@@ -679,7 +685,7 @@ class GunicornTests(TestCase):
 		self,
 		cases,
 	):
-		from DefEssential import __file__ as package_file
+		from DefChord import __file__ as package_file
 
 		script = '''
 from importlib.util import module_from_spec, spec_from_file_location
@@ -688,12 +694,12 @@ from os import getpid
 import sys
 
 source, port, events, worker_class, style = sys.argv[1:]
-spec = spec_from_file_location('DefEssential', Path(source) / '__init__.py')
+spec = spec_from_file_location('DefChord', Path(source) / '__init__.py')
 module = module_from_spec(spec)
-sys.modules['DefEssential'] = module
+sys.modules['DefChord'] = module
 spec.loader.exec_module(module)
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	Body,
 	Extension,
@@ -702,8 +708,8 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.Adapter.Implements.Gunicorn import Server
-from DefEssential.IO.Readers import ChunkedStreamContentReader
+from DefChord.Adapter.Implements.Gunicorn import Server
+from DefChord.IO.Readers import ChunkedStreamContentReader
 
 def record(event):
 	with Path(events).open('a') as output:

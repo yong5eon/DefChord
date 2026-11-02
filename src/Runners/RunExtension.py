@@ -17,7 +17,7 @@ __all__ = (
 	'RunExtensionFactory',
 )
 
-logger = getLogger('DefEssential.Extension')
+logger = getLogger('Extension')
 
 
 def run_extension(

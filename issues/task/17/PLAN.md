@@ -1,9 +1,9 @@
-# DefEssential #17 작업 계획
+# DefChord #17 작업 계획
 
 ## 목표와 기준
 
 - 근거: [원본 이슈 및 메타데이터](./README.md), [요구사항 명세서](./REQUIREMENTS.md)
-- 프로젝트: DefEssential
+- 프로젝트: DefChord
 - 작업 브랜치: `task/17`
 - 병합 대상 브랜치: `master`
 - 대상 CI: [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml)
@@ -31,7 +31,7 @@
 
 ## 수행 결과
 
-- DefEssential CI가 병합된 작업 브랜치의 `issues/{branch}/CHANGELOG.md`를 읽도록 변경했다.
+- DefChord CI가 병합된 작업 브랜치의 `issues/{branch}/CHANGELOG.md`를 읽도록 변경했다.
 - `instructions/README.instructions.md`와 `instructions/DOCS.instructions.md`를 분리해 추가했다. 상세 매뉴얼은 한국어를 기준으로 하고 영어판 파일명에 `.en.md`를 붙이며, 초보자용 단계별 설명, 충분한 실행 가능 예제, 이해를 돕는 Mermaid 다이어그램을 요구한다.
 - `.github/instructions`를 `instructions/`를 가리키는 디렉터리 정션으로 만들었다. Git은 이를 일반 디렉터리로 보기 때문에 중복 경로 제외 규칙을 유지한다.
 - 구현 및 검증 세부 결과는 [구현 기록](./IMPLEMENTS.md)에 기록한다.

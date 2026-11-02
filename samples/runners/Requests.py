@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
 	Body,
 	ClientError,
 	Content,
@@ -16,16 +16,16 @@ from DefEssential import (
 	Response,
 	ResponseSpecification,
 )
-from DefEssential.Descriptor import (
+from DefChord.Descriptor import (
 	Binary,
 	Schema,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ByteStringContentReader,
 	JavaScriptObjectNotationContentReader,
 )
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import (
+from DefChord.Responses import ResponseJSON
+from DefChord.Validator.Patterns import (
 	IsGreaterThan,
 	IsLessThan,
 	IsObject,
@@ -35,7 +35,7 @@ from DefEssential.Validator.Patterns import (
 	ToFloat,
 	ToInteger,
 )
-from DefEssential.Validator.Patterns.Object import (
+from DefChord.Validator.Patterns.Object import (
 	IsMappingOf,
 	IsRequiredIn,
 )

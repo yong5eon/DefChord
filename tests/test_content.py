@@ -1,7 +1,7 @@
 from io import BytesIO
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	Body,
 	ClientError,
@@ -11,7 +11,7 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ByteStringContentReader,
 	ChunkedStream,
 	ChunkedStreamContentReader,

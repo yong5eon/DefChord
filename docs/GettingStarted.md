@@ -4,21 +4,21 @@
 
 [English](./GettingStarted.en.md)
 
-DefEssential은 동기식 Python 웹 프레임워크입니다. HTTP 서버가 받은 요청을 `Application`으로 전달하고, 등록된 `RequestRunner`가 검증과 애플리케이션 로직을 실행해 `Response`를 반환합니다.
+DefChord는 동기식 Python 웹 프레임워크입니다. HTTP 서버가 받은 요청을 `Application`으로 전달하고, 등록된 `RequestRunner`가 검증과 애플리케이션 로직을 실행해 `Response`를 반환합니다.
 
 ## 설치
 
 Python 3.9 이상이 필요합니다. 기본 설치는 Python 표준 라이브러리 기반 서버를 포함하며, Gunicorn과 Uvicorn adapter는 선택 사항입니다.
 
 ```shell
-python -m pip install DefEssential
+python -m pip install DefChord
 ```
 
 다른 서버 adapter를 선택할 때만 해당 extra를 설치합니다.
 
 ```shell
-python -m pip install "DefEssential[Gunicorn]"
-python -m pip install "DefEssential[Uvicorn]"
+python -m pip install "DefChord[Gunicorn]"
+python -m pip install "DefChord[Uvicorn]"
 ```
 
 선택하지 않은 어댑터 코드는 설치하지 않습니다. 소스 코드를 수정하고 싶다면 [설치 격리와 개발·배포](./Packaging.md)를 참고하세요.
@@ -28,9 +28,9 @@ python -m pip install "DefEssential[Uvicorn]"
 다음 코드를 `app.py`로 저장합니다.
 
 ```python
-from DefEssential import Application, Request, RequestRunner
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Responses import ResponseText
+from DefChord import Application, Request, RequestRunner
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Responses import ResponseText
 
 
 class Hello(RequestRunner, method='GET', url='/hello'):
@@ -86,8 +86,8 @@ flowchart LR
 하나의 handler 클래스는 HTTP 메서드와 경로 조합을 선언합니다. 인스턴스는 요청을 처리할 때 생성되므로, handler 인스턴스 필드에 요청 간 상태를 보관하지 마세요.
 
 ```python
-from DefEssential import Application, Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Application, Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class Health(RequestRunner, method='GET', url='/health'):

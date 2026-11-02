@@ -1,11 +1,11 @@
-from DefEssential import (
+from DefChord import (
 	Body,
 	Request,
 	RequestRunner,
 )
-from DefEssential.IO.Readers import JavaScriptObjectNotationContentReader
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import (
+from DefChord.IO.Readers import JavaScriptObjectNotationContentReader
+from DefChord.Responses import ResponseJSON
+from DefChord.Validator.Patterns import (
 	IsArray,
 	IsBool,
 	IsInteger,

@@ -13,7 +13,7 @@ from time import (
 from unittest import TestCase
 from unittest.mock import patch
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationStartup,
 	Body,
@@ -23,8 +23,8 @@ from DefEssential import (
 	RequestRunner,
 	Response,
 )
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.IO.Readers import (
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
@@ -104,7 +104,7 @@ class ServerTests(TestCase):
 				side_effect=server_startup,
 			):
 				with patch('http.server.ThreadingHTTPServer.serve_forever', side_effect=KeyboardInterrupt):
-					with self.assertLogs('DefEssential.Server', level='INFO') as logs:
+					with self.assertLogs('Server', level='INFO') as logs:
 						server.run()
 			self.assertFalse(app.running)
 			self.assertEqual(events, [

@@ -57,7 +57,7 @@ flowchart TD
 
 | 전파된 예외 | 기본 응답 |
 | --- | --- |
-| DefEssential의 `Error` 하위 타입 | 예외의 HTTP 상태 코드, 헤더 및 reason 본문 |
+| DefChord의 `Error` 하위 타입 | 예외의 HTTP 상태 코드, 헤더 및 reason 본문 |
 | 그 밖의 예외 | 일반 `500 Internal Server Error`; 예외 세부 내용은 클라이언트에 노출하지 않음 |
 
 `Error`, `ClientError`, `ServerError`는 HTTP 상태 코드와 오류 reason을 표현합니다. 사용자 오류 훅이 `Response`를 반환하면 해당 상태 코드, 헤더 및 본문은 훅이 결정하며 adapter는 그 응답을 기본 오류 응답으로 교체하지 않습니다.
@@ -70,7 +70,7 @@ flowchart TD
 from logging import getLogger
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
   Application,
   ApplicationRequestError,
   ClientError,
@@ -123,7 +123,7 @@ application.add(Readiness)
 ```python
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
   Application,
   ClientError,
   Request,

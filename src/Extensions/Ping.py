@@ -30,7 +30,7 @@ __all__ = (
 class Ping(Extension):
 	"""Report the current running state of the application connected at startup."""
 
-	logger = getLogger('DefEssential.Extensions.Ping')
+	logger = getLogger('Extension.Ping')
 
 	def __init__(
 		self,

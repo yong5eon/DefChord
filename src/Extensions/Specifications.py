@@ -59,13 +59,13 @@ __all__ = (
 class Specifications(Extension):
 	"""Convert the current declarations in the shared route list to an OpenAPI 3.1 document."""
 
-	logger = getLogger('DefEssential.Extensions.Specifications')
+	logger = getLogger('Extension.Specifications')
 
 	def __init__(
 		self,
 		path: str,
 		*,
-		title: str = 'DefEssential',
+		title: str = 'DefChord',
 		version: str = '1.0.0',
 		description=None,
 		on_startup: Optional[Union[
@@ -221,7 +221,7 @@ class Specifications(Extension):
 			path_names = [match.group(1) for match in route.variable.finditer(route.url)]
 			if isinstance(route, FileSystemRoute):
 				path_names = ['path']
-				operation['x-defessential-catch-all'] = True
+				operation['x-defchord-catch-all'] = True
 			for location, check, names in (
 				('path', properties.parameters, path_names),
 				('query', properties.qs, ()),
@@ -324,7 +324,7 @@ class Specifications(Extension):
 			},
 		}
 		if custom:
-			document['x-defessential-operations'] = custom
+			document['x-defchord-operations'] = custom
 		self.logger.debug(
 			'Specification generated: routes=%s duration=%.6f',
 			len(self.application.router.routes),

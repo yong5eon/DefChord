@@ -146,7 +146,7 @@ Application·Extension에는 별도 생성 완료 훅을 추가하지 않았다.
 | Extension 클래스 선언 훅 | 인스턴스 생성자 훅 |
 | Extension의 기존 `bind/start/stop/begin/end` 중심 연결·관찰 | `startup(application)`·`cleanup()` 및 명시적 Application 요청 훅 등록 |
 | 확장 호출에 Application 전달 | 시작 단계에서 연결하고 요청 시 `extension(request)` |
-| `DefEssential.FileSystemRoute` 가져오기 | `DefEssential.Extensions.FileSystem`에서 가져오기 |
+| `DefChord.FileSystemRoute` 가져오기 | `DefChord.Extensions.FileSystem`에서 가져오기 |
 | 명세 생성 시 Application 전달 | Application 시작 후 `spec.document()` 호출 |
 
 공개 Extension Factory는 제공하지 않는다. 내부 RunExtensionFactory는 라우트에 연결할 RequestRunner 어댑터 생성기로 유지한다.

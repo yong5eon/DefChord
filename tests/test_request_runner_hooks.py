@@ -5,7 +5,7 @@ from threading import Barrier
 from typing import Optional, get_type_hints
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationRequest,
 	ApplicationRequestError,
@@ -29,18 +29,18 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Adapter.RequestHandler import handle_request
-from DefEssential.IO.Readers import (
+from DefChord.Adapter.RequestHandler import handle_request
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.IO.Writers import (
+from DefChord.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEventsWriter,
 	StreamWriter,
 )
-from DefEssential.Runners.RunExtension import run_extension
-from DefEssential.Runners.RunRequest import RunRequest
+from DefChord.Runners.RunExtension import run_extension
+from DefChord.Runners.RunRequest import RunRequest
 
 
 class RequestHook(RequestRunnerRequest):
@@ -143,8 +143,8 @@ def handler(
 class RequestRunnerHookTests(TestCase):
 	def test_exports_and_removed_api(self):
 		for module in (
-			import_module('DefEssential'),
-			import_module('DefEssential.RequestRunner'),
+			import_module('DefChord'),
+			import_module('DefChord.RequestRunner'),
 		):
 			for contract in (
 				RequestRunnerRequest,
@@ -279,7 +279,7 @@ class RequestRunnerHookTests(TestCase):
 				events.append('constructor')
 				return
 
-		with self.assertLogs('DefEssential.RequestRunner', level='DEBUG') as logs:
+		with self.assertLogs('Request', level='DEBUG') as logs:
 			RunRequest(Handler).run(request())
 		messages = '\n'.join(logs.output)
 		for phase in (
@@ -704,7 +704,7 @@ class RequestRunnerHookTests(TestCase):
 			lambda req: Response(body=body),
 			on_request_response=ResponseHook(fail),
 		))
-		with self.assertLogs('DefEssential.RequestRunner', level='ERROR'):
+		with self.assertLogs('Request', level='ERROR'):
 			with self.assertRaises(ValueError) as caught:
 				execution.run(request())
 		self.assertIs(caught.exception, original)
@@ -948,7 +948,7 @@ class RequestRunnerHookTests(TestCase):
 			on_request_response=ResponseHook(lambda req, response: events.append('response') or response),
 			on_request_error=ErrorHook(lambda req, error: events.append('error')),
 		))
-		with self.assertLogs('DefEssential.Server', level='WARNING'):
+		with self.assertLogs('Server', level='WARNING'):
 			with self.assertRaises(OSError):
 				handle_request(app, lambda: request(writer), writer)
 		self.assertEqual(events, [

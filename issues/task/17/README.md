@@ -1,12 +1,12 @@
-# DefEssential #17: 공통 지침 변경으로 인한 CI 룰 변경 및 세부 지침 지정
+# DefChord #17: 공통 지침 변경으로 인한 CI 룰 변경 및 세부 지침 지정
 
 ## 이슈 정보
 
 | 항목 | 내용 |
 | --- | --- |
 | 출처 | GitHub Issues |
-| 저장소 | `yong5eon/DefEssential` |
-| 원본 이슈 | [#17](https://github.com/yong5eon/DefEssential/issues/17) |
+| 저장소 | `yong5eon/DefChord` |
+| 원본 이슈 | [#17](https://github.com/yong5eon/DefChord/issues/17) |
 | 상태 | Open |
 | 유형·레이블 | 작업 (`task`, 원본에 적용됨) |
 | 담당자 | `yong5eon` |

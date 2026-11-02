@@ -115,7 +115,7 @@
 
 | 검증 | 결과 |
 | --- | --- |
-| 전체 `unittest discover -s DefEssential\tests` | 총 198개, 193개 통과·Gunicorn/POSIX 조건 5개 건너뜀 |
+| 전체 `unittest discover -s DefChord\tests` | 총 198개, 193개 통과·Gunicorn/POSIX 조건 5개 건너뜀 |
 | Extension 훅·기본 확장·export 집중 검증 | 46개 통과 |
 | 수명·실패 | 같은 인스턴스 재시작, 소유권, 부분 라우트·동적 훅 롤백, 정리 오류 시 후속 정리와 최초 오류 보존 |
 | 요청 경계 | 요청·응답 변환, 직접 출력, 본문 회수, 오류 체인, 최초 Request 교체·중첩 처리 |

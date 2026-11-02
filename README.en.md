@@ -1,14 +1,14 @@
-# DefEssential
+# DefChord
 
 The Modern Synchronous Python Web Application Framework
 
 **Just def.**<br>
-**Let web apps do the work.**<br>
+**Define your code. Compose your chord.**<br>
 **You don't need to await this.**
 
 [한국어](./README.md)
 
-DefEssential is a synchronous web framework for handling HTTP requests with ordinary Python methods. Configure routes, request validation, responses, and extensions without `async` / `await`.
+DefChord is a synchronous web framework for handling HTTP requests with ordinary Python methods. Configure routes, request validation, responses, and extensions without `async` / `await`.
 
 - Validation for path, query, header, and body inputs
 - JSON, text, and file responses; streaming, Server-Sent Events, and WebSocket
@@ -20,15 +20,15 @@ DefEssential is a synchronous web framework for handling HTTP requests with ordi
 Requires Python 3.9 or later. The built-in server is available without extra server dependencies.
 
 ```shell
-python -m pip install DefEssential
+python -m pip install DefChord
 ```
 
 Install an extra only when using the corresponding Gunicorn or Uvicorn adapter.
 The core contains neither adapter's code. Each extra installs a separate, same-version implementation distribution and its dependencies.
 
 ```shell
-python -m pip install "DefEssential[Gunicorn]"
-python -m pip install "DefEssential[Uvicorn]"
+python -m pip install "DefChord[Gunicorn]"
+python -m pip install "DefChord[Uvicorn]"
 ```
 
 To modify the source code, see [installation isolation, development and distribution](./docs/Packaging.en.md).
@@ -36,9 +36,9 @@ To modify the source code, see [installation isolation, development and distribu
 ## Quick start
 
 ```python
-from DefEssential import Application, Request, RequestRunner
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Responses import ResponseText
+from DefChord import Application, Request, RequestRunner
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Responses import ResponseText
 
 
 class Hello(RequestRunner, method='GET', url='/hello'):
@@ -56,6 +56,6 @@ After starting the server, send a `GET /hello` request to receive `Hello, world!
 ## Documentation and releases
 
 - [Detailed guide (English)](./docs/README.en.md)
-- [Releases and change history](https://github.com/yong5eon/DefEssential/releases)
+- [Releases and change history](https://github.com/yong5eon/DefChord/releases)
 
 See the repository's `LICENSE` file for license terms.

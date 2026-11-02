@@ -13,12 +13,12 @@ from struct import pack
 from sys import path
 from unittest import TestCase
 from unittest.mock import patch
-from DefEssential import (
+from DefChord import (
 	Request,
 	RequestReader,
 	ResponseWriter,
 )
-from DefEssential.Extensions import Specifications
+from DefChord.Extensions import Specifications
 
 from test_server import running
 
@@ -29,7 +29,7 @@ SAMPLE = Path(__file__).resolve().parent.parent / 'samples'
 def create_application():
 	"""Load the application registered by the directly executed sample without starting a server."""
 	with patch('sys.path', [str(SAMPLE), *path]):
-		with patch('DefEssential.Adapter.Implements.Python.Server') as server:
+		with patch('DefChord.Adapter.Implements.Python.Server') as server:
 			run_path(
 				str(SAMPLE / 'Sample.py'),
 				run_name='__main__',
@@ -658,7 +658,7 @@ class SampleTests(TestCase):
 
 	def test_sse_writer_sample_contract(self):
 		from io import BytesIO
-		from DefEssential import (
+		from DefChord import (
 			Request,
 			ResponseWriter,
 		)
@@ -690,7 +690,7 @@ class SampleTests(TestCase):
 			Client,
 			client_frame,
 		)
-		from DefEssential.IO.WebSocket import WebSocketFrame
+		from DefChord.IO.WebSocket import WebSocketFrame
 		with running(create_application()) as address:
 			client = Client(
 				address,

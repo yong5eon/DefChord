@@ -20,7 +20,7 @@ from setuptools.command.sdist import sdist
 from setuptools_scm import get_version
 from wheel.wheelfile import WheelFile
 
-PACKAGE = 'DefEssential'
+PACKAGE = 'DefChord'
 SOURCE = 'src'
 IMPLEMENTATIONS = {
 	'Gunicorn': 'Adapter.Implements.Gunicorn',
@@ -248,11 +248,11 @@ setup(
 	long_description=Path('README.setup.md').read_text(encoding='utf-8'),
 	long_description_content_type='text/markdown',
 	author='Heo Yongseon',
-	url='https://github.com/yong5eon/DefEssential',
+	url='https://github.com/yong5eon/DefChord',
 	project_urls={
-		'Source': 'https://github.com/yong5eon/DefEssential',
-		'Issues': 'https://github.com/yong5eon/DefEssential/issues',
-		'Releases': 'https://github.com/yong5eon/DefEssential/releases',
+		'Source': 'https://github.com/yong5eon/DefChord',
+		'Issues': 'https://github.com/yong5eon/DefChord/issues',
+		'Releases': 'https://github.com/yong5eon/DefChord/releases',
 	},
 	cmdclass={
 		'build': TargetBuild,
@@ -264,7 +264,7 @@ setup(
 	package_dir=PACKAGE_DIR,
 	include_package_data=False,
 	package_data={
-		'DefEssential.Extensions': [
+		'DefChord.Extensions': [
 			'Status.html',
 			'Swagger.html',
 		],

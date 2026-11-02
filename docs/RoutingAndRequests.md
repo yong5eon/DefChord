@@ -11,8 +11,8 @@
 `method`와 `url`은 함께 지정해야 합니다. URL은 `/`로 시작하는 경로이며 쿼리 문자열이나 fragment를 포함하지 않습니다. 경로 변수는 `:name` 형식으로 선언합니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class ReadProduct(
@@ -48,14 +48,14 @@ class ReadProduct(
 아래 예제는 경로와 쿼리 값을 정수로 바꾸고 양수 조건을 적용합니다.
 
 ```python
-from DefEssential import (
+from DefChord import (
   QueryString,
   Request,
   RequestRunner,
   Parameters,
 )
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import IsGreaterThan, ToInteger
+from DefChord.Responses import ResponseJSON
+from DefChord.Validator.Patterns import IsGreaterThan, ToInteger
 
 
 class ReadValue(
@@ -88,9 +88,9 @@ class ReadValue(
 JSON 예제:
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import JavaScriptObjectNotationContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import JavaScriptObjectNotationContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CreateItem(
@@ -132,15 +132,15 @@ curl -X POST http://127.0.0.1:8000/items ^
 다음 예제는 HTTP `Authorization: Bearer ...` 헤더에서 토큰을 추출하고 검증하는 구조를 보여줍니다.
 
 ```python
-from DefEssential import (
+from DefChord import (
   Auth,
   Authorization,
   ClientError,
   Request,
   RequestRunner,
 )
-from DefEssential.Credentials import HTTP
-from DefEssential.Responses import ResponseJSON
+from DefChord.Credentials import HTTP
+from DefChord.Responses import ResponseJSON
 
 
 class AccessTokenAuthorization(Authorization):
@@ -171,7 +171,7 @@ class ReadProfile(
 
 `Auth`의 처리 방식은 다음과 같습니다.
 
-- `Credentials`는 요청에서 자격 증명을 추출합니다. DefEssential에서 제공하는 기본 추출기와 OAuth2 보안 스키마는 다음과 같습니다.
+- `Credentials`는 요청에서 자격 증명을 추출합니다. DefChord에서 제공하는 기본 추출기와 OAuth2 보안 스키마는 다음과 같습니다.
 
   | 클래스 | 추출 위치와 동작 | 주요 사용 예 |
   | --- | --- | --- |
@@ -197,8 +197,8 @@ class ReadProfile(
 `Origin`은 요청의 `Origin` 헤더가 허용 목록과 일치하는지 검사하고, 응답에 교차 출처 리소스 공유(CORS) 헤더를 적용하는 정책입니다. `RequestRunner`에 단일 정책 또는 여러 정책을 지정할 수 있습니다. 여러 정책을 지정하면 하나라도 일치하는 Origin을 허용합니다.
 
 ```python
-from DefEssential import Origin, Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Origin, Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class ReadPublicData(
@@ -234,7 +234,7 @@ CORS는 브라우저가 다른 출처의 응답을 읽을 수 있는지 제어�
 
 ## 일반 응답 반환
 
-기본적인 요청/응답 흐름에서는 `RequestRunner.run()`이 `Response` 객체를 반환합니다. DefEssential은 JSON·텍스트·파일 응답을 위한 클래스를 제공합니다.
+기본적인 요청/응답 흐름에서는 `RequestRunner.run()`이 `Response` 객체를 반환합니다. DefChord는 JSON·텍스트·파일 응답을 위한 클래스를 제공합니다.
 
 | 응답 종류 | 클래스 | 사용 목적 |
 | --- | --- | --- |
@@ -244,8 +244,8 @@ CORS는 브라우저가 다른 출처의 응답을 읽을 수 있는지 제어�
 | 파일 응답 | `ResponseFile` | 파일을 고정 크기 블록으로 읽어 전송 |
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class CreateOrder(RequestRunner, method='POST', url='/orders'):
@@ -261,8 +261,8 @@ class CreateOrder(RequestRunner, method='POST', url='/orders'):
 `ResponseJSON`은 값을 UTF-8 JSON으로 직렬화하고 기본 상태 코드는 200입니다. JSON으로 직렬화할 수 없는 값은 `TypeError`를 발생시킵니다. 문자열 본문은 `ResponseText(text, status=..., headers=..., charset='utf-8')`로 반환할 수 있습니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseText
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseText
 
 
 class PlainText(RequestRunner, method='GET', url='/message'):
@@ -277,7 +277,7 @@ class PlainText(RequestRunner, method='GET', url='/message'):
 직접 `Response`를 생성할 때는 bytes 또는 bytes iterable을 본문으로 전달할 수 있습니다. `format`을 지정하면 `Content-Type`이 설정되며, `charset`은 해당 문자 인코딩을 추가합니다. 응답 헤더 값에는 줄바꿈을 포함할 수 없습니다.
 
 ```python
-from DefEssential import Request, RequestRunner, Response
+from DefChord import Request, RequestRunner, Response
 
 
 class EmptyCreated(RequestRunner, method='POST', url='/empty'):
@@ -290,8 +290,8 @@ class EmptyCreated(RequestRunner, method='POST', url='/empty'):
 `ResponseFile`은 로컬 경로 또는 열린 파일 객체를 응답 본문으로 전송합니다. 경로를 전달하면 확장자를 바탕으로 콘텐츠 형식과 압축 인코딩을 추측하고 파일을 일정 크기의 bytes 단위로 읽습니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseFile
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseFile
 
 
 class DownloadReport(RequestRunner, method='GET', url='/reports/latest'):

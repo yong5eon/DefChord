@@ -11,24 +11,24 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	RequestRunner,
 	Response,
 )
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Startup import (
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Startup import (
 	LOGO,
 	colorize_logo,
 	startup,
 	supports_color,
 )
-from DefEssential.Extensions import (
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 	Ping,
 )
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )
@@ -226,7 +226,7 @@ class StartupTests(TestCase):
 					if encoding == 'utf-8':
 						self.assertIn(LOGO.rstrip(), text)
 					else:
-						self.assertIn(r'\u2584', text)
+						self.assertIn(r'\u2588', text)
 		return
 
 	def test_failed_bind_does_not_print_startup(self):
@@ -260,7 +260,18 @@ class StartupTests(TestCase):
 			self.assertEqual('\033[' in output.getvalue(), colored)
 		colored_logo = colorize_logo(LOGO)
 		self.assertEqual(colored_logo.count('\033[0m'), 5)
-		self.assertIn("You don't need to await this.", colored_logo)
+		logo_rows = LOGO.splitlines()[1:6]
+		self.assertEqual(len(logo_rows), 5)
+		self.assertEqual({len(row.rstrip()) for row in logo_rows}, {52})
+		self.assertTrue(all(len(row) == len(row.rstrip()) for row in logo_rows))
+		self.assertIn('▄', ''.join(logo_rows))
+		self.assertIn('▀', ''.join(logo_rows))
+		self.assertIn(
+			'Just def. Define your code. Compose your chord. '
+			"You don't need to await this.",
+			colored_logo,
+		)
+		self.assertNotIn('Let web apps do the work.', colored_logo)
 		return
 
 	def test_application_and_adapter_metadata_without_a_server_instance(self):

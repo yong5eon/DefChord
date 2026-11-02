@@ -30,14 +30,14 @@ __all__ = (
 class Status(Extension):
 	"""Provide a status page using an explicitly configured same-origin metrics path."""
 
-	logger = getLogger('DefEssential.Extensions.Status')
+	logger = getLogger('Extension.Status')
 
 	def __init__(
 		self,
 		path: str,
 		*,
 		metrics_uri: str,
-		title: str = 'DefEssential',
+		title: str = 'DefChord',
 		description: str = '',
 		on_startup: Optional[Union[
 			ExtensionStartup,

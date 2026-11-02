@@ -1,9 +1,9 @@
 # 선택 구현체 배포 분리 및 extras 설치 격리
 
-- 원본: [DefEssential #25](https://github.com/yong5eon/DefEssential/issues/25)
+- 원본: [DefChord #25](https://github.com/yong5eon/DefChord/issues/25)
 - 제목: 단일 src·setup.py를 유지하는 선택 구현체 배포 분리 및 extras 설치 격리
 - 유형·레이블: `fix` (원본 적용 확인)
-- 대상 저장소: DefEssential
+- 대상 저장소: DefChord
 - 작업 브랜치: `fix/25`
 - 분기 기준·병합 대상: 사용자 확인에 따른 `master`
 - [요구사항](./REQUIREMENTS.md) · [계획](./PLAN.md)
@@ -25,7 +25,7 @@
 ## 요구사항
 
 - 같은 저장소, 하나의 `src`, 하나의 `setup.py`를 유지한다.
-- 기존 `DefEssential[...]` 설치 인터페이스와 선택한 구현체의 import 경로를 유지한다.
+- 기존 `DefChord[...]` 설치 인터페이스와 선택한 구현체의 import 경로를 유지한다.
 - 표준 pip와 사전 빌드 wheel 설치에서도 동일한 격리를 제공한다.
 - 기본 Python 서버와 공통 API의 기존 동작을 유지한다.
 
@@ -33,10 +33,10 @@
 
 | 설치 명령 | 포함할 서버 구현체 |
 | --- | --- |
-| `pip install DefEssential` | 기본 Python 서버만 |
-| `pip install "DefEssential[Gunicorn]"` | 기본 Python 서버와 Gunicorn |
-| `pip install "DefEssential[Uvicorn]"` | 기본 Python 서버와 Uvicorn |
-| `pip install "DefEssential[Gunicorn,Uvicorn]"` | 기본 Python 서버, Gunicorn, Uvicorn |
+| `pip install DefChord` | 기본 Python 서버만 |
+| `pip install "DefChord[Gunicorn]"` | 기본 Python 서버와 Gunicorn |
+| `pip install "DefChord[Uvicorn]"` | 기본 Python 서버와 Uvicorn |
+| `pip install "DefChord[Gunicorn,Uvicorn]"` | 기본 Python 서버, Gunicorn, Uvicorn |
 
 이미 설치한 extra를 다른 설치 명령에서 생략한다고 자동 제거되는 동작은 요구하지 않는다.
 
@@ -54,9 +54,9 @@
 
 | 배포 이름 예시 | 포함 범위 |
 | --- | --- |
-| `DefEssential` | 공통 코드와 기본 Python 서버, 선택 어댑터 제외 |
-| `DefEssential-Gunicorn` | `DefEssential.Adapter.Implements.Gunicorn` 하위 코드와 필요한 리소스 |
-| `DefEssential-Uvicorn` | `DefEssential.Adapter.Implements.Uvicorn` 하위 코드와 필요한 리소스 |
+| `DefChord` | 공통 코드와 기본 Python 서버, 선택 어댑터 제외 |
+| `DefChord-Gunicorn` | `DefChord.Adapter.Implements.Gunicorn` 하위 코드와 필요한 리소스 |
+| `DefChord-Uvicorn` | `DefChord.Adapter.Implements.Uvicorn` 하위 코드와 필요한 리소스 |
 
 코어의 extras는 해당 구현체 배포 패키지를 의존성으로 연결한다. 구현체 패키지는 호환되는 코어와 자신의 외부 의존성에 의존한다. 최종 배포 이름, 버전 결합 정책과 빌드 대상 전달 방법은 구현 전에 확정한다.
 

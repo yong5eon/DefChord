@@ -2,7 +2,7 @@ from logging import getLogger
 from random import randrange
 from time import sleep
 
-from DefEssential import (
+from DefChord import (
 	Body,
 	Request,
 	RequestRunner,
@@ -11,12 +11,12 @@ from DefEssential import (
 	RequestRunnerRequestResponse,
 	Response,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ChunkedStreamContentReader,
 	StreamContentReader,
 )
-from DefEssential.IO.WebSocket import WebSocket
-from DefEssential.IO.Writers import (
+from DefChord.IO.WebSocket import WebSocket
+from DefChord.IO.Writers import (
 	ChunkedStreamWriter,
 	ServerSentEventsWriter,
 	StreamWriter,

@@ -32,7 +32,7 @@ class Server(
 
 	daemon_threads = True
 	app: Application
-	logger = getLogger('DefEssential.Server')
+	logger = getLogger('Server.Python')
 
 	def __init__(
 		self,
@@ -104,8 +104,8 @@ class Server(
 class ServerRequestHandler(BaseHTTPRequestHandler):
 	server: Server
 	protocol_version = 'HTTP/1.1'
-	server_version = 'DefEssential'
-	logger = getLogger('DefEssential.Server')
+	server_version = 'DefChord'
+	logger = getLogger('Server.Python')
 
 	def request_reader(self) -> RequestReader:
 		lengths = self.headers.get_all('Content-Length', [])

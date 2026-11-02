@@ -8,7 +8,7 @@ from struct import (
 from threading import Event
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationRequestError,
 	ApplicationRequestResponse,
@@ -18,11 +18,11 @@ from DefEssential import (
 	RequestRunnerRequestResponse,
 	ResponseWriter,
 )
-from DefEssential.IO.RequestReader import (
+from DefChord.IO.RequestReader import (
 	ClientDisconnected,
 	RequestReader,
 )
-from DefEssential.IO.WebSocket import (
+from DefChord.IO.WebSocket import (
 	WebSocket,
 	WebSocketError,
 	WebSocketFrame,
@@ -387,7 +387,7 @@ class WebSocketServerTests(TestCase):
 		):
 			with self.subTest(code=code, frames=frames[0][:2]):
 				with self.assertLogs(
-					'DefEssential.IO.WebSocket',
+					'Request.WebSocket',
 					level='WARNING',
 				):
 					with running(echo_application()) as address:
@@ -497,7 +497,7 @@ class WebSocketServerTests(TestCase):
 		app = Application(on_request_error=RequestError())
 		app.add(Echo)
 		with self.assertLogs(
-			'DefEssential.Server',
+			'Server',
 			level='INFO',
 		) as logged:
 			with running(app) as address:

@@ -1,4 +1,4 @@
-# DefEssential 문서 현지화 및 Python 설명 문구 영어화 작업 계획
+# DefChord 문서 현지화 및 Python 설명 문구 영어화 작업 계획
 
 ## 목표
 

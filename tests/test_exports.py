@@ -82,8 +82,8 @@ class ExportTests(TestCase):
 			parts = file.relative_to(source).with_suffix('').parts
 			if parts[-1] == '__init__':
 				parts = parts[:-1]
-			name = '.'.join(('DefEssential',) + parts)
-			if name == 'DefEssential.Adapter.Implements.Uvicorn.HTTP':
+			name = '.'.join(('DefChord',) + parts)
+			if name == 'DefChord.Adapter.Implements.Uvicorn.HTTP':
 				continue
 			with self.subTest(module=name):
 				self.assert_module_exports(name)
@@ -91,5 +91,5 @@ class ExportTests(TestCase):
 
 	@skipUnless(find_spec('a2wsgi') is not None, 'a2wsgi 필요')
 	def test_optional_uvicorn_http_exports(self):
-		self.assert_module_exports('DefEssential.Adapter.Implements.Uvicorn.HTTP')
+		self.assert_module_exports('DefChord.Adapter.Implements.Uvicorn.HTTP')
 		return

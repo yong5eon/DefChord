@@ -4,7 +4,7 @@
 
 [한국어](./StreamingAndWebSockets.md)
 
-Streaming reads request bodies incrementally or writes response data as it is produced, avoiding buffering the entire payload in memory. DefEssential provides separate readers for length-delimited and HTTP chunked input, and separate writers for ordinary and chunked output. SSE and WebSocket are distinct long-lived communication patterns.
+Streaming reads request bodies incrementally or writes response data as it is produced, avoiding buffering the entire payload in memory. DefChord provides separate readers for length-delimited and HTTP chunked input, and separate writers for ordinary and chunked output. SSE and WebSocket are distinct long-lived communication patterns.
 
 | Direction | Mode | API | Transport behavior |
 | --- | --- | --- | --- |
@@ -18,9 +18,9 @@ Streaming reads request bodies incrementally or writes response data as it is pr
 `StreamContentReader` exposes a request body with `Content-Length` as a `RequestReader` without pre-reading it. It does not support chunked transfer encoding; if `Content-Length` is missing, it raises a 411 error.
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import StreamContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import StreamContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CountUpload(
@@ -50,9 +50,9 @@ class CountUpload(
 `ChunkedStreamContentReader` exposes a request body as a `ChunkedStream` and incrementally decodes data sent with chunked transfer encoding. A request without chunked transfer encoding produces a client error.
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import ChunkedStreamContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import ChunkedStreamContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CountChunkedUpload(
@@ -82,8 +82,8 @@ class CountChunkedUpload(
 `StreamWriter` starts a response and writes bytes in order. It does not add HTTP chunked framing. The status and headers are fixed by `begin()`; write the body with `write()` and send buffered data with `flush()`.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import StreamWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import StreamWriter
 
 
 class PlainStream(RequestRunner, method='GET', url='/stream'):
@@ -104,8 +104,8 @@ After starting direct output, the handler must return `None`. It cannot return a
 `ChunkedStreamWriter` uses HTTP/1.1 chunked transfer framing. `chunk(data)` writes bytes and flushes so the consumer can receive them progressively. Chunked output is supported only for HTTP/1.1 requests.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import ChunkedStreamWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import ChunkedStreamWriter
 
 
 class ChunkedStreamResponse(RequestRunner, method='GET', url='/chunked-stream'):
@@ -125,8 +125,8 @@ Set the status and headers before `begin()`, and call `end()` after successful c
 Server-Sent Events (SSE) keep an HTTP connection open while sending UTF-8 text events from the server to the client. SSE does not provide bidirectional client-to-server messaging.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import ServerSentEventsWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import ServerSentEventsWriter
 
 
 class Events(RequestRunner, method='GET', url='/events'):
@@ -150,8 +150,8 @@ class Events(RequestRunner, method='GET', url='/events'):
 WebSocket upgrades an HTTP connection into a persistent, bidirectional message channel. Declare the handler as a `RequestRunner` and use `WebSocket` to perform the handshake and exchange messages.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.WebSocket import WebSocket
+from DefChord import Request, RequestRunner
+from DefChord.IO.WebSocket import WebSocket
 
 
 class Echo(RequestRunner, method='GET', url='/ws'):

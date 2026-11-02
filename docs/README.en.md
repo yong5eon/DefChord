@@ -1,10 +1,10 @@
-# DefEssential Detailed Guide
+# DefChord Detailed Guide
 
 [한국어](./README.md)
 
-## What is DefEssential?
+## What is DefChord?
 
-DefEssential is a synchronous web framework that handles HTTP requests with ordinary Python methods. Declare a method and path on a `RequestRunner`, register it with an `Application`, and a selected server adapter dispatches requests to the handler. Build request validation, responses, streaming, and WebSocket handling without coroutine-based `async def` or `await`.
+DefChord is a synchronous web framework that handles HTTP requests with ordinary Python methods. Declare a method and path on a `RequestRunner`, register it with an `Application`, and a selected server adapter dispatches requests to the handler. Build request validation, responses, streaming, and WebSocket handling without coroutine-based `async def` or `await`.
 
 Declare routes and input validation separately from application logic. Path parameters, query strings, headers, and request bodies can be converted by validators and content readers. Return an ordinary response object or write directly to a stream. The built-in Python server is included; Gunicorn and Uvicorn adapters are optional extras.
 

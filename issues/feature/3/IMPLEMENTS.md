@@ -2,13 +2,13 @@
 
 ## 1. 개요
 
-[로깅 지원 이슈](./ISSUE.md)와 [요구사항 명세서](./REQUIREMENTS.md)에 따라 프레임워크 로그를 `DefEssential` 계층으로 정리하고 주요 실행 경로의 로그를 보강했다.
+[로깅 지원 이슈](./ISSUE.md)와 [요구사항 명세서](./REQUIREMENTS.md)에 따라 프레임워크 로그를 책임별 로거 계층으로 정리하고 주요 실행 경로의 로그를 보강했다.
 
 DefStream처럼 Python 표준 `logging`으로 로그를 기록하며, 출력 설정은 샘플의 Application 시작 훅에서 담당한다. 이 문서는 2026-10-25 기준 최종 구현과 앞선 구현 작업에서 확인한 검증 결과를 기록한다.
 
 ## 2. 최종 구현 방식
 
-- 클래스는 `logger = getLogger('DefEssential.…')`로 고정 이름을 선언하고 메서드에서 직접 사용한다.
+- 클래스는 책임에 맞는 고정 로거 이름으로 `logger`를 선언하고 메서드에서 직접 사용한다.
 - 공통 함수는 담당 경계의 모듈 로거를 사용한다. 로거를 전달하기 위한 공개 인자는 추가하지 않았다.
 - 사용자 하위 클래스는 기존 로거를 상속하며 필요하면 명시적으로 재정의할 수 있다.
 - 라이브러리는 핸들러·포매터·필터·레벨을 설정하거나 기존 사용자 설정을 제거하지 않는다. `basicConfig()`와 `NullHandler`도 추가하지 않았다.
@@ -28,13 +28,13 @@ DefStream처럼 Python 표준 `logging`으로 로그를 기록하며, 출력 설
 
 | 대상 | 로거 | 구현 내용 |
 | --- | --- | --- |
-| [Application](../../../src/Application.py) | `DefEssential.Application` | 시작·종료, 확장 연결·롤백·정리, 라우트 등록·선택, 훅 실행과 디스패치 |
-| [요청 실행기](../../../src/Runners/RunRequest.py) | `DefEssential.RequestRunner` | 인증·검증·본문 처리·핸들러 생성·실행, 요청·응답·오류 훅과 직접 출력 단계 |
-| [확장 실행기](../../../src/Runners/RunExtension.py) | `DefEssential.Extension` | 확장 호출과 요청·응답·오류 훅 |
-| [공통 요청 처리기](../../../src/Adapter/RequestHandler.py) | `DefEssential.Server` | HTTP 수신, 오류 응답 선택, 최종 전송 결과와 본문 정리 실패 |
-| [Python](../../../src/Adapter/Implements/Python/Server.py)·[Gunicorn](../../../src/Adapter/Implements/Gunicorn/Server.py)·[Uvicorn](../../../src/Adapter/Implements/Uvicorn/Server.py) 서버 | `DefEssential.Server` | 어댑터 식별, 실제 바인딩 후 준비 완료, 시작·종료·실패 |
-| [WebSocket](../../../src/IO/WebSocket/WebSocket.py) | `DefEssential.IO.WebSocket` | 연결 상태, 종료 코드, 프로토콜 위반과 내부 실패 |
-| [내장 확장](../../../src/Extensions) | `DefEssential.Extensions.*` | File·FileSystem·Ping·Metrics·Status·Specifications·Swagger의 주요 처리와 실패 |
+| [Application](../../../src/Application.py) | `Application` | 시작·종료, 확장 연결·롤백·정리, 라우트 등록·선택, 훅 실행과 디스패치 |
+| [요청 실행기](../../../src/Runners/RunRequest.py) | `Request` | 인증·검증·본문 처리·핸들러 생성·실행, 요청·응답·오류 훅과 직접 출력 단계 |
+| [확장 실행기](../../../src/Runners/RunExtension.py) | `Extension` | 확장 호출과 요청·응답·오류 훅 |
+| [공통 요청 처리기](../../../src/Adapter/RequestHandler.py) | `Server` | HTTP 수신, 오류 응답 선택, 최종 전송 결과와 본문 정리 실패 |
+| [Python](../../../src/Adapter/Implements/Python/Server.py)·[Gunicorn](../../../src/Adapter/Implements/Gunicorn/Server.py)·[Uvicorn](../../../src/Adapter/Implements/Uvicorn/Server.py) 서버 | `Server.Python`·`Server.Gunicorn`·`Server.Uvicorn` | 어댑터별 생명주기, 바인딩 후 준비 완료, 시작·종료·실패 |
+| [WebSocket](../../../src/IO/WebSocket/WebSocket.py) | `Request.WebSocket` | 연결 상태, 종료 코드, 프로토콜 위반과 내부 실패 |
+| [내장 확장](../../../src/Extensions) | `Extension.*` | File·FileSystem·Ping·Metrics·Status·Specifications·Swagger의 주요 처리와 실패 |
 
 | 레벨 | 기록 기준 |
 | --- | --- |
@@ -84,7 +84,7 @@ DefStream처럼 Python 표준 `logging`으로 로그를 기록하며, 출력 설
 [샘플](../../../samples/Sample.py)의 `LoggingSetup`을 첫 Application 시작 훅으로 등록했다.
 
 - 루트 레벨을 DEBUG로 설정하고 이름이 `Sample`인 콘솔 핸들러를 추가한다.
-- 핸들러의 출처 필터로 `Sample`·`Sample.*`, `DefEssential`·`DefEssential.*`만 선택한다. 유사 접두 이름과 외부 서버 로거는 제외한다.
+- 핸들러의 출처 필터로 `Sample`과 `Application`, `Request`, `Server`, `Extension` 계층 및 기존 WebSocket 로거를 선택한다. 유사 접두 이름과 외부 서버 로거는 제외한다.
 - 같은 이름의 핸들러는 재시작 시 중복 추가하지 않으며 기존 사용자 핸들러는 제거하지 않는다. 다른 핸들러의 출력까지 제한하지는 않는다.
 - 현재 포맷은 `%(asctime)s %(levelname)-8s %(name)s %(message)s`이며 밀리초와 레벨별 색상을 표시한다. 색상 포매터는 LogRecord 복사본을 사용한다.
 - 시작 훅 이전의 구성·등록 로그를 소급 출력하지 않으며 기존 시작 배너는 유지한다.

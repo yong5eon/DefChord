@@ -114,7 +114,7 @@ class WSGIResponseWriter(ResponseWriter):
 
 
 class WSGIApplication:
-	"""Adapt DefEssential requests to the WSGI calls used by Gunicorn and a2wsgi."""
+	"""Adapt DefChord requests to the WSGI calls used by Gunicorn and a2wsgi."""
 
 	def __init__(
 		self,

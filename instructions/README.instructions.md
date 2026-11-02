@@ -1,13 +1,13 @@
 ---
-description: "DefEssential 프로젝트 루트 README 작성 지침"
+description: "DefChord 프로젝트 루트 README 작성 지침"
 applyTo: "README*.md"
 ---
 
-# DefEssential 루트 README 작성 지침
+# DefChord 루트 README 작성 지침
 
 ## 문서별 역할
 
-- `README.md`는 한국어로 DefEssential을 소개하고 핵심 사용 정보를 안내한다.
+- `README.md`는 한국어로 DefChord를 소개하고 핵심 사용 정보를 안내한다.
 - `README.en.md`는 `README.md`와 주요 기능, 설치 및 빠른 시작 범위를 맞춘 영어 문서다. 공개 기능이나 사용법을 변경하면 두 문서를 함께 갱신한다.
 - `README.setup.md`는 패키지 저장소에서 독립적으로 읽을 수 있는 간결한 영어 설명이다. 프로젝트 소개, Python 요구 사항, 설치 방법과 최소 빠른 시작을 포함한다.
 - 이 지침은 루트의 세 README에만 적용한다. 상세 사용 설명과 주제별 매뉴얼은 `instructions/DOCS.instructions.md`의 지침에 따라 `docs/`에 작성한다.
@@ -22,14 +22,14 @@ applyTo: "README*.md"
 
 ## 버전 및 변경 이력
 
-- `README.md`와 `README.en.md`에서 최신 릴리즈와 전체 변경 이력을 확인할 수 있도록 DefEssential 릴리즈 페이지로 연결한다.
+- `README.md`와 `README.en.md`에서 최신 릴리즈와 전체 변경 이력을 확인할 수 있도록 DefChord 릴리즈 페이지로 연결한다.
 - 릴리즈마다 수동 갱신이 필요한 버전 번호를 문서에 중복 기록하지 않는다. 버전을 표시해야 하면 릴리즈 기준 정보와 자동으로 동기화되는 방법을 사용한다.
 - 주요 변경 사항을 루트 README에 소개할 필요가 있으면 핵심만 요약하고, 전체 이력은 릴리즈 페이지를 기준으로 한다.
 - `README.setup.md`는 외부 URL이나 외부 웹 페이지 링크를 포함하지 않는다. 따라서 릴리즈 페이지 링크도 넣지 않는다.
 
 ## 정확성 및 표현
 
-- 공개 기능, 지원 범위, 동작과 제약은 DefEssential의 현재 코드와 설정에 맞게 작성한다. 확인하지 않은 보장이나 기능을 추가하지 않는다.
+- 공개 기능, 지원 범위, 동작과 제약은 DefChord의 현재 코드와 설정에 맞게 작성한다. 확인하지 않은 보장이나 기능을 추가하지 않는다.
 - 코드 예제와 import 경로는 현재 공개 API를 사용하고, 설치 명령과 extra 이름은 패키지 설정과 일치시킨다.
 - 기본 Python 서버와 선택 설치형 Gunicorn·Uvicorn adapter를 구분하며, 선택 기능이 기본 설치에 포함된 것처럼 설명하지 않는다.
 - README의 문서 언어에 맞춰 자연스럽게 작성하고, 기술 식별자와 공개 API 이름은 원문을 유지한다.

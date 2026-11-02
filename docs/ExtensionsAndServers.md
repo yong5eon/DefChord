@@ -23,8 +23,8 @@
 필요한 확장만 선택해 등록합니다.
 
 ```python
-from DefEssential import Application
-from DefEssential.Extensions import (
+from DefChord import Application
+from DefChord.Extensions import (
   Metrics,
   Ping,
   Specifications,
@@ -49,7 +49,7 @@ application = Application(exts=(
 `Application.load(mod=...)` 또는 `Application.load(path=...)`는 로드한 모듈의 구체 `RequestRunner` 하위 클래스를 찾아 등록합니다. 애플리케이션 코드와 handler 모듈을 분리하면 등록 목록이 한 파일에 집중되지 않습니다.
 
 ```python
-from DefEssential import Application
+from DefChord import Application
 
 
 application = Application()
@@ -63,7 +63,7 @@ application.load(mod='myapp.handlers')
 기본 Python adapter는 외부 서버 패키지 없이 사용할 수 있습니다.
 
 ```python
-from DefEssential.Adapter.Implements.Python import Server
+from DefChord.Adapter.Implements.Python import Server
 
 server = Server('127.0.0.1', 8000, application)
 server.run()
@@ -72,8 +72,8 @@ server.run()
 | Adapter | 설치 | 동작과 주의사항 |
 | --- | --- | --- |
 | Python | 기본 설치 | 표준 라이브러리의 threaded HTTP 서버 사용. 개발·기본 실행에 적합 |
-| Gunicorn | `DefEssential[Gunicorn]` | POSIX 플랫폼용. Windows에서는 실행 불가하며 Linux 또는 WSL 필요 |
-| Uvicorn | `DefEssential[Uvicorn]` | `a2wsgi` 경계를 통해 동기 앱 실행. 앱 인스턴스 설정은 `workers=1`, `reload=False`로 제한 |
+| Gunicorn | `DefChord[Gunicorn]` | POSIX 플랫폼용. Windows에서는 실행 불가하며 Linux 또는 WSL 필요 |
+| Uvicorn | `DefChord[Uvicorn]` | `a2wsgi` 경계를 통해 동기 앱 실행. 앱 인스턴스 설정은 `workers=1`, `reload=False`로 제한 |
 
 Gunicorn adapter는 `host`, `port`, `workers`, `worker_class`와 추가 Gunicorn 옵션을 받습니다. Windows에서는 실행 시 오류를 내므로 native Windows 환경에서 Gunicorn 실행을 시도하지 마세요.
 

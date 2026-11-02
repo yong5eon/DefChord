@@ -14,7 +14,7 @@ from pathlib import Path
 from sys import path
 from typing import Optional
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	ApplicationCleanup,
 	ApplicationRequest,
@@ -26,8 +26,8 @@ from DefEssential import (
 	Request,
 	Response,
 )
-from DefEssential.Adapter.Implements.Python import Server
-from DefEssential.Extensions import (
+from DefChord.Adapter.Implements.Python import Server
+from DefChord.Extensions import (
 	File,
 	FileSystem,
 	Status,
@@ -36,8 +36,8 @@ from DefEssential.Extensions import (
 	Specifications,
 	Swagger,
 )
-from DefEssential.Responses import ResponseFile
-from DefEssential.Utils.FileSystemObject.Implements.FileSystem import (
+from DefChord.Responses import ResponseFile
+from DefChord.Utils.FileSystemObject.Implements.FileSystem import (
 	Configuration,
 	Connection,
 )
@@ -120,7 +120,10 @@ class LoggingSetup(ApplicationStartup):
 	def __init__(self) -> None:
 		sources = (
 			Filter('Sample'),
-			Filter('DefEssential'),
+			Filter('Application'),
+			Filter('Request'),
+			Filter('Server'),
+			Filter('Extension'),
 		)
 		self.handler = StreamHandler()
 		self.handler.set_name('Sample')
@@ -230,7 +233,7 @@ def create_application() -> Application:
 			),
 			Specifications(
 				'/api/doc',
-				title='DefEssential HTTP Sample',
+				title='DefChord HTTP Sample',
 			),
 			Swagger(
 				'/swagger',

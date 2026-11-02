@@ -71,7 +71,7 @@ class FileSystemRoute(Route):
 class FileSystem(Extension):
 	"""Return the requested file from the injected connection."""
 
-	logger = getLogger('DefEssential.Extensions.FileSystem')
+	logger = getLogger('Extension.FileSystem')
 
 	def __init__(
 		self,

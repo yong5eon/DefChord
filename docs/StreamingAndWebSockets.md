@@ -4,7 +4,7 @@
 
 [English](./StreamingAndWebSockets.en.md)
 
-스트리밍은 요청 본문을 조금씩 읽거나 응답을 생성되는 대로 기록하여 전체 데이터를 메모리에 모으지 않도록 합니다. DefEssential은 본문 길이가 지정된 입력 스트림과 HTTP chunked 입력 스트림, 일반 출력 스트림과 chunked 출력 스트림을 각각 제공합니다. SSE와 WebSocket은 연결을 오래 유지하는 별도 통신 방식입니다.
+스트리밍은 요청 본문을 조금씩 읽거나 응답을 생성되는 대로 기록하여 전체 데이터를 메모리에 모으지 않도록 합니다. DefChord는 본문 길이가 지정된 입력 스트림과 HTTP chunked 입력 스트림, 일반 출력 스트림과 chunked 출력 스트림을 각각 제공합니다. SSE와 WebSocket은 연결을 오래 유지하는 별도 통신 방식입니다.
 
 | 방향 | 방식 | API | 전송 특성 |
 | --- | --- | --- | --- |
@@ -18,9 +18,9 @@
 `StreamContentReader`는 `Content-Length`가 지정된 요청 본문을 미리 읽지 않고 `RequestReader`로 전달합니다. chunked transfer encoding 입력은 지원하지 않으며 `Content-Length`가 없으면 411 오류가 발생합니다.
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import StreamContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import StreamContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CountUpload(
@@ -50,9 +50,9 @@ class CountUpload(
 `ChunkedStreamContentReader`는 요청 본문을 `ChunkedStream`으로 전달하고 chunked transfer encoding으로 전송된 데이터를 점진적으로 디코딩합니다. 입력에 chunked 전송 표시가 없으면 요청 오류가 발생합니다.
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import ChunkedStreamContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import ChunkedStreamContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CountChunkedUpload(
@@ -82,8 +82,8 @@ class CountChunkedUpload(
 `StreamWriter`는 응답을 시작한 뒤 bytes를 순서대로 씁니다. HTTP chunked framing은 추가하지 않습니다. 상태 코드와 헤더는 `begin()` 시 확정되며, 본문은 `write()`로 전달하고 `flush()`로 내보낼 수 있습니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import StreamWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import StreamWriter
 
 
 class PlainStream(RequestRunner, method='GET', url='/stream'):
@@ -104,8 +104,8 @@ class PlainStream(RequestRunner, method='GET', url='/stream'):
 `ChunkedStreamWriter`는 HTTP/1.1 chunked transfer framing을 사용합니다. `chunk(data)`는 bytes를 기록하고 flush하므로 소비자가 데이터를 점진적으로 받을 수 있습니다. chunked 출력은 HTTP/1.1 요청에만 사용할 수 있습니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import ChunkedStreamWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import ChunkedStreamWriter
 
 
 class ChunkedStreamResponse(RequestRunner, method='GET', url='/chunked-stream'):
@@ -125,8 +125,8 @@ class ChunkedStreamResponse(RequestRunner, method='GET', url='/chunked-stream'):
 Server-Sent Events(SSE)는 HTTP 연결을 유지하며 서버에서 클라이언트로 UTF-8 텍스트 이벤트를 보냅니다. 클라이언트에서 서버로 메시지를 보내는 양방향 통신은 제공하지 않습니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.Writers import ServerSentEventsWriter
+from DefChord import Request, RequestRunner
+from DefChord.IO.Writers import ServerSentEventsWriter
 
 
 class Events(RequestRunner, method='GET', url='/events'):
@@ -150,8 +150,8 @@ class Events(RequestRunner, method='GET', url='/events'):
 WebSocket은 HTTP 연결을 업그레이드해 클라이언트와 서버가 양방향 메시지를 주고받는 지속 연결 프로토콜입니다. handler는 `RequestRunner`로 선언하고 `WebSocket` 객체에서 handshake와 메시지를 처리합니다.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.IO.WebSocket import WebSocket
+from DefChord import Request, RequestRunner
+from DefChord.IO.WebSocket import WebSocket
 
 
 class Echo(RequestRunner, method='GET', url='/ws'):

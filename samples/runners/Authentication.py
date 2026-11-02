@@ -1,4 +1,4 @@
-from DefEssential import (
+from DefChord import (
 	Auth,
 	Authorization,
 	Body,
@@ -7,7 +7,7 @@ from DefEssential import (
 	Request,
 	RequestRunner,
 )
-from DefEssential.Credentials import (
+from DefChord.Credentials import (
 	Cookie,
 	Header,
 	HTTP,
@@ -18,16 +18,16 @@ from DefEssential.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefEssential.IO.Readers import FormUrlEncodedContentReader
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import (
+from DefChord.IO.Readers import FormUrlEncodedContentReader
+from DefChord.Responses import ResponseJSON
+from DefChord.Validator.Patterns import (
 	IsIn,
 	IsObject,
 	IsOptional,
 	IsString,
 	SetDefault,
 )
-from DefEssential.Validator.Patterns.Object import (
+from DefChord.Validator.Patterns.Object import (
 	IsMappingOf,
 	IsRequiredIn,
 )

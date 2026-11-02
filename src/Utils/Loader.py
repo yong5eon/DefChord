@@ -26,7 +26,7 @@ class Loader:
 		path: str,
 	) -> ModuleType:
 		source = Path(path).resolve(strict=True)
-		name = 'defessential_loaded_' + sha256(str(source).encode('utf-8')).hexdigest()
+		name = 'defchord_loaded_' + sha256(str(source).encode('utf-8')).hexdigest()
 		if name in modules:
 			return modules[name]
 		spec = spec_from_file_location(

@@ -1,7 +1,7 @@
 from io import BytesIO
 from unittest import TestCase
 
-from DefEssential import (
+from DefChord import (
 	Application,
 	Auth,
 	Authorization,
@@ -19,7 +19,7 @@ from DefEssential import (
 	Response,
 	ResponseWriter,
 )
-from DefEssential.Credentials import (
+from DefChord.Credentials import (
 	Cookie,
 	Header,
 	HTTP,
@@ -29,15 +29,15 @@ from DefEssential.Credentials import (
 	OAuth2Password,
 	Query,
 )
-from DefEssential.IO.Readers import (
+from DefChord.IO.Readers import (
 	ByteStringContentReader,
 	FormUrlEncodedContentReader,
 	JavaScriptObjectNotationContentReader,
 	TextContentReader,
 	TypeReader,
 )
-from DefEssential.IO.Writers import StreamWriter
-from DefEssential.Validator.Patterns import (
+from DefChord.IO.Writers import StreamWriter
+from DefChord.Validator.Patterns import (
 	IsString,
 	SetDefault,
 	ToInteger,

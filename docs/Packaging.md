@@ -4,13 +4,15 @@
 
 ## 무엇이 설치되는가
 
-`DefEssential`에는 코어와 기본 Python 서버만 포함됩니다. `Gunicorn`과 `Uvicorn` extras는 각각 동일 버전의 `DefEssential-Gunicorn`, `DefEssential-Uvicorn` 배포물과 해당 외부 의존성을 설치합니다. 기존 Python import 경로는 유지합니다.
+`DefChord`에는 코어와 기본 Python 서버만 포함됩니다. `Gunicorn`과 `Uvicorn` extras는 각각 동일 버전의 `DefChord-Gunicorn`, `DefChord-Uvicorn` 배포물과 해당 외부 의존성을 설치합니다. 공개 Python import 경로도 `DefChord`로 변경되며 기존 이름의 호환 alias는 제공하지 않습니다.
+
+Metrics는 `defchord_*` 이름을, OpenAPI vendor extension은 `x-defchord-*` 키를 사용합니다.
 
 새 환경에서 선택하지 않은 어댑터 파일은 설치되지 않습니다. 이미 설치한 어댑터는 나중에 extra를 생략해도 제거되지 않으므로, 필요 없다면 해당 구현체 배포물을 명시적으로 제거하세요.
 
 ```mermaid
 flowchart LR
-  A["DefEssential[Uvicorn] 설치"] --> B["코어와 Python 서버"]
+  A["DefChord[Uvicorn] 설치"] --> B["코어와 Python 서버"]
   A --> C["동일 버전 Uvicorn 구현체"]
   C --> D["uvicorn · a2wsgi"]
 ```

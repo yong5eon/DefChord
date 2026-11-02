@@ -11,8 +11,8 @@ A route connects an HTTP method and URL path to a `RequestRunner`. Validation co
 Specify `method` and `url` together. A URL must be a path beginning with `/`; it cannot contain a query string or fragment. Declare a path parameter with the `:name` syntax.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class ReadProduct(
@@ -48,14 +48,14 @@ Configure validation for each request location through `RequestRunner` class opt
 This example converts path and query values to integers and requires them to be positive.
 
 ```python
-from DefEssential import (
+from DefChord import (
   QueryString,
   Request,
   RequestRunner,
   Parameters,
 )
-from DefEssential.Responses import ResponseJSON
-from DefEssential.Validator.Patterns import IsGreaterThan, ToInteger
+from DefChord.Responses import ResponseJSON
+from DefChord.Validator.Patterns import IsGreaterThan, ToInteger
 
 
 class ReadValue(
@@ -88,9 +88,9 @@ Body processing requires `Body` and an explicitly selected reader. If a request 
 JSON example:
 
 ```python
-from DefEssential import Body, Content, Request, RequestRunner
-from DefEssential.IO.Readers import JavaScriptObjectNotationContentReader
-from DefEssential.Responses import ResponseJSON
+from DefChord import Body, Content, Request, RequestRunner
+from DefChord.IO.Readers import JavaScriptObjectNotationContentReader
+from DefChord.Responses import ResponseJSON
 
 
 class CreateItem(
@@ -132,15 +132,15 @@ Declare authentication by combining `Credentials`, which extracts credentials fr
 This example extracts a token from an HTTP `Authorization: Bearer ...` header and validates it:
 
 ```python
-from DefEssential import (
+from DefChord import (
   Auth,
   Authorization,
   ClientError,
   Request,
   RequestRunner,
 )
-from DefEssential.Credentials import HTTP
-from DefEssential.Responses import ResponseJSON
+from DefChord.Credentials import HTTP
+from DefChord.Responses import ResponseJSON
 
 
 class AccessTokenAuthorization(Authorization):
@@ -171,7 +171,7 @@ The fixed token in this example only demonstrates the contract; it is not a subs
 
 `Auth` works as follows:
 
-- `Credentials` extracts credentials from the request. DefEssential provides these built-in extractors and OAuth2 security schemes:
+- `Credentials` extracts credentials from the request. DefChord provides these built-in extractors and OAuth2 security schemes:
 
   | Class | Extraction and behavior | Example |
   | --- | --- | --- |
@@ -197,8 +197,8 @@ See the [Credentials API](../src/Credentials.py) and [Validators API](../src/Val
 `Origin` checks whether the request's `Origin` header matches an allowlist and applies Cross-Origin Resource Sharing (CORS) headers to the response. A `RequestRunner` can declare one policy or several. With multiple policies, an Origin matching any policy is allowed.
 
 ```python
-from DefEssential import Origin, Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Origin, Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class ReadPublicData(
@@ -234,7 +234,7 @@ The request contains a unique `request.id`, method, URI, path, parameters, query
 
 ## Return an ordinary response
 
-For a typical request/response flow, `RequestRunner.run()` returns a `Response` object. DefEssential provides classes for JSON, text, and file responses.
+For a typical request/response flow, `RequestRunner.run()` returns a `Response` object. DefChord provides classes for JSON, text, and file responses.
 
 | Response type | Class | Purpose |
 | --- | --- | --- |
@@ -244,8 +244,8 @@ For a typical request/response flow, `RequestRunner.run()` returns a `Response` 
 | File response | `ResponseFile` | Read and send a file in fixed-size blocks |
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseJSON
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseJSON
 
 
 class CreateOrder(RequestRunner, method='POST', url='/orders'):
@@ -261,8 +261,8 @@ class CreateOrder(RequestRunner, method='POST', url='/orders'):
 `ResponseJSON` serializes a value as UTF-8 JSON and defaults to status 200. Values that cannot be serialized as JSON raise `TypeError`. Return a string body with `ResponseText(text, status=..., headers=..., charset='utf-8')`.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseText
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseText
 
 
 class PlainText(RequestRunner, method='GET', url='/message'):
@@ -277,7 +277,7 @@ class PlainText(RequestRunner, method='GET', url='/message'):
 When creating a `Response` directly, pass bytes or an iterable of bytes as the body. Setting `format` sets `Content-Type`; `charset` adds the character encoding. Response header values cannot contain line breaks.
 
 ```python
-from DefEssential import Request, RequestRunner, Response
+from DefChord import Request, RequestRunner, Response
 
 
 class EmptyCreated(RequestRunner, method='POST', url='/empty'):
@@ -290,8 +290,8 @@ class EmptyCreated(RequestRunner, method='POST', url='/empty'):
 `ResponseFile` sends a local path or open file object as the response body. Given a path, it guesses the content type and compression encoding from the extension and reads the file in fixed-size byte chunks.
 
 ```python
-from DefEssential import Request, RequestRunner
-from DefEssential.Responses import ResponseFile
+from DefChord import Request, RequestRunner
+from DefChord.Responses import ResponseFile
 
 
 class DownloadReport(RequestRunner, method='GET', url='/reports/latest'):
