@@ -133,6 +133,7 @@ class Events(RequestRunner, method='GET', url='/events'):
   def run(self, request: Request) -> None:
     writer = ServerSentEventsWriter(request.writer)
     writer.begin()
+    writer.comment('keep-alive')
     writer.emit(
       '{"status":"ready"}',
       event='status',
@@ -143,7 +144,7 @@ class Events(RequestRunner, method='GET', url='/events'):
     return
 ```
 
-`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `retry(ms)` sends a reconnection interval field, and `end()` finishes output. This example sends one event and closes the connection. For a persistent connection, design event production, client disconnection, heartbeats, server/proxy timeouts, and reconnection behavior together.
+`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `comment(text)` sends line-by-line SSE comments (`: ...`) and flushes immediately, which is useful for heartbeats and idle keep-alive traffic. `retry(ms)` sends a reconnection interval field, and `end()` finishes output. This example sends a comment and an event, then closes the connection. For a persistent connection, design event production, client disconnection, heartbeats, server/proxy timeouts, and reconnection behavior together.
 
 ## WebSocket
 

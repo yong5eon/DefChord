@@ -62,6 +62,14 @@ class ServerSentEventsWriter:
 		self.writer.flush()
 		return
 
+	def comment(
+		self,
+		text: str,
+	) -> None:
+		self.writer.write(ServerSentEvents.comment(text))
+		self.writer.flush()
+		return
+
 	def end(self) -> None:
 		self.writer.end()
 		return

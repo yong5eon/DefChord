@@ -122,7 +122,12 @@ class WriterTests(TestCase):
 					id='42',
 					retry=100,
 				)
+				sse.comment('keep-alive\r\ndata: 가짜')
 				sse.retry(200)
+				sse.emit(
+					'다음',
+					id='43',
+				)
 				sse.end()
 				event = ServerSentEvents(
 					data='첫 줄\n\n끝',
@@ -130,12 +135,19 @@ class WriterTests(TestCase):
 					id='42',
 					retry=100,
 				).encode()
+				comment = ServerSentEvents.comment('keep-alive\r\ndata: 가짜')
 				retry = b'retry: 200\n\n'
-				expected = event + retry
+				next_event = ServerSentEvents(
+					data='다음',
+					id='43',
+				).encode()
+				expected = event + comment + retry + next_event
 				if transport is ChunkedStreamWriter:
 					expected = (
 						format(len(event), 'x').encode() + b'\r\n' + event + b'\r\n'
+						+ format(len(comment), 'x').encode() + b'\r\n' + comment + b'\r\n'
 						+ format(len(retry), 'x').encode() + b'\r\n' + retry + b'\r\n'
+						+ format(len(next_event), 'x').encode() + b'\r\n' + next_event + b'\r\n'
 						+ b'0\r\n\r\n'
 					)
 				self.assertEqual(
@@ -150,6 +162,39 @@ class WriterTests(TestCase):
 					starts[0][0].header('Cache-Control'),
 					'no-cache',
 				)
+		return
+
+	def test_sse_comment_propagates_write_and_flush_failures(self):
+		class BrokenWrite(BytesIO):
+			def write(
+				self,
+				data,
+			):
+				raise BrokenPipeError('쓰기 실패')
+
+		writer = ResponseWriter(
+			lambda response, chunked: None,
+			BrokenWrite(),
+		)
+		sse = ServerSentEventsWriter(writer)
+		sse.begin()
+		with self.assertRaises(BrokenPipeError):
+			sse.comment('keep-alive')
+		self.assertTrue(writer.failed)
+
+		class BrokenFlush(BytesIO):
+			def flush(self):
+				raise OSError('flush 실패')
+
+		writer = ResponseWriter(
+			lambda response, chunked: None,
+			BrokenFlush(),
+		)
+		sse = ServerSentEventsWriter(writer)
+		sse.begin()
+		with self.assertRaises(OSError):
+			sse.comment('keep-alive')
+		self.assertTrue(writer.failed)
 		return
 
 	def test_sse_validates_before_writing(self):

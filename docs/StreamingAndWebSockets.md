@@ -133,6 +133,7 @@ class Events(RequestRunner, method='GET', url='/events'):
   def run(self, request: Request) -> None:
     writer = ServerSentEventsWriter(request.writer)
     writer.begin()
+    writer.comment('keep-alive')
     writer.emit(
       '{"status":"ready"}',
       event='status',
@@ -143,7 +144,7 @@ class Events(RequestRunner, method='GET', url='/events'):
     return
 ```
 
-`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `retry(ms)`는 재연결 간격 필드를 전송하며, `end()`는 출력을 끝냅니다. 위 예제는 이벤트 하나를 보낸 뒤 연결을 닫습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, heartbeat, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하세요.
+`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `comment(text)`는 줄 단위 SSE 주석(`: ...`)을 전송하고 즉시 flush하며, heartbeat나 유휴 연결 유지 신호에 사용할 수 있습니다. `retry(ms)`는 재연결 간격 필드를 전송하며, `end()`는 출력을 끝냅니다. 위 예제는 주석과 이벤트를 보낸 뒤 연결을 닫습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, heartbeat, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하세요.
 
 ## WebSocket
 

@@ -25,6 +25,13 @@ class SSETests(TestCase):
 		)
 		return
 
+	def test_comment_encoding(self):
+		self.assertEqual(
+			ServerSentEvents.comment('keep-alive\r\ndata: 가짜\rid: 7\revent: x\n'),
+			': keep-alive\n: data: 가짜\n: id: 7\n: event: x\n:\n\n'.encode(),
+		)
+		return
+
 	def test_invalid_fields(self):
 		for event in (
 			ServerSentEvents(event='a\nb'),

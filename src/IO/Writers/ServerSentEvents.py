@@ -15,6 +15,13 @@ class ServerSentEvents:
 	id: Optional[str] = None
 	retry: Optional[int] = None
 
+	@staticmethod
+	def comment(
+		text: str,
+	) -> bytes:
+		lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+		return ('\n'.join(': ' + line if line else ':' for line in lines) + '\n\n').encode('utf-8')
+
 	def retry_line(self) -> str:
 		"""Return a validated reconnection delay field."""
 		if self.retry is None:
