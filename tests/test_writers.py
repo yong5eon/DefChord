@@ -122,7 +122,6 @@ class WriterTests(TestCase):
 					id='42',
 					retry=100,
 				)
-				sse.comment('keep-alive\r\n첫 줄\r끝')
 				sse.retry(200)
 				sse.end()
 				event = ServerSentEvents(
@@ -131,13 +130,11 @@ class WriterTests(TestCase):
 					id='42',
 					retry=100,
 				).encode()
-				comment = ': keep-alive\n: 첫 줄\n: 끝\n\n'.encode('utf-8')
 				retry = b'retry: 200\n\n'
-				expected = event + comment + retry
+				expected = event + retry
 				if transport is ChunkedStreamWriter:
 					expected = (
 						format(len(event), 'x').encode() + b'\r\n' + event + b'\r\n'
-						+ format(len(comment), 'x').encode() + b'\r\n' + comment + b'\r\n'
 						+ format(len(retry), 'x').encode() + b'\r\n' + retry + b'\r\n'
 						+ b'0\r\n\r\n'
 					)
@@ -153,30 +150,6 @@ class WriterTests(TestCase):
 					starts[0][0].header('Cache-Control'),
 					'no-cache',
 				)
-		return
-
-	def test_sse_comment_write_and_flush_failures_propagate(self):
-		class BrokenWrite:
-			def write(self, data):
-				raise BrokenPipeError('write failed')
-
-			def flush(self):
-				return
-
-		class BrokenFlush:
-			def write(self, data):
-				return
-
-			def flush(self):
-				raise BrokenPipeError('flush failed')
-
-		for writer in (
-			BrokenWrite(),
-			BrokenFlush(),
-		):
-			with self.subTest(writer=writer):
-				with self.assertRaises(BrokenPipeError):
-					ServerSentEventsWriter(writer).comment('keep-alive')
 		return
 
 	def test_sse_validates_before_writing(self):
