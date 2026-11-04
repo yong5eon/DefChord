@@ -62,16 +62,6 @@ class ServerSentEventsWriter:
 		self.writer.flush()
 		return
 
-	def comment(
-		self,
-		text: str,
-	) -> None:
-		text = text.replace('\r\n', '\n').replace('\r', '\n')
-		frame = '\n'.join(': ' + line for line in text.split('\n')) + '\n\n'
-		self.writer.write(frame.encode('utf-8'))
-		self.writer.flush()
-		return
-
 	def end(self) -> None:
 		self.writer.end()
 		return
