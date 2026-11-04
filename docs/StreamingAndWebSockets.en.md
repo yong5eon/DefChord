@@ -139,11 +139,12 @@ class Events(RequestRunner, method='GET', url='/events'):
       id='1',
       retry=3000,
     )
+    writer.comment('keep-alive')
     writer.end()
     return
 ```
 
-`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `retry(ms)` sends a reconnection interval field, and `end()` finishes output. This example sends one event and closes the connection. For a persistent connection, design event production, client disconnection, heartbeats, server/proxy timeouts, and reconnection behavior together.
+`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `retry(ms)` sends a reconnection interval field, while `comment(text)` writes and immediately flushes a comment such as `: keep-alive\n\n`. Newlines in the text are encoded as separate comment lines; comments do not change event IDs or add event fields. To keep a connection alive, call `comment('keep-alive')` periodically from the application while the connection remains open. No automatic heartbeat scheduler is provided. `end()` finishes output. This example sends one event and a comment, then closes the connection. For a persistent connection, design event production, client disconnection, heartbeats, server/proxy timeouts, and reconnection behavior together.
 
 ## WebSocket
 
