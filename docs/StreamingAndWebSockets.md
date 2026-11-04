@@ -139,11 +139,12 @@ class Events(RequestRunner, method='GET', url='/events'):
       id='1',
       retry=3000,
     )
+    writer.comment('keep-alive')
     writer.end()
     return
 ```
 
-`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `retry(ms)`는 재연결 간격 필드를 전송하며, `end()`는 출력을 끝냅니다. 위 예제는 이벤트 하나를 보낸 뒤 연결을 닫습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, heartbeat, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하세요.
+`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `retry(ms)`는 재연결 간격 필드를 전송하고, `comment(text)`는 `: keep-alive\n\n`처럼 주석을 쓰고 즉시 flush합니다. 줄바꿈이 포함된 주석도 각 줄을 주석으로 인코딩하며 이벤트 ID나 필드는 변경하지 않습니다. 연결 유지가 필요하면 연결이 열려 있는 동안 애플리케이션이 적절한 주기로 `comment('keep-alive')`를 호출하세요. 자동 heartbeat 스케줄러는 제공하지 않습니다. `end()`는 출력을 끝냅니다. 위 예제는 이벤트와 주석을 보낸 뒤 연결을 닫습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, heartbeat, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하세요.
 
 ## WebSocket
 
