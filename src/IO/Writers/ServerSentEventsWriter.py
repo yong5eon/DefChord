@@ -62,6 +62,19 @@ class ServerSentEventsWriter:
 		self.writer.flush()
 		return
 
+	def comment(
+		self,
+		text: str,
+	) -> None:
+		"""
+		Write UTF-8 SSE comment lines and flush immediately.
+		"""
+		normalized: str = text.replace('\r\n', '\n').replace('\r', '\n')
+		frame: str = '\n'.join(': ' + line for line in normalized.split('\n')) + '\n\n'
+		self.writer.write(frame.encode('utf-8'))
+		self.writer.flush()
+		return
+
 	def end(self) -> None:
 		self.writer.end()
 		return

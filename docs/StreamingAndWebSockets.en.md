@@ -139,11 +139,27 @@ class Events(RequestRunner, method='GET', url='/events'):
       id='1',
       retry=3000,
     )
+    writer.comment('keep-alive')
+    writer.emit(
+      '{"status":"done"}',
+      event='status',
+      id='2',
+    )
     writer.end()
     return
 ```
 
-`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `retry(ms)` sends a reconnection interval field, and `end()` finishes output. This example sends one event and closes the connection. For a persistent connection, design event production, client disconnection, heartbeats, server/proxy timeouts, and reconnection behavior together.
+`begin()` starts a response with `Content-Type: text/event-stream; charset=utf-8` and `Cache-Control: no-cache` by default. `emit(data, event=..., id=..., retry=...)` encodes an SSE event, writes it, and flushes immediately. `retry(ms)` sends a reconnection interval field, and `end()` finishes output. This example sends a comment between two events and closes the connection; it does not implement a heartbeat interval.
+
+### Comments and keep-alives
+
+`comment(text: str) -> None` prefixes every input line with `: `, adds a final blank line, sends the UTF-8 SSE comment, and flushes immediately. For example, `comment('keep-alive')` sends `b': keep-alive\n\n'`. An empty string sends `b': \n\n'`. CRLF, CR, and LF are normalized to LF, preserving intermediate blank lines and trailing line breaks.
+
+SSE clients ignore comments, so they do not dispatch application events or change the last event ID or reconnection interval. Even when multiline input contains `data:`, `event:`, `id:`, or `retry:`, every line is sent as a comment. The same API works with plain output and the existing chunked output path that accepts a `ChunkedStreamWriter`.
+
+If you need keep-alive heartbeats, configure your application to call `comment('keep-alive')` repeatedly during idle periods. DefChord does not provide a timer or automatic heartbeat scheduler. Call it after `begin()` while output remains open. Write and flush failures propagate to the caller, so use your application's existing error handling.
+
+An immediate flush means flushing the underlying writer; it does not guarantee client receipt, disable proxy buffering, or guarantee that an idle connection stays open. For a persistent connection, design event production, client disconnection, server/proxy timeouts, and reconnection behavior together, and verify them in the deployment environment.
 
 ## WebSocket
 

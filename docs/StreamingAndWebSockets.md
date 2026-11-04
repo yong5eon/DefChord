@@ -139,11 +139,27 @@ class Events(RequestRunner, method='GET', url='/events'):
       id='1',
       retry=3000,
     )
+    writer.comment('keep-alive')
+    writer.emit(
+      '{"status":"done"}',
+      event='status',
+      id='2',
+    )
     writer.end()
     return
 ```
 
-`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `retry(ms)`는 재연결 간격 필드를 전송하며, `end()`는 출력을 끝냅니다. 위 예제는 이벤트 하나를 보낸 뒤 연결을 닫습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, heartbeat, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하세요.
+`begin()`은 `Content-Type: text/event-stream; charset=utf-8`과 기본 `Cache-Control: no-cache`로 응답을 시작합니다. `emit(data, event=..., id=..., retry=...)`는 SSE 형식으로 인코딩한 이벤트를 쓰고 즉시 flush합니다. `retry(ms)`는 재연결 간격 필드를 전송하며, `end()`는 출력을 끝냅니다. 위 예제는 두 이벤트 사이에 주석을 보낸 뒤 연결을 닫으며, 주석 전송 주기를 구현한 예제는 아닙니다.
+
+### 주석 전송과 연결 유지
+
+`comment(text: str) -> None`은 모든 입력 줄 앞에 `: `를 붙이고 마지막에 빈 줄을 추가해 UTF-8 SSE 주석을 전송한 뒤 즉시 flush합니다. 예를 들어 `comment('keep-alive')`는 `b': keep-alive\n\n'`를 전송합니다. 빈 문자열도 `b': \n\n'`로 전송하며 CRLF·CR·LF를 LF로 정규화하고 중간 빈 줄과 마지막 줄바꿈을 보존합니다.
+
+SSE 클라이언트는 주석을 무시하므로 업무 이벤트가 발생하지 않고 마지막 이벤트 ID와 재연결 간격도 바뀌지 않습니다. 여러 줄 입력에 `data:`·`event:`·`id:`·`retry:`가 있더라도 각 줄은 주석으로 전송됩니다. 일반 출력과 `ChunkedStreamWriter`를 전달하는 기존 chunked 출력에서 같은 API를 사용할 수 있습니다.
+
+연결 유지용 heartbeat가 필요하면 애플리케이션이 유휴 시간에 `comment('keep-alive')`를 반복 호출하도록 구성하세요. DefChord는 타이머나 자동 heartbeat 스케줄러를 제공하지 않습니다. `begin()` 이후 출력이 열려 있는 동안 호출하고, write·flush 실패는 호출자에게 전파되므로 애플리케이션의 기존 오류 처리 흐름을 따르세요.
+
+즉시 flush는 하위 writer를 flush한다는 뜻이며 클라이언트 수신, 프록시 버퍼링 해제나 유휴 연결 유지 성공을 보장하지 않습니다. 지속 연결을 구성할 때는 이벤트 생산, 클라이언트 연결 종료, 서버·프록시 시간 제한과 재연결 동작을 함께 설계하고 배포 환경에서 확인하세요.
 
 ## WebSocket
 

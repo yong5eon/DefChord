@@ -12,6 +12,7 @@ from socket import (
 from struct import pack
 from threading import Event
 from unittest import TestCase
+from unittest.mock import patch
 
 from DefChord import (
 	Application,
@@ -171,6 +172,197 @@ class WriterTests(TestCase):
 			output.getvalue(),
 			b'',
 		)
+		return
+
+	def test_sse_comment_encoding_and_transports(self) -> None:
+		cases: tuple[tuple[str, bytes], ...] = (
+			(
+				'keep-alive',
+				b': keep-alive\n\n',
+			),
+			(
+				'',
+				b': \n\n',
+			),
+			(
+				'첫 줄',
+				': 첫 줄\n\n'.encode('utf-8'),
+			),
+			(
+				'a\r\nb',
+				b': a\n: b\n\n',
+			),
+			(
+				'a\rb',
+				b': a\n: b\n\n',
+			),
+			(
+				'a\nb',
+				b': a\n: b\n\n',
+			),
+			(
+				'a\r\nb\rc\nd',
+				b': a\n: b\n: c\n: d\n\n',
+			),
+			(
+				'a\n\nb\n',
+				b': a\n: \n: b\n: \n\n',
+			),
+			(
+				'data: x\r\nevent: y\rid: z\nretry: 1',
+				b': data: x\n: event: y\n: id: z\n: retry: 1\n\n',
+			),
+		)
+		for transport in (
+			None,
+			StreamWriter,
+			ChunkedStreamWriter,
+		):
+			for text, frame in cases:
+				with self.subTest(
+					transport=transport,
+					text=text,
+				):
+					writer, output, starts = self.writer()
+					sse: ServerSentEventsWriter = ServerSentEventsWriter(
+						writer if transport is None else transport(writer),
+					)
+					sse.begin()
+					expected: bytes = frame
+					if transport is ChunkedStreamWriter:
+						expected = format(len(frame), 'x').encode('ascii') + b'\r\n' + frame + b'\r\n'
+					with patch.object(
+						output,
+						'flush',
+						side_effect=lambda: self.assertEqual(output.getvalue(), expected),
+					) as flush:
+						self.assertIsNone(sse.comment(text))
+						flush.assert_called_once_with()
+						self.assertEqual(
+							output.getvalue(),
+							expected,
+						)
+					sse.end()
+					if transport is ChunkedStreamWriter:
+						expected += b'0\r\n\r\n'
+					self.assertEqual(
+						output.getvalue(),
+						expected,
+					)
+					self.assertEqual(
+						starts[0][1],
+						transport is ChunkedStreamWriter,
+					)
+		return
+
+	def test_sse_comment_between_events_preserves_fields(self) -> None:
+		for transport in (
+			StreamWriter,
+			ChunkedStreamWriter,
+		):
+			with self.subTest(transport=transport):
+				writer, output, _ = self.writer()
+				sse: ServerSentEventsWriter = ServerSentEventsWriter(transport(writer))
+				sse.begin()
+				sse.emit(
+					'first',
+					event='sample',
+					id='42',
+					retry=100,
+				)
+				sse.comment('keep-alive')
+				sse.retry(200)
+				sse.emit('last')
+				sse.end()
+				frames: tuple[bytes, ...] = (
+					b'event: sample\nid: 42\nretry: 100\ndata: first\n\n',
+					b': keep-alive\n\n',
+					b'retry: 200\n\n',
+					b'data: last\n\n',
+				)
+				expected: bytes = b''.join(frames)
+				if transport is ChunkedStreamWriter:
+					expected = b''.join(
+						format(len(frame), 'x').encode('ascii') + b'\r\n' + frame + b'\r\n'
+						for frame in frames
+					) + b'0\r\n\r\n'
+				self.assertEqual(
+					output.getvalue(),
+					expected,
+				)
+		return
+
+	def test_sse_comment_requires_open_response(self) -> None:
+		for transport in (
+			None,
+			StreamWriter,
+			ChunkedStreamWriter,
+		):
+			with self.subTest(transport=transport):
+				writer, output, _ = self.writer()
+				sse: ServerSentEventsWriter = ServerSentEventsWriter(
+					writer if transport is None else transport(writer),
+				)
+				with self.assertRaisesRegex(RuntimeError, 'Response must be started first'):
+					sse.comment('before')
+				sse.begin()
+				sse.end()
+				expected: bytes = output.getvalue()
+				with self.assertRaisesRegex(RuntimeError, 'completed or failed'):
+					sse.comment('after')
+				self.assertEqual(
+					output.getvalue(),
+					expected,
+				)
+		return
+
+	def test_sse_comment_propagates_write_and_flush_failures(self) -> None:
+		for transport in (
+			None,
+			StreamWriter,
+			ChunkedStreamWriter,
+		):
+			for operation in (
+				'write',
+				'flush',
+			):
+				with self.subTest(
+					transport=transport,
+					operation=operation,
+				):
+					writer, output, _ = self.writer()
+					sse: ServerSentEventsWriter = ServerSentEventsWriter(
+						writer if transport is None else transport(writer),
+					)
+					sse.begin()
+					error: OSError = OSError('SSE comment transmission failed')
+					with patch.object(output, 'write', wraps=output.write) as write:
+						with patch.object(output, 'flush', wraps=output.flush) as flush:
+							if operation == 'write':
+								write.side_effect = error
+							else:
+								flush.side_effect = error
+							with self.assertRaises(OSError) as raised:
+								sse.comment('keep-alive')
+							self.assertIs(raised.exception, error)
+							write.assert_called_once()
+							if operation == 'write':
+								flush.assert_not_called()
+							else:
+								flush.assert_called_once_with()
+					self.assertTrue(writer.failed)
+					with self.assertRaisesRegex(RuntimeError, 'completed or failed'):
+						sse.comment('after failure')
+					with self.assertRaises(RuntimeError):
+						sse.end()
+					self.assertFalse(writer.ended)
+					self.assertEqual(
+						output.getvalue(),
+						b'' if operation == 'write' else (
+							b'e\r\n: keep-alive\n\n\r\n'
+							if transport is ChunkedStreamWriter else b': keep-alive\n\n'
+						),
+					)
 		return
 
 	def test_head_and_no_body_statuses_never_write_chunks(self):
@@ -589,6 +781,7 @@ class DirectServerTests(TestCase):
 					):
 						sse = ServerSentEventsWriter(transport(request.writer))
 						sse.begin()
+						sse.comment('keep-alive')
 						sse.emit('first')
 						if not release.wait(3):
 							raise TimeoutError('종료 신호가 없습니다')
@@ -626,6 +819,14 @@ class DirectServerTests(TestCase):
 							'/events',
 						)
 						response = connection.getresponse()
+						self.assertEqual(
+							response.readline(),
+							b': keep-alive\n',
+						)
+						self.assertEqual(
+							response.readline(),
+							b'\n',
+						)
 						self.assertEqual(
 							response.readline(),
 							b'data: first\n',
