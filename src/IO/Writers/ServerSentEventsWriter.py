@@ -13,6 +13,13 @@ __all__ = (
 )
 
 
+def _encode_sse_comment(
+	text: str,
+) -> bytes:
+	lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+	return ('\n'.join(': ' + line if line else ':' for line in lines) + '\n\n').encode('utf-8')
+
+
 class ServerSentEventsWriter:
 	"""Wrap a plain or chunked stream to send SSE events immediately."""
 
@@ -66,7 +73,7 @@ class ServerSentEventsWriter:
 		self,
 		text: str,
 	) -> None:
-		self.writer.write(ServerSentEvents.comment(text))
+		self.writer.write(_encode_sse_comment(text))
 		self.writer.flush()
 		return
 

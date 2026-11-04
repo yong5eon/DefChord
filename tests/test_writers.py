@@ -135,7 +135,7 @@ class WriterTests(TestCase):
 					id='42',
 					retry=100,
 				).encode()
-				comment = ServerSentEvents.comment('keep-alive\r\ndata: 가짜')
+				comment = ': keep-alive\n: data: 가짜\n\n'.encode()
 				retry = b'retry: 200\n\n'
 				next_event = ServerSentEvents(
 					data='다음',
@@ -162,6 +162,18 @@ class WriterTests(TestCase):
 					starts[0][0].header('Cache-Control'),
 					'no-cache',
 				)
+		return
+
+	def test_sse_comment_encoding_normalizes_newlines_and_ends_with_blank_line(self):
+		writer, output, _ = self.writer()
+		sse = ServerSentEventsWriter(writer)
+		sse.begin()
+		sse.comment('keep-alive\r\ndata: 가짜\rid: 7\revent: x\n')
+		sse.end()
+		self.assertEqual(
+			output.getvalue(),
+			': keep-alive\n: data: 가짜\n: id: 7\n: event: x\n:\n\n'.encode(),
+		)
 		return
 
 	def test_sse_comment_propagates_write_and_flush_failures(self):
