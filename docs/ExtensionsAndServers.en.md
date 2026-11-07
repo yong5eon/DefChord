@@ -42,6 +42,44 @@ application = Application(exts=(
 
 `Swagger` fetches the OpenAPI document from `spec_uri`, so `Specifications` must serve that path. The accuracy of the specification depends on handler `summary`, `description`, `tags`, input content, and response definitions. Consider whether access to status, metrics, and documentation endpoints should be restricted in production.
 
+### Select a `Specifications` document format
+
+`Specifications` returns JSON by default.
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_json = Specifications('/api/doc')
+```
+
+If you need YAML, set `document_format='yaml'`. The response uses UTF-8 and a YAML media type (`application/yaml`).
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_yaml = Specifications('/api/doc.yaml', document_format='yaml')
+```
+
+If you need a different YAML media type, set `yaml_media_type`.
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_yaml = Specifications(
+  '/api/doc.yaml',
+  document_format='yaml',
+  yaml_media_type='text/yaml',
+)
+```
+
+YAML serialization requires the optional dependency `PyYAML`. If it is missing and YAML is requested, `ModuleNotFoundError` is raised.
+
+```shell
+pip install PyYAML
+```
+
+`Specifications` currently emits OpenAPI version `3.1.0`.
+
 An extension instance can belong to only one `Application`. Do not share an instance across applications; create a fresh instance for each one. A custom extension can implement the `Extension` contract and provide request, response, error, startup, and cleanup hooks.
 
 ## Register handlers from modules

@@ -42,6 +42,44 @@ application = Application(exts=(
 
 `Swagger`는 지정한 `spec_uri`에서 OpenAPI 문서를 가져오므로, 그 경로에 `Specifications`가 등록되어 있어야 합니다. 명세의 정확도는 handler의 `summary`, `description`, `tags`, 입력 콘텐츠와 응답 정의에 달려 있습니다. 운영에서 상태·지표·문서 endpoint에 대한 접근을 제한해야 하는지 검토하세요.
 
+### `Specifications` 문서 형식 선택
+
+`Specifications`는 기본값으로 JSON 문서를 반환합니다.
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_json = Specifications('/api/doc')
+```
+
+YAML 문서가 필요하면 `document_format='yaml'`을 사용합니다. 이때 응답은 UTF-8 인코딩과 YAML 미디어 타입(`application/yaml`)을 사용합니다.
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_yaml = Specifications('/api/doc.yaml', document_format='yaml')
+```
+
+YAML 미디어 타입을 바꿔야 한다면 `yaml_media_type`으로 지정할 수 있습니다.
+
+```python
+from DefChord.Extensions import Specifications
+
+spec_yaml = Specifications(
+  '/api/doc.yaml',
+  document_format='yaml',
+  yaml_media_type='text/yaml',
+)
+```
+
+YAML 직렬화는 선택 의존성 `PyYAML`이 필요합니다. 설치되지 않은 상태에서 YAML 형식을 사용하면 `ModuleNotFoundError`가 발생합니다.
+
+```shell
+pip install PyYAML
+```
+
+`Specifications`가 생성하는 OpenAPI 버전 문자열은 현재 `3.1.0`입니다.
+
 확장 인스턴스는 하나의 `Application`에만 등록할 수 있습니다. 여러 애플리케이션에서 같은 인스턴스를 공유하지 말고 각 앱마다 새 인스턴스를 만드세요. 사용자 정의 확장은 `Extension` 계약을 구현하고 요청, 응답, 오류 및 시작·정리 훅을 제공할 수 있습니다.
 
 ## 모듈에서 handler 등록
