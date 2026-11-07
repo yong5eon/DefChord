@@ -353,24 +353,6 @@ class Specifications(Extension):
 		self,
 		request: Request,
 	) -> Response:
-		def normalize(value: Any) -> Any:
-			if isinstance(value, Enum):
-				return value.value
-			if isinstance(value, Mapping):
-				return {
-					key: normalize(item) for key, item in value.items()
-				}
-			if isinstance(value, Sequence) and not isinstance(
-				value,
-				(
-					str,
-					bytes,
-					bytearray,
-				),
-			):
-				return [normalize(item) for item in value]
-			return value
-
 		self.logger.debug('Specification response preparing: request_id=%s', request.id)
 		document = self.document()
 		if self.document_format == 'json':
@@ -384,7 +366,7 @@ class Specifications(Extension):
 				) from error
 			response = Response(
 				body=yaml.safe_dump(
-					normalize(document),
+					self.normalize_yaml_value(document),
 					allow_unicode=True,
 					sort_keys=False,
 				).encode('utf-8'),
@@ -393,3 +375,24 @@ class Specifications(Extension):
 			)
 		self.logger.debug('Specification response prepared: request_id=%s', request.id)
 		return response
+
+	def normalize_yaml_value(
+		self,
+		value: Any,
+	) -> Any:
+		if isinstance(value, Enum):
+			return value.value
+		if isinstance(value, Mapping):
+			return {
+				key: self.normalize_yaml_value(item) for key, item in value.items()
+			}
+		if isinstance(value, Sequence) and not isinstance(
+			value,
+			(
+				str,
+				bytes,
+				bytearray,
+			),
+		):
+			return [self.normalize_yaml_value(item) for item in value]
+		return value
