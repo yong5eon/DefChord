@@ -2,6 +2,7 @@ from contextlib import redirect_stdout
 from dataclasses import dataclass
 from http.client import HTTPConnection
 from importlib import import_module
+from importlib.util import find_spec
 from io import StringIO
 from json import loads
 from threading import Event
@@ -9,8 +10,14 @@ from typing import (
 	Annotated,
 	Any,
 )
-from unittest import TestCase
-from unittest.mock import patch
+from unittest import (
+	TestCase,
+	skipUnless,
+)
+from unittest.mock import (
+	Mock,
+	patch,
+)
 
 from DefChord import (
 	Application,
@@ -549,6 +556,139 @@ class ExtensionTests(TestCase):
 
 
 class SpecTests(TestCase):
+	def test_specifications_default_json_output_is_preserved(self):
+		app = Application(exts=(Specifications('/spec'),))
+		app.start()
+		self.addCleanup(app.stop)
+		response = app(request('/spec'))
+		assert isinstance(response, Response)
+		content_type = response.header('Content-Type')
+		assert isinstance(content_type, str)
+		self.assertTrue(content_type.startswith('application/json'))
+		assert isinstance(response.body, bytes)
+		self.assertEqual(loads(response.body)['openapi'], '3.1.0')
+		return
+
+	@skipUnless(find_spec('yaml') is not None, 'PyYAML 선택적 의존성 필요')
+	def test_specifications_yaml_output_matches_json_semantics(self):
+		yaml = import_module('yaml')
+
+		class Documented(
+			RequestRunner,
+			method='POST',
+			url='/items/:id',
+			body=Body(
+				JavaScriptObjectNotationContentReader(),
+				content=Content(
+					'application/json',
+					Schema('Input', Object(properties=Properties(
+						value=Integer(min=0),
+					))),
+					{
+						'message': '안녕',
+						'truthy': 'true',
+						'nullish': 'null',
+						'numberish': '0123',
+						'key:true': 'value',
+					},
+				),
+			),
+			response=ResponseSpecification(
+				200,
+				'ok',
+				Content(
+					'application/json',
+					Schema('Output', Object(properties=Properties(
+						result=String(),
+					))),
+				),
+			),
+			auth=Auth(
+				SessionAuthorization(),
+				HTTP('Bearer'),
+			),
+		):
+			def run(self, req):
+				return Response()
+
+		class Custom(
+			RequestRunner,
+			method='CUSTOM',
+			url='/custom',
+		):
+			def run(self, req):
+				return Response()
+
+		app = Application(exts=(
+			Specifications('/spec-json'),
+			Specifications('/spec-yaml', document_format='yaml'),
+		))
+		app.add(Documented)
+		app.add(Custom)
+		app.start()
+		self.addCleanup(app.stop)
+		json_response = app(request('/spec-json'))
+		yaml_response = app(request('/spec-yaml'))
+		assert isinstance(json_response, Response)
+		assert isinstance(yaml_response, Response)
+		yaml_content_type = yaml_response.header('Content-Type')
+		assert isinstance(yaml_content_type, str)
+		self.assertTrue(yaml_content_type.startswith('application/yaml; charset=utf-8'))
+		assert isinstance(yaml_response.body, bytes)
+		self.assertIn('안녕'.encode('utf-8'), yaml_response.body)
+		json_document = loads(json_response.body)
+		yaml_document = yaml.safe_load(yaml_response.body.decode('utf-8'))
+		self.assertEqual(json_document, yaml_document)
+		self.assertIn('/items/{id}', yaml_document['paths'])
+		self.assertIn('Input', yaml_document['components']['schemas'])
+		self.assertEqual(
+			yaml_document['paths']['/items/{id}']['post']['requestBody']['content']['application/json']['schema']['$ref'],
+			'#/components/schemas/Input',
+		)
+		self.assertEqual(yaml_document['components']['securitySchemes']['HTTP']['scheme'], 'bearer')
+		self.assertIn('x-defchord-operations', yaml_document)
+		example = yaml_document['paths']['/items/{id}']['post']['requestBody']['content']['application/json']['example']
+		self.assertEqual(example['truthy'], 'true')
+		self.assertEqual(example['nullish'], 'null')
+		self.assertEqual(example['numberish'], '0123')
+		self.assertEqual(example['key:true'], 'value')
+		return
+
+	def test_specifications_rejects_unsupported_document_format(self):
+		with self.assertRaises(ValueError):
+			Specifications('/spec', document_format='xml')
+		return
+
+	def test_specifications_yaml_requires_dependency_without_silent_fallback(self):
+		app = Application(exts=(
+			Specifications('/spec', document_format='yaml'),
+		))
+		app.start()
+		self.addCleanup(app.stop)
+		with patch(
+			'DefChord.Extensions.Specifications.import_module',
+			side_effect=ModuleNotFoundError('No module named yaml'),
+		):
+			with self.assertRaisesRegex(ModuleNotFoundError, 'YAML output requires PyYAML'):
+				app(request('/spec'))
+		return
+
+	def test_specifications_yaml_serialization_failure_is_propagated(self):
+		app = Application(exts=(
+			Specifications('/spec', document_format='yaml'),
+		))
+		app.start()
+		self.addCleanup(app.stop)
+		serializer = Mock()
+		serializer.safe_dump.side_effect = TypeError('yaml dump failed')
+		with patch(
+			'DefChord.Extensions.Specifications.import_module',
+			return_value=serializer,
+		):
+			with self.assertRaisesRegex(TypeError, 'yaml dump failed'):
+				app(request('/spec'))
+		return
+
 	def test_live_extension_ownership_does_not_hide_general_methods_at_same_path(self):
 		class Submit(
 			RequestRunner,

@@ -3,6 +3,8 @@ from collections.abc import (
 	Sequence,
 )
 from copy import deepcopy
+from enum import Enum
+from importlib import import_module
 from logging import getLogger
 from time import monotonic
 from re import (
@@ -60,6 +62,10 @@ class Specifications(Extension):
 	"""Convert the current declarations in the shared route list to an OpenAPI 3.1 document."""
 
 	logger = getLogger('Extension.Specifications')
+	formats = (
+		'json',
+		'yaml',
+	)
 
 	def __init__(
 		self,
@@ -68,6 +74,8 @@ class Specifications(Extension):
 		title: str = 'DefChord',
 		version: str = '1.0.0',
 		description=None,
+		document_format: str = 'json',
+		yaml_media_type: str = 'application/yaml',
 		on_startup: Optional[Union[
 			ExtensionStartup,
 			Sequence[ExtensionStartup],
@@ -100,9 +108,18 @@ class Specifications(Extension):
 		self.path = path
 		if not isinstance(title, str) or not title or not isinstance(version, str) or not version:
 			raise ValueError('Document title and version must be non-empty strings')
+		if not isinstance(document_format, str):
+			raise TypeError('document_format must be a string')
+		document_format = document_format.strip().lower()
+		if document_format not in self.formats:
+			raise ValueError('Unsupported document format: ' + document_format)
+		if not isinstance(yaml_media_type, str) or not yaml_media_type.strip():
+			raise ValueError('yaml_media_type must be a non-empty string')
 		self.title = title
 		self.version = version
 		self.description = description
+		self.document_format = document_format
+		self.yaml_media_type = yaml_media_type.strip()
 		return
 
 	def __str__(self) -> str:
@@ -336,7 +353,43 @@ class Specifications(Extension):
 		self,
 		request: Request,
 	) -> Response:
+		def normalize(value: Any) -> Any:
+			if isinstance(value, Enum):
+				return value.value
+			if isinstance(value, Mapping):
+				return {
+					key: normalize(item) for key, item in value.items()
+				}
+			if isinstance(value, Sequence) and not isinstance(
+				value,
+				(
+					str,
+					bytes,
+					bytearray,
+				),
+			):
+				return [normalize(item) for item in value]
+			return value
+
 		self.logger.debug('Specification response preparing: request_id=%s', request.id)
-		response = ResponseJSON(self.document())
+		document = self.document()
+		if self.document_format == 'json':
+			response = ResponseJSON(document)
+		else:
+			try:
+				yaml = import_module('yaml')
+			except ModuleNotFoundError as error:
+				raise ModuleNotFoundError(
+					'YAML output requires PyYAML; install PyYAML to use document_format="yaml"'
+				) from error
+			response = Response(
+				body=yaml.safe_dump(
+					normalize(document),
+					allow_unicode=True,
+					sort_keys=False,
+				).encode('utf-8'),
+				format=self.yaml_media_type,
+				charset='utf-8',
+			)
 		self.logger.debug('Specification response prepared: request_id=%s', request.id)
 		return response
